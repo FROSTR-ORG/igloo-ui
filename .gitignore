@@ -1,0 +1,17 @@
+node_modules/
+dist/
+
+# Environment and local scratch
+.env
+.env.*
+coverage/
+
+# Editor/OS noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs and diagnostics
+*.log
+logs/
