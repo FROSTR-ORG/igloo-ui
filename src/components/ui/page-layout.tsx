@@ -8,8 +8,8 @@ type PageLayoutProps = React.HTMLAttributes<HTMLDivElement> & {
 
 export function PageLayout({ className, maxWidth = 'max-w-3xl', header, children, ...props }: PageLayoutProps) {
   return (
-    <div className={cn('min-h-screen p-4 sm:p-8 text-blue-100', className)} {...props}>
-      <div className={cn('mx-auto flex w-full flex-col gap-6', maxWidth)}>
+    <div className={cn('min-h-screen p-3 sm:p-6 text-blue-100', className)} {...props}>
+      <div className={cn('mx-auto flex w-full flex-col gap-4', maxWidth)}>
         {header}
         {children}
       </div>

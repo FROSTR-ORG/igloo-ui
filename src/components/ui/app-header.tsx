@@ -3,11 +3,12 @@ import { cn } from '../../lib/utils';
 
 type AppHeaderProps = {
   title?: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   right?: React.ReactNode;
   className?: string;
   logoSrc?: string;
   logoAlt?: string;
+  centered?: boolean;
 };
 
 export function AppHeader({
@@ -16,21 +17,31 @@ export function AppHeader({
   right,
   className,
   logoSrc,
-  logoAlt = 'FROSTR'
+  logoAlt = 'FROSTR',
+  centered = false,
 }: AppHeaderProps) {
   return (
     <header className={cn('mb-6', className)}>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3 sm:gap-4">
-          {logoSrc && <img src={logoSrc} alt={logoAlt} className="h-11 w-11 object-contain" />}
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-3',
+          centered ? 'justify-center text-center' : 'justify-between',
+        )}
+      >
+        <div className={cn('flex items-center gap-3 sm:gap-4', centered && 'justify-center')}>
+          {logoSrc && <img src={logoSrc} alt={logoAlt} className="h-9 w-9 object-contain sm:h-10 sm:w-10" />}
           <div>
-            <h1 className="bg-gradient-to-r from-blue-300 via-blue-200 to-cyan-300 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
+            <h1 className="bg-gradient-to-r from-blue-300 via-blue-200 to-cyan-300 bg-clip-text font-sharetech text-[2.05rem] font-bold uppercase leading-none tracking-[0.11em] text-transparent sm:text-[2.45rem]">
               {title}
             </h1>
-            {subtitle && <p className="mt-0.5 text-sm text-gray-400">{subtitle}</p>}
+            {subtitle && (
+              <p className={cn('mt-0.5 text-[0.8rem] text-blue-400', centered && 'mx-auto max-w-xl')}>
+                {subtitle}
+              </p>
+            )}
           </div>
         </div>
-        {right && <div className="flex items-center gap-2">{right}</div>}
+        {right && <div className={cn('flex items-center gap-2', centered && 'w-full justify-center')}>{right}</div>}
       </div>
     </header>
   );

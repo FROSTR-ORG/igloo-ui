@@ -1,36 +1,11 @@
+@import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
-    --primary: 216 92% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
-    --success: 152 76% 40%;
-    --success-foreground: 152 89% 96%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 38 100% 96%;
-    --ring: 216 92% 60%;
-    --radius: 0.75rem;
-  }
-
-  .dark {
     --background: 222 84% 4.9%;
     --foreground: 210 40% 98%;
     --muted: 217 33% 17%;
@@ -54,33 +29,47 @@
     --warning: 38 92% 50%;
     --warning-foreground: 38 100% 96%;
     --ring: 216 92% 60%;
+    --radius: 0.625rem;
+    --igloo-shell-line: rgba(30, 64, 175, 0.35);
+    --igloo-shell-panel: rgba(15, 23, 42, 0.78);
+    --igloo-shell-panel-strong: rgba(15, 23, 42, 0.95);
+    --igloo-shell-panel-soft: rgba(30, 41, 59, 0.58);
+    --igloo-shell-text: #eff6ff;
+    --igloo-shell-muted: #94a3b8;
+    --igloo-shell-accent: #60a5fa;
+    --igloo-shell-accent-soft: rgba(59, 130, 246, 0.14);
+    --igloo-shell-live: rgba(16, 185, 129, 0.16);
+    --igloo-shell-busy: rgba(234, 179, 8, 0.16);
+    --igloo-shell-danger: rgba(239, 68, 68, 0.18);
+    --igloo-shell-shadow: 0 24px 80px rgba(2, 6, 23, 0.42);
   }
-}
 
-@layer base {
   * {
-    @apply border-border;
+    box-sizing: border-box;
   }
 
   html {
-    @apply dark;
+    color-scheme: dark;
   }
 
   body {
-    @apply min-h-screen text-foreground font-sharetech antialiased;
+    min-height: 100vh;
+    color: hsl(var(--foreground));
+    font-family: "Share Tech Mono", monospace;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "rlig" 1, "calt" 1;
     background-color: hsl(var(--background));
     background-image:
-      radial-gradient(circle at 30% 20%, rgba(59,130,246,0.12), transparent 50%),
-      radial-gradient(circle at 80% 10%, rgba(56,189,248,0.08), transparent 40%),
-      radial-gradient(circle at 20% 80%, rgba(76,29,149,0.06), transparent 40%);
-    @apply dark;
+      radial-gradient(circle at 18% 18%, rgba(59, 130, 246, 0.2), transparent 30%),
+      radial-gradient(circle at 82% 12%, rgba(56, 189, 248, 0.12), transparent 28%),
+      radial-gradient(circle at 24% 78%, rgba(37, 99, 235, 0.1), transparent 32%);
   }
 }
 
 @layer components {
   .igloo-card {
-    @apply rounded-lg border border-blue-900/30 bg-gray-900/40 backdrop-blur-sm shadow-lg;
+    @apply rounded-md border border-blue-900/30 bg-gray-900/40 backdrop-blur-sm shadow-lg;
   }
 
   .igloo-button {
@@ -150,5 +139,729 @@
   .pulse-animation-yellow {
     animation: pulse-glow 1.5s ease-in-out infinite;
     box-shadow: 0 0 5px 2px rgba(234, 179, 8, 0.6);
+  }
+
+  .igloo-shell-app {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    min-height: 100vh;
+    color: var(--igloo-shell-text);
+  }
+
+  .igloo-shell-rail {
+    border-right: 1px solid var(--igloo-shell-line);
+    padding: 28px 22px;
+    background:
+      linear-gradient(180deg, rgba(2, 6, 23, 0.86), rgba(15, 23, 42, 0.78)),
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 42%);
+    backdrop-filter: blur(24px);
+    box-shadow: inset -1px 0 0 rgba(96, 165, 250, 0.06);
+  }
+
+  .igloo-shell-brand h1,
+  .igloo-shell-hero h2,
+  .igloo-panel h3 {
+    margin: 0;
+    font-family: "IBM Plex Serif", "Iowan Old Style", serif;
+  }
+
+  .igloo-shell-brand p,
+  .igloo-shell-hero p,
+  .igloo-shell-nav-item small,
+  .igloo-shell-paths dd,
+  .igloo-detail-list dd,
+  .igloo-empty,
+  .igloo-log-entry span,
+  .igloo-toggle-row small,
+  .igloo-card-note {
+    color: var(--igloo-shell-muted);
+  }
+
+  .igloo-shell-kicker {
+    color: var(--igloo-shell-accent);
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .igloo-shell-nav {
+    display: grid;
+    gap: 10px;
+    margin: 28px 0;
+  }
+
+  .igloo-shell-nav-item {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid var(--igloo-shell-line);
+    background: rgba(15, 23, 42, 0.42);
+    color: inherit;
+    text-align: left;
+    transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+  }
+
+  .igloo-shell-nav-item:hover,
+  .igloo-flow-root button:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  .igloo-shell-nav-item.is-active {
+    border-color: rgba(96, 165, 250, 0.48);
+    background: linear-gradient(135deg, var(--igloo-shell-accent-soft), rgba(15, 23, 42, 0.72));
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.08);
+  }
+
+  .igloo-shell-paths dl {
+    display: grid;
+    gap: 8px;
+  }
+
+  .igloo-detail-list {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 6px;
+    align-items: start;
+  }
+
+  .igloo-shell-paths dt,
+  .igloo-detail-list dt,
+  .igloo-panel h4 {
+    color: var(--igloo-shell-accent);
+    font-size: 0.76rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .igloo-shell-paths dd,
+  .igloo-detail-list dd {
+    margin: 0 0 10px;
+    word-break: break-word;
+  }
+
+  .igloo-detail-list dd {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.35;
+    color: #dbeafe;
+  }
+
+  .igloo-shell-main {
+    display: grid;
+    gap: 14px;
+    padding: 22px;
+  }
+
+  .igloo-shell-hero,
+  .igloo-panel,
+  .igloo-shell-alert {
+    border: 1px solid var(--igloo-shell-line);
+    border-radius: 18px;
+    background: var(--igloo-shell-panel);
+    box-shadow: var(--igloo-shell-shadow);
+    backdrop-filter: blur(18px);
+  }
+
+  .igloo-shell-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .igloo-shell-status-bar,
+  .igloo-button-row,
+  .igloo-two-up,
+  .igloo-two-column {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .igloo-two-column {
+    align-items: flex-start;
+  }
+
+  .igloo-two-column > * {
+    flex: 1 1 320px;
+  }
+
+  .igloo-shell-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--igloo-shell-line);
+    background: rgba(15, 23, 42, 0.52);
+    color: var(--igloo-shell-text);
+  }
+
+  .igloo-shell-pill.is-live {
+    border-color: rgba(16, 185, 129, 0.34);
+    background: var(--igloo-shell-live);
+  }
+
+  .igloo-shell-pill.is-busy {
+    border-color: rgba(234, 179, 8, 0.34);
+    background: var(--igloo-shell-busy);
+  }
+
+  .igloo-shell-alert {
+    padding: 14px 18px;
+    color: #fecaca;
+    border-color: rgba(239, 68, 68, 0.42);
+    background: var(--igloo-shell-danger);
+  }
+
+  .igloo-flow-root {
+    color: var(--igloo-shell-text);
+  }
+
+  .igloo-panel-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .igloo-panel {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .igloo-panel-span {
+    grid-column: 1 / -1;
+  }
+
+  .igloo-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .igloo-stack {
+    display: grid;
+    gap: 10px;
+  }
+
+  .igloo-banner-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .igloo-flow-list,
+  .igloo-generated-grid,
+  .igloo-log-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .igloo-generated-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .igloo-flow-card,
+  .igloo-generated-card,
+  .igloo-log-entry,
+  .igloo-toggle-row {
+    display: grid;
+    gap: 4px;
+    border-radius: 11px;
+    border: 1px solid rgba(96, 165, 250, 0.18);
+    background: var(--igloo-shell-panel-soft);
+  }
+
+  .igloo-flow-card,
+  .igloo-generated-card {
+    padding: 9px 11px;
+    color: inherit;
+  }
+
+  .igloo-flow-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+  }
+
+  .igloo-flow-card.is-selected {
+    border-color: rgba(96, 165, 250, 0.46);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(15, 23, 42, 0.82));
+  }
+
+  .igloo-flow-card-select {
+    display: grid;
+    gap: 2px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .igloo-flow-card-select strong {
+    font-size: 0.94rem;
+    line-height: 1.15;
+  }
+
+  .igloo-flow-card-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .igloo-flow-card-badges {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .igloo-flow-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: 1px solid rgba(125, 211, 252, 0.25);
+    background: rgba(30, 41, 59, 0.78);
+    color: #dbeafe;
+  }
+
+  .igloo-flow-badge.is-active {
+    border-color: rgba(52, 211, 153, 0.35);
+    background: rgba(6, 78, 59, 0.7);
+    color: #d1fae5;
+  }
+
+  .igloo-flow-card-select span {
+    font-size: 0.84rem;
+    color: #dbeafe;
+  }
+
+  .igloo-flow-card-select small {
+    font-size: 0.74rem;
+    letter-spacing: 0.02em;
+  }
+
+  .igloo-flow-card-select:hover {
+    background: transparent;
+    transform: none;
+  }
+
+  .igloo-generated-card header {
+    display: grid;
+    gap: 2px;
+  }
+
+  .igloo-flow-root label {
+    display: grid;
+    gap: 5px;
+    font-size: 0.84rem;
+  }
+
+  .igloo-inline-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .igloo-card-note {
+    margin: 0;
+    font-size: 0.76rem;
+    line-height: 1.45;
+  }
+
+  .igloo-flow-root input,
+  .igloo-flow-root textarea,
+  .igloo-flow-root button,
+  .igloo-shell-nav-item {
+    font: inherit;
+  }
+
+  .igloo-flow-root input,
+  .igloo-flow-root textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    background: var(--igloo-shell-panel-strong);
+    color: var(--igloo-shell-text);
+  }
+
+  .igloo-flow-root input::placeholder,
+  .igloo-flow-root textarea::placeholder {
+    color: var(--igloo-shell-muted);
+  }
+
+  .igloo-flow-root textarea {
+    min-height: 104px;
+    resize: vertical;
+  }
+
+  .igloo-flow-root button {
+    cursor: pointer;
+  }
+
+  .igloo-code-block {
+    margin: 0;
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(2, 6, 23, 0.82);
+    border: 1px solid rgba(96, 165, 250, 0.14);
+    color: #bfdbfe;
+    font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+    font-size: 0.78rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .igloo-log-list {
+    max-height: 320px;
+    overflow: auto;
+  }
+
+  .igloo-log-entry {
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.74);
+  }
+
+  .igloo-empty {
+    padding: 10px 0;
+    font-size: 0.84rem;
+  }
+
+  .igloo-flow-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid var(--igloo-shell-panel-border);
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(8, 47, 73, 0.85), rgba(15, 23, 42, 0.94));
+    padding: 10px 12px;
+  }
+
+  .igloo-flow-summary strong {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.95rem;
+  }
+
+  .igloo-flow-summary small {
+    display: block;
+    margin-top: 2px;
+    color: #bfdbfe;
+    font-size: 0.75rem;
+  }
+
+  .igloo-flow-summary-kicker {
+    display: inline-block;
+    color: var(--igloo-shell-accent);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .igloo-message-error {
+    color: #fecdd3;
+    font-size: 0.84rem;
+  }
+
+  .igloo-message-muted {
+    color: var(--igloo-shell-muted);
+    font-size: 0.84rem;
+  }
+
+  .igloo-tab-list {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 10px;
+  }
+
+  .igloo-tab-panel {
+    display: grid;
+    gap: 10px;
+  }
+
+  .igloo-button-row-tight {
+    gap: 8px;
+  }
+
+  .igloo-task-banner {
+    display: grid;
+    gap: 0.65rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(96, 165, 250, 0.18);
+    border-radius: 14px;
+    background:
+      linear-gradient(180deg, rgba(37, 99, 235, 0.08), rgba(15, 23, 42, 0.18)),
+      rgba(15, 23, 42, 0.42);
+  }
+
+  .igloo-task-banner p {
+    margin: 0;
+    color: #dbeafe;
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+
+  .igloo-task-kicker {
+    color: var(--igloo-shell-accent);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .igloo-task-points {
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .igloo-task-points span {
+    display: flex;
+    gap: 0.45rem;
+    align-items: flex-start;
+    color: var(--igloo-shell-muted);
+    font-size: 0.76rem;
+    line-height: 1.45;
+  }
+
+  .igloo-task-points span::before {
+    content: "•";
+    color: var(--igloo-shell-accent);
+    flex: none;
+  }
+
+  .igloo-step-progress {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .igloo-step-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(96, 165, 250, 0.16);
+    background: rgba(15, 23, 42, 0.42);
+    color: var(--igloo-shell-muted);
+    font-size: 0.74rem;
+    line-height: 1;
+  }
+
+  .igloo-step-chip span {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 18px;
+    block-size: 18px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.12);
+    color: #dbeafe;
+    font-size: 0.72rem;
+  }
+
+  .igloo-step-chip.is-active {
+    border-color: rgba(96, 165, 250, 0.38);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(15, 23, 42, 0.84));
+    color: #eff6ff;
+  }
+
+  .igloo-step-chip.is-active span {
+    background: rgba(96, 165, 250, 0.24);
+    color: #eff6ff;
+  }
+
+  .igloo-confirm-shell {
+    border-color: rgba(96, 165, 250, 0.24);
+    background:
+      linear-gradient(180deg, rgba(37, 99, 235, 0.1), rgba(15, 23, 42, 0.24)),
+      rgba(15, 23, 42, 0.68);
+  }
+
+  .igloo-confirm-kicker {
+    color: var(--igloo-shell-accent);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .igloo-confirm-primary {
+    display: grid;
+    gap: 3px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(96, 165, 250, 0.18);
+    background: rgba(15, 23, 42, 0.5);
+  }
+
+  .igloo-confirm-primary strong {
+    font-size: 1rem;
+    color: #eff6ff;
+  }
+
+  .igloo-confirm-label,
+  .igloo-confirm-item > span {
+    color: var(--igloo-shell-accent);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .igloo-confirm-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .igloo-confirm-item {
+    display: grid;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(96, 165, 250, 0.12);
+    background: rgba(15, 23, 42, 0.42);
+  }
+
+  .igloo-confirm-item code,
+  .igloo-confirm-relays code {
+    display: block;
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(2, 6, 23, 0.68);
+    border: 1px solid rgba(96, 165, 250, 0.1);
+    color: #bfdbfe;
+    font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+    font-size: 0.76rem;
+    overflow: auto;
+    word-break: break-word;
+  }
+
+  .igloo-confirm-relays {
+    display: grid;
+    gap: 6px;
+  }
+
+  .igloo-qr-shell {
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    border: 1px solid rgba(96, 165, 250, 0.18);
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.6);
+  }
+
+  .igloo-qr-grid {
+    display: grid;
+    grid-template-columns: repeat(21, 10px);
+    grid-template-rows: repeat(21, 10px);
+    gap: 2px;
+    padding: 14px;
+    border-radius: 14px;
+    background: white;
+  }
+
+  .igloo-qr-grid span {
+    display: block;
+    inline-size: 10px;
+    block-size: 10px;
+    background: white;
+  }
+
+  .igloo-qr-grid span.is-on {
+    background: #020617;
+  }
+
+  .igloo-diagnostics-tabs {
+    margin-bottom: 8px;
+  }
+
+  .igloo-settings-grid {
+    display: grid;
+    gap: 10px;
+  }
+
+  @media (max-width: 720px) {
+    .igloo-confirm-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .igloo-toggle-row {
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 10px;
+    padding: 10px 11px;
+  }
+
+  .igloo-toggle-row input {
+    inline-size: 16px;
+    block-size: 16px;
+    margin-top: 1px;
+  }
+
+  .igloo-toggle-row span {
+    display: grid;
+    gap: 2px;
+  }
+
+  .igloo-toggle-row strong {
+    font-size: 0.84rem;
+    line-height: 1.2;
+  }
+
+  .igloo-toggle-row small {
+    display: block;
+    font-size: 0.74rem;
+    line-height: 1.35;
+  }
+
+  .igloo-flow-root details {
+    border: 1px solid rgba(96, 165, 250, 0.18);
+    border-radius: 12px;
+    padding: 10px;
+    background: rgba(15, 23, 42, 0.48);
+  }
+
+  .igloo-flow-root details summary {
+    cursor: pointer;
+    color: var(--igloo-shell-accent);
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .igloo-shell-app {
+    grid-template-columns: 1fr;
+  }
+
+  .igloo-shell-rail {
+    border-right: 0;
+    border-bottom: 1px solid var(--igloo-shell-line);
+  }
+
+  .igloo-panel-grid,
+  .igloo-banner-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .igloo-shell-hero {
+    flex-direction: column;
   }
 }

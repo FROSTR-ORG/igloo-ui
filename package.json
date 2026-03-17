@@ -17,8 +17,8 @@
     "README.md"
   ],
   "scripts": {
-    "build": "rm -rf dist && node ./scripts/build.mjs && node ./node_modules/typescript/bin/tsc -p tsconfig.json --emitDeclarationOnly && cp src/styles.css dist/styles.css",
-    "prepare": "npm run build"
+    "build": "BROWSERSLIST_IGNORE_OLD_DATA=1 rm -rf dist && BROWSERSLIST_IGNORE_OLD_DATA=1 node ./scripts/build.mjs && BROWSERSLIST_IGNORE_OLD_DATA=1 node ./node_modules/typescript/bin/tsc -p tsconfig.json --emitDeclarationOnly && BROWSERSLIST_IGNORE_OLD_DATA=1 tailwindcss -c ./tailwind.config.js -i ./src/styles.css -o ./dist/styles.css",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "react": "^18.3.1",
@@ -32,9 +32,16 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.1.0",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
+    "browserslist": "^4.28.1",
+    "caniuse-lite": "^1.0.30001777",
     "esbuild": "^0.25.0",
-    "typescript": "^5.5.4"
+    "jsdom": "^25.0.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.9"
   }
 }

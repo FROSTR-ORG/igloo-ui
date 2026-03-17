@@ -50,7 +50,7 @@ export function TabsList({ className, ...props }: React.HTMLAttributes<HTMLDivEl
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-2 rounded-2xl border border-slate-700/40 bg-slate-950/35 p-1.5',
+        'inline-flex items-center gap-1 rounded-md bg-gray-900/40 p-0.5',
         className,
       )}
       {...props}
@@ -71,10 +71,10 @@ export function TabsTrigger({ className, value, onClick, ...props }: TabsTrigger
       type="button"
       data-state={active ? 'active' : 'inactive'}
       className={cn(
-        'rounded-xl px-4 py-2 text-sm font-medium transition-colors',
+        'rounded-md border border-transparent px-3 py-1.5 text-[0.8rem] font-medium transition-colors',
         active
-          ? 'bg-orange-500/15 text-orange-100'
-          : 'text-slate-300 hover:bg-slate-800/60 hover:text-slate-100',
+          ? 'border-blue-400/30 bg-blue-600/20 text-blue-100'
+          : 'text-blue-300/80 hover:bg-blue-950/40 hover:text-blue-100',
         className,
       )}
       onClick={(event) => {
