@@ -27,7 +27,6 @@ describe('CreateImportPanel', () => {
         saveForms={{}}
         onChangeCreateForm={vi.fn()}
         onGenerateFresh={vi.fn()}
-        onGenerateImported={vi.fn()}
         onChangeImportForm={vi.fn()}
         onChangeOnboardingForm={vi.fn()}
         onImportOnboardingProfile={onImportOnboardingProfile}

@@ -52,7 +52,6 @@ type Props = {
   saveForms: Record<number, GeneratedShareDraft>;
   onChangeCreateForm: (field: 'threshold' | 'count' | 'nsec', value: string) => void;
   onGenerateFresh: () => void;
-  onGenerateImported: () => void;
   onChangeImportForm: (field: keyof Props['importForm'], value: string) => void;
   onChangeOnboardingForm: (field: keyof Props['onboardingForm'], value: string) => void;
   onImportOnboardingProfile: () => void;
@@ -70,7 +69,6 @@ export function CreateImportPanel({
   saveForms,
   onChangeCreateForm,
   onGenerateFresh,
-  onGenerateImported,
   onChangeImportForm,
   onChangeOnboardingForm,
   onImportOnboardingProfile,
@@ -94,23 +92,22 @@ export function CreateImportPanel({
                 <CardTitle>Create Keyset</CardTitle>
                 <Tooltip
                   trigger={<HelpCircle size={15} className="text-blue-400 cursor-help" />}
-                  content="Start from a fresh secret or a pasted nsec, then split it into managed member profiles."
+                  content="Generate a fresh secret and split it into managed member profiles."
                 />
               </div>
               <CardDescription>
-                Split a fresh or imported nsec into managed FROSTR V2 profiles.
+                Generate a fresh managed FROSTR V2 keyset and save member profiles locally.
               </CardDescription>
             </CardHeader>
             <CardContent className="igloo-stack">
               <section className="igloo-task-banner">
                 <span className="igloo-task-kicker">Create Flow</span>
                 <p>
-                  Generate a fresh keyset or split an existing nsec, then review the group package once before
-                  saving a member profile into this workspace.
+                  Generate a fresh keyset, then review the group package once before saving a member profile into this
+                  workspace.
                 </p>
                 <div className="igloo-task-points">
                   <span>Choose threshold and member count.</span>
-                  <span>Optional imported nsec for deterministic splits.</span>
                   <span>Save one or more member profiles after review.</span>
                 </div>
               </section>
@@ -134,18 +131,8 @@ export function CreateImportPanel({
                   />
                 </label>
               </div>
-              <label>
-                Imported nsec
-                <Textarea
-                  className="min-h-[88px]"
-                  placeholder="Paste an nsec here when you want deterministic share generation."
-                  value={createForm.nsec}
-                  onChange={(event) => onChangeCreateForm('nsec', event.target.value)}
-                />
-              </label>
               <div className="igloo-button-row igloo-button-row-tight">
                 <Button type="button" size="sm" onClick={onGenerateFresh}>Generate fresh keyset</Button>
-                <Button type="button" size="sm" variant="secondary" onClick={onGenerateImported}>Split imported nsec</Button>
               </div>
             </CardContent>
           </Card>
