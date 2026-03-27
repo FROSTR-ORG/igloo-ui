@@ -2,6 +2,10 @@
 
 Shared React UI package for the Igloo applications.
 
+## Status
+
+- Beta.
+
 ## Owns
 
 - reusable UI primitives
@@ -24,7 +28,7 @@ Import the package stylesheet once at app startup:
 import 'igloo-ui/styles.css';
 ```
 
-In the monorepo, prefer resolving `igloo-ui` from source for local development and tests so React stays deduped. `igloo-home` is the reference setup.
+For local development and tests, prefer resolving `igloo-ui` from source so React stays deduped.
 
 ## Shared Surface
 
@@ -41,3 +45,8 @@ Primary flow exports:
 - `RecoveryWorkspace`
 
 These flows are reusable UI only. Consumers pass data, callbacks, and async actions in through props.
+
+## Additional Docs
+
+- [TESTING.md](./TESTING.md)
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
