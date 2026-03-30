@@ -34,6 +34,16 @@ For local development and tests, prefer resolving `igloo-ui` from source so Reac
 
 Primary flow exports:
 
+- `HostEntryTile`
+- `HostFlowShell`
+- `StoredProfilesLandingCard`
+- `StepProgress`
+- `CreateFlowTaskBanner`
+- `CreateFlowGenerateCard`
+- `CreateFlowLocalSaveCard`
+- `CreateFlowReviewPanel`
+- `CreateFlowDistributionCards`
+- `CreateFlowDistributionSection`
 - `DesktopAppShell`
 - `CreateImportPanel`
 - `ManagedProfilesPanel`
@@ -48,5 +58,6 @@ These flows are reusable UI only. Consumers pass data, callbacks, and async acti
 
 ## Additional Docs
 
+- [CHANGELOG.md](./CHANGELOG.md)
 - [TESTING.md](./TESTING.md)
 - [CONTRIBUTING.md](./CONTRIBUTING.md)
