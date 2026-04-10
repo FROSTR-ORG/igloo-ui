@@ -61,7 +61,7 @@ export function OperatorSettingsPanel({
   saving = false,
   saveDisabled = false,
   message = null,
-  maintenanceDescription = 'Operator controls for complete local reset.',
+  maintenanceDescription = 'Profile export, share rotation, and session controls.',
   maintenanceActions = [],
   extraSections,
 }: Props) {

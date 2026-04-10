@@ -88,22 +88,35 @@ export type HostStoredProfileSummary = {
   id: string;
   label: string;
   subtitle?: string;
-  actionLabel?: string;
+  statusLabel?: string;
+  loadLabel?: string;
 };
 
 export function StoredProfilesLandingCard({
   profiles,
-  onAction,
+  selectedProfileId,
+  onSelect,
+  onLoad,
+  onDelete,
   description = 'Profiles remain available while logged out. Only label and short id are shown here.',
-  footer,
+  emptyMessage = 'No stored profiles are saved on this device yet.',
+  renderProfileDetail,
+  loadDisabled = false,
+  deleteDisabled = false,
+  deleteLabel = 'Delete Profile',
 }: {
   profiles: HostStoredProfileSummary[];
-  onAction: (profileId: string) => void;
+  selectedProfileId?: string | null;
+  onSelect?: (profileId: string) => void;
+  onLoad: (profileId: string) => void;
+  onDelete?: (profileId: string) => void;
   description?: string;
-  footer?: React.ReactNode;
+  emptyMessage?: string;
+  renderProfileDetail?: (profile: HostStoredProfileSummary, isSelected: boolean) => React.ReactNode;
+  loadDisabled?: boolean;
+  deleteDisabled?: boolean;
+  deleteLabel?: string;
 }) {
-  if (!profiles.length) return null;
-
   return (
     <Card>
       <CardHeader>
@@ -111,20 +124,80 @@ export function StoredProfilesLandingCard({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="igloo-stack">
-        {profiles.map((profile) => (
-          <div key={profile.id} className="igloo-flow-card">
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <strong>{profile.label || 'Unnamed device'}</strong>
-                {profile.subtitle ? <div className="text-xs text-slate-400">{profile.subtitle}</div> : null}
+        {profiles.length ? (
+          profiles.map((profile) => {
+            const isSelected = profile.id === selectedProfileId;
+            const detail = renderProfileDetail?.(profile, isSelected);
+
+            const summary = (
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <strong>{profile.label || 'Unnamed device'}</strong>
+                  {profile.subtitle ? (
+                    <div className="text-xs text-slate-400">{profile.subtitle}</div>
+                  ) : null}
+                </div>
+                {profile.statusLabel ? (
+                  <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[11px] font-medium text-cyan-200">
+                    {profile.statusLabel}
+                  </span>
+                ) : null}
               </div>
-              <Button type="button" size="sm" onClick={() => onAction(profile.id)}>
-                {profile.actionLabel ?? 'Load Profile'}
-              </Button>
-            </div>
+            );
+
+            return (
+              <div
+                key={profile.id}
+                className={`rounded-xl border p-3 transition ${
+                  isSelected
+                    ? 'border-cyan-500/40 bg-cyan-500/10'
+                    : 'border-slate-700/60 bg-slate-900/40'
+                }`}
+              >
+                <div className="grid gap-3">
+                  {onSelect ? (
+                    <button
+                      type="button"
+                      className="w-full text-left"
+                      aria-pressed={isSelected}
+                      onClick={() => onSelect(profile.id)}
+                    >
+                      {summary}
+                    </button>
+                  ) : (
+                    summary
+                  )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => onLoad(profile.id)}
+                      disabled={loadDisabled}
+                    >
+                      {profile.loadLabel ?? 'Load Profile'}
+                    </Button>
+                    {onDelete ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => onDelete(profile.id)}
+                        disabled={deleteDisabled}
+                      >
+                        {deleteLabel}
+                      </Button>
+                    ) : null}
+                  </div>
+                  {detail ? <div>{detail}</div> : null}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="igloo-flow-card border-dashed border-slate-700/60 bg-slate-900/30 text-sm text-slate-300">
+            {emptyMessage}
           </div>
-        ))}
-        {footer}
+        )}
       </CardContent>
     </Card>
   );

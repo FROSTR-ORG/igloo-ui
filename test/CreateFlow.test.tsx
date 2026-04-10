@@ -10,8 +10,10 @@ import {
 } from '../src';
 
 describe('shared host flow components', () => {
-  it('renders stored profiles on landing and dispatches the load action', () => {
-    const onAction = vi.fn();
+  it('renders stored profiles on landing, supports selection, and dispatches the explicit actions', () => {
+    const onSelect = vi.fn();
+    const onLoad = vi.fn();
+    const onDelete = vi.fn();
 
     render(
       <StoredProfilesLandingCard
@@ -20,15 +22,33 @@ describe('shared host flow components', () => {
             id: 'profile-1',
             label: 'Primary Browser Device',
             subtitle: 'abcd1234',
+            statusLabel: 'Available',
           },
+          {
+            id: 'profile-2',
+            label: 'Backup Device',
+            subtitle: 'efgh5678',
+            statusLabel: 'Locked',
+            loadLabel: 'Open Dashboard',
+          }
         ]}
-        onAction={onAction}
+        selectedProfileId="profile-2"
+        onSelect={onSelect}
+        onLoad={onLoad}
+        onDelete={onDelete}
       />,
     );
 
     expect(screen.getByText('Stored Profiles')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Load Profile' }));
-    expect(onAction).toHaveBeenCalledWith('profile-1');
+    fireEvent.click(screen.getByText('Primary Browser Device').closest('button')!);
+    expect(onSelect).toHaveBeenCalledWith('profile-1');
+
+    const backupCard = screen.getByText('Backup Device').closest('.rounded-xl') as HTMLElement;
+    fireEvent.click(within(backupCard).getByRole('button', { name: 'Open Dashboard' }));
+    expect(onLoad).toHaveBeenCalledWith('profile-2');
+
+    fireEvent.click(within(backupCard).getByRole('button', { name: 'Delete Profile' }));
+    expect(onDelete).toHaveBeenCalledWith('profile-2');
   });
 
   it('dispatches create-flow edits and mode changes', () => {

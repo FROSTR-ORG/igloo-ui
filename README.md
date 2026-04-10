@@ -30,6 +30,13 @@ import 'igloo-ui/styles.css';
 
 For local development and tests, prefer resolving `igloo-ui` from source so React stays deduped.
 
+## Ownership Note
+
+- `igloo-shared` owns profile package export and rotation semantics.
+- `igloo-ui` owns reusable presentation only.
+- `igloo-chrome`, `igloo-pwa`, and `igloo-home` own storage, runtime transport, lifecycle wiring, and UI state.
+- Operator settings actions are intentionally aligned across hosts: `copy profile`, `copy share`, `rotate share`, and `logout`.
+
 ## Shared Surface
 
 Primary flow exports:

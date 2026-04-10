@@ -33,6 +33,10 @@ describe('operator dashboard surface', () => {
     const onClearAllPeerPermissions = vi.fn();
     const onPeerPermissionChange = vi.fn();
     const onSave = vi.fn();
+    const onCopyProfile = vi.fn();
+    const onCopyShare = vi.fn();
+    const onRotateShare = vi.fn();
+    const onLogout = vi.fn();
 
     render(
       <div>
@@ -83,6 +87,12 @@ describe('operator dashboard surface', () => {
           onSignerSettingNumberChange={vi.fn()}
           onPeerSelectionStrategyChange={vi.fn()}
           onSave={onSave}
+          maintenanceActions={[
+            { label: 'copy profile', onClick: onCopyProfile },
+            { label: 'copy share', onClick: onCopyShare },
+            { label: 'rotate share', onClick: onRotateShare },
+            { label: 'logout', onClick: onLogout, variant: 'outline' },
+          ]}
         />
       </div>,
     );
@@ -101,5 +111,15 @@ describe('operator dashboard surface', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
     expect(onSave).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'copy profile' }));
+    fireEvent.click(screen.getByRole('button', { name: 'copy share' }));
+    fireEvent.click(screen.getByRole('button', { name: 'rotate share' }));
+    fireEvent.click(screen.getByRole('button', { name: 'logout' }));
+    expect(onCopyProfile).toHaveBeenCalledTimes(1);
+    expect(onCopyShare).toHaveBeenCalledTimes(1);
+    expect(onRotateShare).toHaveBeenCalledTimes(1);
+    expect(onLogout).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: /wipe all data/i })).not.toBeInTheDocument();
   });
 });
