@@ -50,6 +50,7 @@ describe('operator dashboard surface', () => {
           runtimeState="running"
           runtimeControlLabel="Stop Signer"
           runtimeSummaryLabel="running"
+          statusBanner={<div>Refreshed 2 of 3 peers. 1 peer refresh failed.</div>}
           sharePublicKey="share-pub-1"
           groupPublicKey="group-pub-1"
           onPrimaryAction={onPrimaryAction}
@@ -99,6 +100,7 @@ describe('operator dashboard surface', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Stop Signer' }));
     expect(onPrimaryAction).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Refreshed 2 of 3 peers. 1 peer refresh failed.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear All' }));
     expect(onClearAllPeerPermissions).toHaveBeenCalledTimes(1);

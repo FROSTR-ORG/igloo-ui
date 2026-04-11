@@ -37,6 +37,7 @@ type Props = {
   activationStage?: string | null;
   activationUpdatedAt?: number | null;
   runtimeError?: string | null;
+  statusBanner?: React.ReactNode;
   sharePublicKey?: string | null;
   groupPublicKey?: string | null;
   copiedField?: 'group' | 'share' | null;
@@ -67,6 +68,7 @@ export function OperatorSignerPanel({
   activationStage,
   activationUpdatedAt,
   runtimeError,
+  statusBanner,
   sharePublicKey,
   groupPublicKey,
   copiedField = null,
@@ -144,6 +146,8 @@ export function OperatorSignerPanel({
           </Button>
         </div>
       </div>
+
+      {statusBanner ? statusBanner : null}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)]">
         <div className="rounded-xl border border-blue-800/30 bg-slate-950/60 p-4 shadow-[0_18px_50px_rgba(2,6,23,0.22)]">
