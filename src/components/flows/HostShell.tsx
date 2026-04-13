@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { CRITICAL_E2E_TEST_IDS, type CriticalE2ETestId } from '../../lib/e2e-test-ids';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { ContentCard } from '../ui/content-card';
@@ -13,6 +14,7 @@ export function HostEntryTile({
   title,
   description,
   actionLabel,
+  testId,
   icon,
   tone = 'secondary',
   onAction,
@@ -21,6 +23,7 @@ export function HostEntryTile({
   title: string;
   description: string;
   actionLabel: string;
+  testId?: CriticalE2ETestId;
   icon: React.ReactNode;
   tone?: 'primary' | 'secondary';
   onAction: () => void;
@@ -35,7 +38,13 @@ export function HostEntryTile({
           <p>{description}</p>
         </div>
       </div>
-      <Button type="button" size="sm" variant={tone === 'primary' ? 'default' : 'secondary'} onClick={onAction}>
+      <Button
+        type="button"
+        size="sm"
+        variant={tone === 'primary' ? 'default' : 'secondary'}
+        onClick={onAction}
+        data-testid={testId}
+      >
         {actionLabel}
       </Button>
     </section>
@@ -148,6 +157,7 @@ export function StoredProfilesLandingCard({
             return (
               <div
                 key={profile.id}
+                data-testid={CRITICAL_E2E_TEST_IDS.storedProfileEntry}
                 className={`rounded-xl border p-3 transition ${
                   isSelected
                     ? 'border-cyan-500/40 bg-cyan-500/10'
@@ -171,6 +181,7 @@ export function StoredProfilesLandingCard({
                     <Button
                       type="button"
                       size="sm"
+                      data-testid={CRITICAL_E2E_TEST_IDS.storedProfileLoad}
                       onClick={() => onLoad(profile.id)}
                       disabled={loadDisabled}
                     >

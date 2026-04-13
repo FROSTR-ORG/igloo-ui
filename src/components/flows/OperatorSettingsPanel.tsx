@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { CriticalE2ETestId } from '../../lib/e2e-test-ids';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
 import { Input } from '../ui/input';
@@ -19,6 +20,7 @@ export type OperatorMaintenanceAction = {
   onClick: () => void;
   variant?: 'secondary' | 'destructive' | 'outline';
   disabled?: boolean;
+  testId?: CriticalE2ETestId;
 };
 
 type Props = {
@@ -165,6 +167,7 @@ export function OperatorSettingsPanel({
               key={action.label}
               variant={action.variant ?? 'secondary'}
               size="sm"
+              data-testid={action.testId}
               onClick={action.onClick}
               disabled={action.disabled}
             >
