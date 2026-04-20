@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { StatusBadge, type StatusState } from '../ui/status-indicator';
 import { Textarea } from '../ui/textarea';
 import { ProfileConfirmationCard } from './ProfileConfirmationCard';
 
@@ -33,7 +34,73 @@ export type SharedDistributionDraft = {
 export type SharedDistributionResult = {
   kind: 'copied' | 'qr' | 'saved';
   label: string;
+  packageText?: string;
+  targetPeerPubkey?: string;
+  tracking?: SharedDistributionTrackingStatus;
 };
+
+export type SharedDistributionTrackingStage =
+  | 'waiting_for_device'
+  | 'device_contacted_host'
+  | 'handshake_completed'
+  | 'peer_online'
+  | 'sign_ready'
+  | 'failed';
+
+export type SharedDistributionTrackingStatus = {
+  stage: SharedDistributionTrackingStage;
+  updatedAt?: number | null;
+  error?: string | null;
+};
+
+function distributionTrackingPresentation(
+  tracking: SharedDistributionTrackingStatus,
+): { state: StatusState; label: string; detail: string } {
+  switch (tracking.stage) {
+    case 'waiting_for_device':
+      return {
+        state: 'idle',
+        label: 'waiting for device',
+        detail: 'The package was prepared. Waiting for the remote device to contact this host.',
+      };
+    case 'device_contacted_host':
+      return {
+        state: 'online',
+        label: 'device contacted host',
+        detail: 'The remote device reached this host and started the onboarding handshake.',
+      };
+    case 'handshake_completed':
+      return {
+        state: 'online',
+        label: 'handshake completed',
+        detail: 'Onboarding succeeded. The host completed the onboarding handshake for this device.',
+      };
+    case 'peer_online':
+      return {
+        state: 'online',
+        label: 'peer online',
+        detail: 'Onboarding already succeeded, and the new device is now visible as online.',
+      };
+    case 'sign_ready':
+      return {
+        state: 'warning',
+        label: 'sign-ready',
+        detail: 'Onboarding succeeded, and the new device is ready to participate in signing.',
+      };
+    case 'failed':
+      return {
+        state: 'offline',
+        label: 'failed',
+        detail: tracking.error?.trim() || 'The host could not complete onboarding for this device.',
+      };
+  }
+}
+
+function formatTrackingUpdatedAt(value?: number | null): string | null {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null;
+  const normalized = value > 10_000_000_000 ? value : value * 1000;
+  return new Date(normalized).toLocaleTimeString();
+}
 
 export type SharedLocalSaveDraft = {
   label: string;
@@ -431,8 +498,31 @@ export function CreateFlowDistributionCards({
               </Button>
             </div>
             {result ? (
-              <div className="igloo-message-muted">
-                {`${result.kind === 'copied' ? 'Copied' : result.kind === 'qr' ? 'Prepared QR for' : 'Saved file for'} ${result.label}.`}
+              <div className="igloo-stack">
+                <div className="igloo-message-muted">
+                  {`${result.kind === 'copied' ? 'Copied' : result.kind === 'qr' ? 'Prepared QR for' : 'Saved file for'} ${result.label}.`}
+                </div>
+                {result.tracking ? (
+                  <div className="rounded-md border border-blue-900/30 bg-slate-950/40 px-3 py-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {(() => {
+                        const presentation = distributionTrackingPresentation(result.tracking);
+                        const updatedAt = formatTrackingUpdatedAt(result.tracking.updatedAt);
+                        return (
+                          <>
+                            <StatusBadge state={presentation.state} label={presentation.label} />
+                            {updatedAt ? (
+                              <span className="text-xs text-slate-400">Updated {updatedAt}</span>
+                            ) : null}
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <p className="mt-2 text-xs text-slate-300">
+                      {distributionTrackingPresentation(result.tracking).detail}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </section>

@@ -131,6 +131,46 @@ describe('shared host flow components', () => {
     expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
+  it('renders live onboarding status for distributed shares', () => {
+    render(
+      <CreateFlowDistributionCards
+        shares={[
+          {
+            name: 'Remote Tablet',
+            member_idx: 2,
+            share_public_key: 'share-pub-2',
+          },
+        ]}
+        drafts={{
+          2: {
+            label: 'Remote Tablet',
+            packagePassword: '',
+            confirmPassword: '',
+          },
+        }}
+        results={{
+          2: {
+            kind: 'copied',
+            label: 'Remote Tablet',
+            tracking: {
+              stage: 'handshake_completed',
+              updatedAt: 1_710_000_000,
+            },
+          },
+        }}
+        onChangeDraft={vi.fn()}
+        onDistribute={vi.fn()}
+        onFinish={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Copied Remote Tablet.')).toBeInTheDocument();
+    expect(screen.getByText('handshake completed')).toBeInTheDocument();
+    expect(
+      screen.getByText('Onboarding succeeded. The host completed the onboarding handshake for this device.'),
+    ).toBeInTheDocument();
+  });
+
   it('renders the shared local-save form contract', () => {
     const onAction = vi.fn();
 
