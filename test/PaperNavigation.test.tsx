@@ -1,0 +1,34 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+import { AppHeader, PageBackLink } from '../src';
+
+describe('paper navigation primitives', () => {
+  it('renders the Paper welcome header links', () => {
+    render(<AppHeader mode="welcome" />);
+
+    expect(screen.getByText('Igloo')).toHaveClass('text-igloo-primary');
+    expect(screen.getByText('Threshold Signing for Nostr')).toHaveClass('text-igloo-subtle');
+    expect(screen.getByRole('link', { name: 'Website' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Docs' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'GitHub' })).toBeInTheDocument();
+  });
+
+  it('renders Paper task and profile header modes without custom right content', () => {
+    const { rerender } = render(<AppHeader mode="task" taskLabel="Create" />);
+
+    expect(screen.getByText('Create')).toHaveClass('font-sharetech');
+
+    rerender(<AppHeader mode="profile" profileName="My Signing Key" />);
+    expect(screen.getByText('My Signing Key')).toHaveClass('text-igloo-muted');
+  });
+
+  it('renders a screen-level back link', () => {
+    const onBack = vi.fn();
+
+    render(<PageBackLink label="Back to Welcome" onBack={onBack} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Welcome' }));
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+});

@@ -21,16 +21,16 @@ export function Collapsible({
   const [open, setOpen] = React.useState(defaultOpen);
 
   return (
-    <div className={cn('overflow-hidden rounded-2xl border border-slate-700/40 bg-slate-950/25', className)}>
+    <div className={cn('overflow-hidden rounded-lg border border-igloo-border bg-igloo-panel', className)}>
       <button
         type="button"
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
         onClick={() => setOpen((current) => !current)}
       >
-        <span className="text-sm font-medium text-slate-100">{title}</span>
-        {open ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+        <span className="text-sm font-medium text-igloo-text">{title}</span>
+        {open ? <ChevronUp className="h-4 w-4 text-igloo-muted" /> : <ChevronDown className="h-4 w-4 text-igloo-muted" />}
       </button>
-      {open ? <div className={cn('border-t border-slate-700/30 p-4', contentClassName)}>{children}</div> : null}
+      {open ? <div className={cn('border-t border-igloo-border-muted p-4', contentClassName)}>{children}</div> : null}
     </div>
   );
 }

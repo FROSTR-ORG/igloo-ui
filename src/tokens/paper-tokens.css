@@ -1,0 +1,94 @@
+/*
+ * Igloo Paper design tokens.
+ * Synced from repos/igloo-paper/design-system/tokens on 2026-05-20.
+ * Keep this file semantic and package-local; do not import igloo-paper at runtime.
+ */
+
+:root {
+  --igloo-color-gray-950: #030712;
+  --igloo-color-gray-900: #111827;
+  --igloo-color-gray-900-40: #11182766;
+  --igloo-color-slate-900-60: #0F172A99;
+  --igloo-color-slate-900-80: #0F172ACC;
+
+  --igloo-color-blue-100: #DBEAFE;
+  --igloo-color-blue-200: #BFDBFE;
+  --igloo-color-blue-300: #93C5FD;
+  --igloo-color-blue-400: #60A5FA;
+  --igloo-color-blue-600: #2563EB;
+  --igloo-color-blue-700: #1D4ED8;
+  --igloo-color-blue-900: #1E3A8A;
+  --igloo-rgb-blue-100: 219 234 254;
+  --igloo-rgb-blue-200: 191 219 254;
+  --igloo-rgb-blue-300: 147 197 253;
+  --igloo-rgb-blue-400: 96 165 250;
+  --igloo-rgb-blue-600: 37 99 235;
+  --igloo-rgb-blue-700: 29 78 216;
+  --igloo-rgb-blue-900: 30 58 138;
+
+  --igloo-color-green-600: #16A34A;
+  --igloo-color-red-600: #DC2626;
+  --igloo-color-amber-400: #FBBF24;
+  --igloo-color-orange-400: #FB923C;
+  --igloo-color-purple-400: #C084FC;
+  --igloo-color-red-900-30: #7F1D1D4D;
+  --igloo-color-yellow-900-30: #713F124D;
+
+  --igloo-color-slate-200: #E2E8F0;
+  --igloo-color-slate-400: #94A3B8;
+  --igloo-color-slate-500: #64748B;
+  --igloo-rgb-slate-200: 226 232 240;
+  --igloo-rgb-slate-400: 148 163 184;
+  --igloo-rgb-slate-500: 100 116 139;
+
+  --igloo-color-blue-900-30: #1E3A8A4D;
+  --igloo-color-blue-900-20: #1E3A8A33;
+  --igloo-color-slate-400-20: #94A3B833;
+  --igloo-color-red-500-06: #EF44440F;
+  --igloo-color-red-500-30: #EF44444D;
+
+  --igloo-color-status-default: #6B7280;
+  --igloo-color-status-success: #22C55E;
+  --igloo-color-status-error: #EF4444;
+  --igloo-color-status-warning: #EAB308;
+  --igloo-color-status-info: #3B82F6;
+  --igloo-rgb-status-default: 107 114 128;
+  --igloo-rgb-status-success: 34 197 94;
+  --igloo-rgb-status-error: 239 68 68;
+  --igloo-rgb-status-warning: 234 179 8;
+  --igloo-rgb-status-info: 59 130 246;
+
+  --igloo-font-share-tech-mono: "Share Tech Mono", system-ui, sans-serif;
+  --igloo-font-inter: "Inter", system-ui, sans-serif;
+
+  --igloo-text-h1-font-family: var(--igloo-font-share-tech-mono);
+  --igloo-text-h1-size: 36px;
+  --igloo-text-h1-line-height: 44px;
+  --igloo-text-h1-weight: 400;
+  --igloo-text-h1-tracking: -0.01em;
+
+  --igloo-text-h2-font-family: var(--igloo-font-share-tech-mono);
+  --igloo-text-h2-size: 24px;
+  --igloo-text-h2-line-height: 30px;
+  --igloo-text-h2-weight: 400;
+
+  --igloo-text-h3-font-family: var(--igloo-font-share-tech-mono);
+  --igloo-text-h3-size: 20px;
+  --igloo-text-h3-line-height: 24px;
+  --igloo-text-h3-weight: 400;
+
+  --igloo-text-body-font-family: var(--igloo-font-inter);
+  --igloo-text-body-size: 14px;
+  --igloo-text-body-line-height: 18px;
+  --igloo-text-body-weight: 400;
+
+  --igloo-text-small-font-family: var(--igloo-font-inter);
+  --igloo-text-small-size: 12px;
+  --igloo-text-small-line-height: 16px;
+  --igloo-text-small-weight: 400;
+
+  --igloo-text-value-font-family: var(--igloo-font-share-tech-mono);
+  --igloo-text-value-size: 14px;
+  --igloo-text-value-line-height: 18px;
+  --igloo-text-value-weight: 400;
+}

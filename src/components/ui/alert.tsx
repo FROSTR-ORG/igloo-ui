@@ -5,10 +5,10 @@ import { cn } from '../../lib/utils';
 type AlertTone = 'default' | 'danger' | 'warning' | 'success';
 
 const toneClass: Record<AlertTone, string> = {
-  default: 'border-slate-500/30 bg-slate-950/40 text-slate-200',
-  danger: 'border-rose-500/35 bg-rose-950/45 text-rose-100',
-  warning: 'border-amber-500/35 bg-amber-950/35 text-amber-100',
-  success: 'border-emerald-500/35 bg-emerald-950/35 text-emerald-100',
+  default: 'border-igloo-border bg-igloo-panel text-igloo-text',
+  danger: 'border-igloo-error/35 bg-igloo-error/10 text-igloo-error',
+  warning: 'border-igloo-warning/35 bg-igloo-warning/10 text-igloo-warning',
+  success: 'border-igloo-success/35 bg-igloo-success/10 text-igloo-success',
 };
 
 export type AlertProps = React.HTMLAttributes<HTMLDivElement> & {

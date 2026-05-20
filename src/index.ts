@@ -1,5 +1,7 @@
 export * from './lib/utils';
 export * from './lib/e2e-test-ids';
+export * from './tokens/paper-tokens';
+export * from './models/view-models';
 export * from './components/OnboardingInstructions';
 export * from './components/flows/CreateFlow';
 export * from './components/flows/CreateImportPanel';
@@ -29,6 +31,7 @@ export * from './components/ui/label';
 export * from './components/ui/log-entry';
 export * from './components/ui/modal';
 export * from './components/ui/page-layout';
+export * from './components/ui/page-back-link';
 export * from './components/ui/peer-list';
 export * from './components/ui/relay-input';
 export * from './components/ui/status-indicator';

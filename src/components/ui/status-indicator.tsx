@@ -17,10 +17,10 @@ export function StatusDot({
       className={cn(
         'inline-flex rounded-full',
         sizeClass,
-        state === 'online' && 'bg-green-500',
-        state === 'warning' && 'bg-yellow-500',
-        state === 'offline' && 'bg-red-500',
-        state === 'idle' && 'bg-gray-500',
+        state === 'online' && 'bg-igloo-success',
+        state === 'warning' && 'bg-igloo-warning',
+        state === 'offline' && 'bg-igloo-error',
+        state === 'idle' && 'bg-igloo-subtle',
         className
       )}
     />
@@ -41,10 +41,10 @@ export function StatusBadge({
     <span
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset',
-        state === 'online' && 'bg-green-500/20 text-green-400 ring-green-500/30',
-        state === 'warning' && 'bg-yellow-500/20 text-yellow-400 ring-yellow-500/30',
-        state === 'offline' && 'bg-red-500/20 text-red-400 ring-red-500/30',
-        state === 'idle' && 'bg-gray-500/20 text-gray-400 ring-gray-500/30',
+        state === 'online' && 'bg-igloo-success/20 text-igloo-success ring-igloo-success/30',
+        state === 'warning' && 'bg-igloo-warning/20 text-igloo-warning ring-igloo-warning/30',
+        state === 'offline' && 'bg-igloo-error/20 text-igloo-error ring-igloo-error/30',
+        state === 'idle' && 'bg-igloo-subtle/20 text-igloo-muted ring-igloo-subtle/30',
         className
       )}
     >

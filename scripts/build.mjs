@@ -2,6 +2,7 @@
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { cp, mkdir } from 'node:fs/promises';
 
 import esbuild from 'esbuild';
 
@@ -21,3 +22,9 @@ await esbuild.build({
   external: ['react', 'react-dom'],
   logLevel: 'silent'
 });
+
+await mkdir(path.join(rootDir, 'dist', 'tokens'), { recursive: true });
+await cp(
+  path.join(rootDir, 'src', 'tokens', 'paper-tokens.css'),
+  path.join(rootDir, 'dist', 'tokens', 'paper-tokens.css')
+);

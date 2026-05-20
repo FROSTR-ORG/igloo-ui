@@ -1,4 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap");
+@import "./tokens/paper-tokens.css";
 
 @tailwind base;
 @tailwind components;
@@ -55,7 +56,7 @@
   body {
     min-height: 100vh;
     color: hsl(var(--foreground));
-    font-family: "Share Tech Mono", monospace;
+    font-family: var(--igloo-font-inter);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -69,27 +70,27 @@
 
 @layer components {
   .igloo-card {
-    @apply rounded-md border border-blue-900/30 bg-gray-900/40 backdrop-blur-sm shadow-lg;
+    @apply rounded-md border border-igloo-border bg-igloo-panel backdrop-blur-sm shadow-lg;
   }
 
   .igloo-button {
-    @apply bg-blue-600 hover:bg-blue-700 text-blue-100 transition-colors;
+    @apply bg-igloo-action hover:bg-igloo-action-hover text-white transition-colors;
   }
 
   .igloo-button-ghost {
-    @apply text-blue-400 hover:text-blue-300 hover:bg-blue-900/30 transition-colors;
+    @apply text-igloo-primary hover:text-igloo-text hover:bg-igloo-primary/15 transition-colors;
   }
 
   .igloo-text-primary {
-    @apply text-blue-300;
+    @apply text-igloo-text;
   }
 
   .igloo-text-secondary {
-    @apply text-blue-400;
+    @apply text-igloo-primary;
   }
 
   .igloo-text-muted {
-    @apply text-gray-400;
+    @apply text-igloo-muted;
   }
 
   .igloo-badge {
@@ -97,23 +98,23 @@
   }
 
   .igloo-badge-default {
-    @apply bg-gray-500/20 text-gray-400 ring-gray-500/30;
+    @apply bg-igloo-subtle/20 text-igloo-muted ring-igloo-subtle/30;
   }
 
   .igloo-badge-success {
-    @apply bg-green-500/20 text-green-400 ring-green-500/30;
+    @apply bg-igloo-success/20 text-igloo-success ring-igloo-success/30;
   }
 
   .igloo-badge-error {
-    @apply bg-red-500/20 text-red-400 ring-red-500/30;
+    @apply bg-igloo-error/20 text-igloo-error ring-igloo-error/30;
   }
 
   .igloo-badge-warning {
-    @apply bg-yellow-500/20 text-yellow-400 ring-yellow-500/30;
+    @apply bg-igloo-warning/20 text-igloo-warning ring-igloo-warning/30;
   }
 
   .igloo-badge-info {
-    @apply bg-blue-500/20 text-blue-400 ring-blue-500/30;
+    @apply bg-igloo-info/20 text-igloo-info ring-igloo-info/30;
   }
 
   @keyframes pulse-glow {

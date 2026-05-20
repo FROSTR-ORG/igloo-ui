@@ -12,7 +12,7 @@ export function Tooltip({ trigger, content, className }: TooltipProps) {
   return (
     <span className={cn('group relative inline-flex', className)}>
       {trigger}
-      <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-xl border border-slate-700/40 bg-slate-950/95 px-3 py-2 text-xs leading-5 text-slate-200 shadow-xl group-hover:block group-focus-within:block">
+      <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-72 -translate-x-1/2 rounded-lg border border-igloo-border bg-igloo-panel-strong px-3 py-2 text-xs leading-5 text-igloo-text shadow-xl group-hover:block group-focus-within:block">
         {content}
       </span>
     </span>
