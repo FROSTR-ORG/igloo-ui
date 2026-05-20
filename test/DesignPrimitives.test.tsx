@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import { Badge, Button, Card, CardDescription, CardTitle, Input, StatusBadge, Textarea } from '../src';
 
-describe('paper-backed primitives', () => {
-  it('uses semantic Paper token classes for action and status primitives', () => {
+describe('design-backed primitives', () => {
+  it('uses semantic token classes for action and status primitives', () => {
     render(
       <div>
         <Button>Primary action</Button>
@@ -20,7 +20,7 @@ describe('paper-backed primitives', () => {
     expect(screen.getByText('online').parentElement).toHaveClass('text-igloo-success');
   });
 
-  it('uses semantic Paper token classes for form and panel primitives', () => {
+  it('uses semantic token classes for form and panel primitives', () => {
     render(
       <Card>
         <CardTitle>Profile</CardTitle>

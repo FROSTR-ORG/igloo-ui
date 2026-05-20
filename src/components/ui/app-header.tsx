@@ -36,27 +36,27 @@ export function AppHeader({
   profileName,
   actions,
 }: AppHeaderProps) {
-  const paperMode = Boolean(mode);
-  const displayTitle = paperMode ? 'Igloo' : title;
-  const displaySubtitle = paperMode && subtitle === undefined ? 'Threshold Signing for Nostr' : subtitle;
-  const rightContent = right ?? renderPaperRightContent({ mode, links, taskLabel, profileName, actions });
+  const shellMode = Boolean(mode);
+  const displayTitle = shellMode ? 'Igloo' : title;
+  const displaySubtitle = shellMode && subtitle === undefined ? 'Threshold Signing for Nostr' : subtitle;
+  const rightContent = right ?? renderShellRightContent({ mode, links, taskLabel, profileName, actions });
 
   return (
-    <header className={cn(paperMode ? 'flex w-full justify-center px-5 py-5 sm:px-10 lg:px-20' : 'mb-6', className)}>
+    <header className={cn(shellMode ? 'flex w-full justify-center px-5 py-5 sm:px-10 lg:px-20' : 'mb-6', className)}>
       <div
         className={cn(
-          paperMode
+          shellMode
             ? 'flex w-full max-w-[1000px] items-center justify-between rounded-xl border border-igloo-border bg-igloo-panel px-5 py-3.5'
             : 'flex flex-wrap items-center gap-3',
           centered ? 'justify-center text-center' : 'justify-between',
         )}
       >
-        <div className={cn('flex items-center gap-3 sm:gap-4', paperMode && 'gap-3.5', centered && 'justify-center')}>
+        <div className={cn('flex items-center gap-3 sm:gap-4', shellMode && 'gap-3.5', centered && 'justify-center')}>
           {logoSrc && <img src={logoSrc} alt={logoAlt} className="h-9 w-9 object-contain sm:h-10 sm:w-10" />}
-          <div className={cn(paperMode && 'flex min-h-12 flex-col justify-center gap-0.5')}>
+          <div className={cn(shellMode && 'flex min-h-12 flex-col justify-center gap-0.5')}>
             <h1
               className={cn(
-                paperMode
+                shellMode
                   ? 'text-[28px] font-bold leading-8 tracking-[-0.01em] text-igloo-primary'
                   : 'bg-gradient-to-r from-blue-300 via-blue-200 to-cyan-300 bg-clip-text font-sharetech text-[2.05rem] font-bold uppercase leading-none tracking-[0.11em] text-transparent sm:text-[2.45rem]',
               )}
@@ -64,19 +64,19 @@ export function AppHeader({
               {displayTitle}
             </h1>
             {displaySubtitle && (
-              <p className={cn(paperMode ? 'text-xs leading-4 tracking-[0.01em] text-igloo-subtle' : 'mt-0.5 text-[0.8rem] text-blue-400', centered && 'mx-auto max-w-xl')}>
+              <p className={cn(shellMode ? 'text-xs leading-4 tracking-[0.01em] text-igloo-subtle' : 'mt-0.5 text-[0.8rem] text-blue-400', centered && 'mx-auto max-w-xl')}>
                 {displaySubtitle}
               </p>
             )}
           </div>
         </div>
-        {rightContent && <div className={cn(paperMode ? 'flex items-center gap-5' : 'flex items-center gap-2', centered && 'w-full justify-center')}>{rightContent}</div>}
+        {rightContent && <div className={cn(shellMode ? 'flex items-center gap-5' : 'flex items-center gap-2', centered && 'w-full justify-center')}>{rightContent}</div>}
       </div>
     </header>
   );
 }
 
-function renderPaperRightContent({
+function renderShellRightContent({
   mode,
   links,
   taskLabel,

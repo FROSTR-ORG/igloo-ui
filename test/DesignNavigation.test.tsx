@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AppHeader, PageBackLink } from '../src';
 
-describe('paper navigation primitives', () => {
-  it('renders the Paper welcome header links', () => {
+describe('design navigation primitives', () => {
+  it('renders the welcome header links', () => {
     render(<AppHeader mode="welcome" />);
 
     expect(screen.getByText('Igloo')).toHaveClass('text-igloo-primary');
@@ -14,7 +14,7 @@ describe('paper navigation primitives', () => {
     expect(screen.getByRole('link', { name: 'GitHub' })).toBeInTheDocument();
   });
 
-  it('renders Paper task and profile header modes without custom right content', () => {
+  it('renders task and profile header modes without custom right content', () => {
     const { rerender } = render(<AppHeader mode="task" taskLabel="Create" />);
 
     expect(screen.getByText('Create')).toHaveClass('font-sharetech');

@@ -25,6 +25,6 @@ await esbuild.build({
 
 await mkdir(path.join(rootDir, 'dist', 'tokens'), { recursive: true });
 await cp(
-  path.join(rootDir, 'src', 'tokens', 'paper-tokens.css'),
-  path.join(rootDir, 'dist', 'tokens', 'paper-tokens.css')
+  path.join(rootDir, 'src', 'tokens', 'design-tokens.css'),
+  path.join(rootDir, 'dist', 'tokens', 'design-tokens.css')
 );

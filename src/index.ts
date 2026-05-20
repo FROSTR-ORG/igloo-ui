@@ -1,6 +1,6 @@
 export * from './lib/utils';
 export * from './lib/e2e-test-ids';
-export * from './tokens/paper-tokens';
+export * from './tokens/design-tokens';
 export * from './models/view-models';
 export * from './components/OnboardingInstructions';
 export * from './components/flows/CreateFlow';

@@ -12,12 +12,12 @@ export type StoredProfileCardModel = {
   destructiveActionLabel?: string;
 };
 
-export type PaperStepState = 'active' | 'pending' | 'complete' | 'error' | 'loading';
+export type FlowStepState = 'active' | 'pending' | 'complete' | 'error' | 'loading';
 
-export type PaperStepModel = {
+export type FlowStepModel = {
   id: string;
   label: string;
-  state: PaperStepState;
+  state: FlowStepState;
   description?: string;
 };
 

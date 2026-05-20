@@ -30,6 +30,15 @@ import 'igloo-ui/styles.css';
 
 For local development and tests, prefer resolving `igloo-ui` from source so React stays deduped.
 
+## Design Tokens
+
+Design tokens are committed package-local artifacts under `src/tokens/`. They
+are refreshed by the coordinating workspace handoff process, not by package
+runtime code, app code, or build-time dependencies.
+
+Do not add package, runtime, test, or published entrypoint dependencies on
+external design repos or desktop design tooling.
+
 ## Ownership Note
 
 - `igloo-shared` owns profile package export and rotation semantics.
