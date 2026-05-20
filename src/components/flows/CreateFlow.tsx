@@ -6,11 +6,9 @@ import { Textarea } from '../ui/textarea';
 import { ProfileConfirmationCard } from './ProfileConfirmationCard';
 
 export type SharedCreateFormState = {
-  mode: 'new' | 'rotate';
   groupName: string;
   threshold: string;
   count: string;
-  sourceProfileId?: string;
 };
 
 export type SharedRotationSource = {
@@ -65,56 +63,32 @@ export function CreateFlowTaskBanner({
 }
 
 export function CreateFlowGenerateCard({
-  form,
-  availableProfiles,
-  rotationSources,
+  groupName,
+  threshold,
+  count,
   onChangeForm,
-  onChangeRotationSource,
-  onAddRotationSource,
-  onRemoveRotationSource,
   onGenerate,
 }: {
-  form: SharedCreateFormState;
-  availableProfiles: Array<{ id: string; label: string }>;
-  rotationSources: SharedRotationSource[];
+  groupName: string;
+  threshold: string;
+  count: string;
   onChangeForm: (
-    field: 'mode' | 'groupName' | 'threshold' | 'count' | 'sourceProfileId',
+    field: 'groupName' | 'threshold' | 'count',
     value: string,
   ) => void;
-  onChangeRotationSource: (index: number, field: 'packageText' | 'packagePassword', value: string) => void;
-  onAddRotationSource: () => void;
-  onRemoveRotationSource: (index: number) => void;
   onGenerate: () => void;
 }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create or Rotate</CardTitle>
-        <CardDescription>Choose the source mode, then provide the target threshold geometry.</CardDescription>
+        <CardTitle>Create Keyset</CardTitle>
+        <CardDescription>Provide the target threshold geometry for a new keyset.</CardDescription>
       </CardHeader>
       <CardContent className="igloo-stack">
-        <div className="igloo-button-row">
-          <Button
-            type="button"
-            size="sm"
-            variant={form.mode === 'new' ? 'default' : 'secondary'}
-            onClick={() => onChangeForm('mode', 'new')}
-          >
-            Create New Keyset
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={form.mode === 'rotate' ? 'default' : 'secondary'}
-            onClick={() => onChangeForm('mode', 'rotate')}
-          >
-            Rotate Existing Keyset
-          </Button>
-        </div>
         <label>
           Group Name
           <input
-            value={form.groupName}
+            value={groupName}
             onChange={(event) => onChangeForm('groupName', event.target.value)}
             placeholder="e.g. Treasury Signers"
           />
@@ -125,7 +99,7 @@ export function CreateFlowGenerateCard({
             <input
               type="number"
               min={2}
-              value={form.threshold}
+              value={threshold}
               onChange={(event) => onChangeForm('threshold', event.target.value)}
             />
           </label>
@@ -134,69 +108,101 @@ export function CreateFlowGenerateCard({
             <input
               type="number"
               min={2}
-              value={form.count}
+              value={count}
               onChange={(event) => onChangeForm('count', event.target.value)}
             />
           </label>
         </div>
-        {form.mode === 'rotate' ? (
-          <div className="igloo-stack">
-            <label>
-              Source Profile
-              <select
-                value={form.sourceProfileId ?? ''}
-                onChange={(event) => onChangeForm('sourceProfileId', event.target.value)}
-              >
-                <option value="">Select a local profile</option>
-                {availableProfiles.map((profile) => (
-                  <option key={profile.id} value={profile.id}>
-                    {profile.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="igloo-stack">
-              {rotationSources.map((source, index) => (
-                <div key={`rotation-source-${index}`} className="igloo-generated-card">
-                  <header>
-                    <strong>{availableProfiles.length ? `Recovery Share ${index + 1}` : `bfshare Source ${index + 1}`}</strong>
-                    <span>Add threshold bfshare packages to reconstruct the current keyset.</span>
-                  </header>
-                  <label>
-                    bfshare
-                    <Textarea
-                      className="min-h-[96px]"
-                      value={source.packageText}
-                      onChange={(event) => onChangeRotationSource(index, 'packageText', event.target.value)}
-                      placeholder="Paste bfshare1..."
-                    />
-                  </label>
-                  <label>
-                    Package Password
-                    <input
-                      type="password"
-                      value={source.packagePassword}
-                      onChange={(event) => onChangeRotationSource(index, 'packagePassword', event.target.value)}
-                    />
-                  </label>
-                  <div className="igloo-button-row">
-                    <Button type="button" size="sm" variant="secondary" onClick={() => onRemoveRotationSource(index)}>
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-              ))}
+        <div className="igloo-button-row">
+          <Button type="button" size="sm" onClick={onGenerate}>
+            Generate Keyset
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function RotateKeysetPanel({
+  sourceProfileId,
+  availableProfiles,
+  rotationSources,
+  onChangeSourceProfile,
+  onChangeRotationSource,
+  onAddRotationSource,
+  onRemoveRotationSource,
+  onRotate,
+}: {
+  sourceProfileId: string;
+  availableProfiles: Array<{ id: string; label: string }>;
+  rotationSources: SharedRotationSource[];
+  onChangeSourceProfile: (profileId: string) => void;
+  onChangeRotationSource: (index: number, field: 'packageText' | 'packagePassword', value: string) => void;
+  onAddRotationSource: () => void;
+  onRemoveRotationSource: (index: number) => void;
+  onRotate: () => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Rotate Keyset</CardTitle>
+        <CardDescription>Select the source profile and add recovery shares for the existing keyset.</CardDescription>
+      </CardHeader>
+      <CardContent className="igloo-stack">
+        <label>
+          Source Profile
+          <select
+            value={sourceProfileId}
+            onChange={(event) => onChangeSourceProfile(event.target.value)}
+          >
+            <option value="">Select a local profile</option>
+            {availableProfiles.map((profile) => (
+              <option key={profile.id} value={profile.id}>
+                {profile.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="igloo-stack">
+          {rotationSources.map((source, index) => (
+            <div key={`rotation-source-${index}`} className="igloo-generated-card">
+              <header>
+                <strong>Recovery Share {index + 1}</strong>
+                <span>Add threshold bfshare packages to reconstruct the current keyset.</span>
+              </header>
+              <label>
+                bfshare
+                <Textarea
+                  className="min-h-[96px]"
+                  value={source.packageText}
+                  onChange={(event) => onChangeRotationSource(index, 'packageText', event.target.value)}
+                  placeholder="Paste bfshare1..."
+                />
+              </label>
+              <label>
+                Package Password
+                <input
+                  type="password"
+                  value={source.packagePassword}
+                  onChange={(event) => onChangeRotationSource(index, 'packagePassword', event.target.value)}
+                />
+              </label>
               <div className="igloo-button-row">
-                <Button type="button" size="sm" variant="secondary" onClick={onAddRotationSource}>
-                  Add bfshare Source
+                <Button type="button" size="sm" variant="secondary" onClick={() => onRemoveRotationSource(index)}>
+                  Remove
                 </Button>
               </div>
             </div>
+          ))}
+          <div className="igloo-button-row">
+            <Button type="button" size="sm" variant="secondary" onClick={onAddRotationSource}>
+              Add bfshare Source
+            </Button>
           </div>
-        ) : null}
+        </div>
         <div className="igloo-button-row">
-          <Button type="button" size="sm" onClick={onGenerate}>
-            {form.mode === 'rotate' ? 'Rotate Keyset' : 'Generate Keyset'}
+          <Button type="button" size="sm" onClick={onRotate}>
+            Rotate Keyset
           </Button>
         </div>
       </CardContent>

@@ -41,33 +41,38 @@ describe('operator dashboard surface', () => {
     render(
       <div>
         <OperatorSignerPanel
-          profile={{
-            name: 'Primary Browser Device',
-            sharePublicKey: 'share-pub-1',
-            groupPublicKey: 'group-pub-1',
+          view={{
+            profileName: 'Primary Browser Device',
+            thresholdLabel: '2/3',
+            publicKeyLabel: 'group-pub-1',
+            shareLabel: 'Share #1',
+            readinessLabel: 'running',
+            relaySummary: 'Runtime is attached.',
+            peerRows: [],
+            pendingOperationRows: [],
+            eventRows: [],
           }}
           introMessage="Runtime is attached."
-          runtimeState="running"
           runtimeControlLabel="Stop Signer"
-          runtimeSummaryLabel="running"
           statusBanner={<div>Refreshed 2 of 3 peers. 1 peer refresh failed.</div>}
-          sharePublicKey="share-pub-1"
-          groupPublicKey="group-pub-1"
           onPrimaryAction={onPrimaryAction}
-          peers={[]}
-          pendingOperations={[]}
-          logs={[]}
         />
         <OperatorPermissionsPanel
-          peerPermissions={[
-            {
-              pubkey: 'peer-1',
-              send: true,
-              receive: false,
-            },
-          ]}
+          view={{
+            peerRows: [
+              {
+                pubkey: 'peer-1',
+                request: { ping: true, onboard: true, sign: true, ecdh: false },
+                respond: { ping: true, onboard: false, sign: false, ecdh: false },
+                manualOverride: {
+                  request: { ping: 'allow', onboard: 'unset', sign: 'unset', ecdh: 'unset' },
+                  respond: { ping: 'unset', onboard: 'unset', sign: 'deny', ecdh: 'unset' },
+                },
+              },
+            ],
+          }}
           onClearAllPeerPermissions={onClearAllPeerPermissions}
-          onPeerPermissionChange={onPeerPermissionChange}
+          onPeerPolicyOverrideChange={onPeerPermissionChange}
         />
         <OperatorSettingsPanel
           hasProfile
@@ -105,11 +110,11 @@ describe('operator dashboard surface', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear All' }));
     expect(onClearAllPeerPermissions).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'send: allow' }));
-    expect(onPeerPermissionChange).toHaveBeenCalledWith('peer-1', 'send', false);
+    fireEvent.click(screen.getByRole('button', { name: 'request sign: allow' }));
+    expect(onPeerPermissionChange).toHaveBeenCalledWith('peer-1', 'request', 'sign', 'deny');
 
-    fireEvent.click(screen.getByRole('button', { name: 'receive: deny' }));
-    expect(onPeerPermissionChange).toHaveBeenCalledWith('peer-1', 'receive', true);
+    fireEvent.click(screen.getByRole('button', { name: 'respond sign: deny' }));
+    expect(onPeerPermissionChange).toHaveBeenCalledWith('peer-1', 'respond', 'sign', 'unset');
 
     fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
     expect(onSave).toHaveBeenCalledTimes(1);

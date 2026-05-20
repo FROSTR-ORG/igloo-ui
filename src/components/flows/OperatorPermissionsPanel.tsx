@@ -1,72 +1,26 @@
 import * as React from 'react';
 
+import type {
+  PolicyDashboardViewModel,
+  PolicyMethodOverrideState,
+  PolicyMethodState,
+  PolicyOverrideValue,
+} from '../../models/view-models';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
 
-export type OperatorSitePermission = {
-  id: string;
-  host: string;
-  methodLabel: string;
-  scopeLabel: string;
-  createdAtLabel: string;
-  allow: boolean;
-};
-
-export type OperatorPeerPermission = {
-  pubkey: string;
-  send: boolean;
-  receive: boolean;
-};
-
-export type OperatorPolicyOverrideValue = 'unset' | 'allow' | 'deny';
-
-export type OperatorMethodPermission = {
-  ping: boolean;
-  onboard: boolean;
-  sign: boolean;
-  ecdh: boolean;
-};
-
-export type OperatorMethodPermissionOverride = {
-  ping: OperatorPolicyOverrideValue;
-  onboard: OperatorPolicyOverrideValue;
-  sign: OperatorPolicyOverrideValue;
-  ecdh: OperatorPolicyOverrideValue;
-};
-
-export type OperatorPeerPermissionState = {
-  pubkey: string;
-  manualOverride: {
-    request: OperatorMethodPermissionOverride;
-    respond: OperatorMethodPermissionOverride;
-  };
-  remoteObservation: {
-    request: OperatorMethodPermission;
-    respond: OperatorMethodPermission;
-    updated: number;
-    revision: number;
-  } | null;
-  effectivePolicy: {
-    request: OperatorMethodPermission;
-    respond: OperatorMethodPermission;
-  };
-};
-
 type Props = {
-  sitePermissions?: OperatorSitePermission[];
-  peerPermissions: OperatorPeerPermission[];
-  peerPermissionStates?: OperatorPeerPermissionState[];
+  view: PolicyDashboardViewModel;
   loading?: boolean;
   onRefresh?: () => void;
   onClearAllSitePermissions?: () => void;
   onRevokeSitePermission?: (permissionId: string) => void;
   onClearAllPeerPermissions?: () => void;
-  onPeerPermissionChange?: (pubkey: string, field: 'send' | 'receive', value: boolean) => void;
-  onPeerPermissionOverrideChange?: (
+  onPeerPolicyOverrideChange?: (
     pubkey: string,
     direction: 'request' | 'respond',
-    method: keyof OperatorMethodPermissionOverride,
-    value: OperatorPolicyOverrideValue
+    method: keyof PolicyMethodOverrideState,
+    value: PolicyOverrideValue
   ) => void;
   siteDescription?: string;
   peerDescription?: string;
@@ -76,56 +30,40 @@ type Props = {
 };
 
 export function OperatorPermissionsPanel({
-  sitePermissions,
-  peerPermissions,
-  peerPermissionStates,
+  view,
   loading = false,
   onRefresh,
   onClearAllSitePermissions,
   onRevokeSitePermission,
   onClearAllPeerPermissions,
-  onPeerPermissionChange,
-  onPeerPermissionOverrideChange,
+  onPeerPolicyOverrideChange,
   siteDescription = 'Permissions granted to websites through the signing bridge.',
   peerDescription = 'Stored inbound and outbound peer rules for the signer runtime.',
   siteEmptyText = 'No website permissions have been granted yet.',
   peerEmptyText = 'No peer policy state has been saved yet.',
   peerClearAllLabel = 'Clear All',
 }: Props) {
-  const siteCount = sitePermissions?.length ?? 0;
-  const allowedSiteCount = sitePermissions?.filter((permission) => permission.allow).length ?? 0;
-  const peerSendCount = peerPermissions.filter((policy) => policy.send).length;
-  const peerReceiveCount = peerPermissions.filter((policy) => policy.receive).length;
-  const detailedPeerCount = peerPermissionStates?.length ?? 0;
+  const siteRows = view.siteRows ?? [];
+  const siteCount = siteRows.length;
+  const allowedSiteCount = siteRows.filter((permission) => permission.state === 'allow').length;
+  const effectiveResponderCount = view.peerRows.filter(
+    (policy) => policy.respond.sign || policy.respond.ecdh
+  ).length;
 
   return (
     <div className="space-y-6">
       <div className="grid gap-3 md:grid-cols-3">
-        {sitePermissions ? (
+        {view.siteRows ? (
           <>
             <SummaryPill label="Site policies" value={siteCount} tone="blue" />
             <SummaryPill label="Allowed origins" value={allowedSiteCount} tone="green" />
           </>
         ) : null}
-        <SummaryPill
-          label={peerPermissionStates ? 'Peers' : 'Peer send rules'}
-          value={peerPermissionStates ? detailedPeerCount : peerSendCount}
-          tone="blue"
-        />
-        <SummaryPill
-          label={peerPermissionStates ? 'Effective responders' : 'Peer receive rules'}
-          value={
-            peerPermissionStates
-              ? peerPermissionStates.filter(
-                  (policy) => policy.effectivePolicy.respond.sign || policy.effectivePolicy.respond.ecdh
-                ).length
-              : peerReceiveCount
-          }
-          tone="blue"
-        />
+        <SummaryPill label="Peers" value={view.peerRows.length} tone="blue" />
+        <SummaryPill label="Effective responders" value={effectiveResponderCount} tone="blue" />
       </div>
 
-      {sitePermissions ? (
+      {view.siteRows ? (
         <ContentCard
           title="Site Policies"
           description={siteDescription}
@@ -141,7 +79,7 @@ export function OperatorPermissionsPanel({
                   variant="destructive"
                   size="sm"
                   onClick={onClearAllSitePermissions}
-                  disabled={!sitePermissions.length}
+                  disabled={!siteRows.length}
                 >
                   Clear All
                 </Button>
@@ -149,13 +87,13 @@ export function OperatorPermissionsPanel({
             </div>
           }
         >
-          {sitePermissions.length === 0 ? (
+          {siteRows.length === 0 ? (
             <div className="rounded border border-dashed border-blue-900/30 px-4 py-6 text-sm text-gray-400">
               {siteEmptyText}
             </div>
           ) : (
             <div className="space-y-3">
-              {sitePermissions.map((permission) => (
+              {siteRows.map((permission) => (
                 <div
                   key={permission.id}
                   className="rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5"
@@ -172,12 +110,12 @@ export function OperatorPermissionsPanel({
                     <div className="flex items-center gap-2">
                       <span
                         className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                          permission.allow
+                          permission.state === 'allow'
                             ? 'bg-green-500/20 text-green-300 ring-1 ring-green-500/30'
                             : 'bg-red-500/20 text-red-300 ring-1 ring-red-500/30'
                         }`}
                       >
-                        {permission.allow ? 'allow' : 'deny'}
+                        {permission.state}
                       </span>
                       {onRevokeSitePermission ? (
                         <Button variant="secondary" size="sm" onClick={() => onRevokeSitePermission(permission.id)}>
@@ -208,7 +146,7 @@ export function OperatorPermissionsPanel({
                 variant="destructive"
                 size="sm"
                 onClick={onClearAllPeerPermissions}
-                disabled={!peerPermissions.length}
+                disabled={!view.peerRows.length}
               >
                 {peerClearAllLabel}
               </Button>
@@ -216,104 +154,41 @@ export function OperatorPermissionsPanel({
           </div>
         }
       >
-        {(peerPermissionStates ? peerPermissionStates.length === 0 : peerPermissions.length === 0) ? (
+        {view.peerRows.length === 0 ? (
           <div className="rounded border border-dashed border-blue-900/30 px-4 py-6 text-sm text-gray-400">
             {peerEmptyText}
           </div>
-        ) : peerPermissionStates ? (
+        ) : (
           <div className="space-y-4">
-            {peerPermissionStates.map((policy) => (
+            {view.peerRows.map((policy) => (
               <div
                 key={policy.pubkey}
                 className="rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5"
               >
                 <div className="mb-3 font-mono text-sm text-blue-200">{policy.pubkey}</div>
-                <div className="grid gap-4 lg:grid-cols-3">
+                <div className="grid gap-4 lg:grid-cols-2">
                   <PermissionSection
-                    title="Manual Override"
-                    rows={[
-                      { label: 'request', policy: policy.manualOverride.request, editable: true },
-                      { label: 'respond', policy: policy.manualOverride.respond, editable: true }
-                    ]}
+                    title="Request"
+                    direction="request"
+                    policy={policy.request}
+                    overrides={policy.manualOverride?.request}
                     onChange={
-                      onPeerPermissionOverrideChange
-                        ? (direction, method, value) =>
-                            onPeerPermissionOverrideChange(policy.pubkey, direction, method, value)
+                      onPeerPolicyOverrideChange
+                        ? (method, value) => onPeerPolicyOverrideChange(policy.pubkey, 'request', method, value)
                         : undefined
                     }
                   />
                   <PermissionSection
-                    title="Remote Reported"
-                    rows={
-                      policy.remoteObservation
-                        ? [
-                            {
-                              label: `request · rev ${policy.remoteObservation.revision}`,
-                              policy: policy.remoteObservation.request
-                            },
-                            {
-                              label: `respond · ${new Date(policy.remoteObservation.updated).toLocaleString()}`,
-                              policy: policy.remoteObservation.respond
-                            }
-                          ]
-                        : [{ label: 'status', emptyText: 'No remote policy observed yet.' }]
+                    title="Respond"
+                    direction="respond"
+                    policy={policy.respond}
+                    overrides={policy.manualOverride?.respond}
+                    onChange={
+                      onPeerPolicyOverrideChange
+                        ? (method, value) => onPeerPolicyOverrideChange(policy.pubkey, 'respond', method, value)
+                        : undefined
                     }
                   />
-                  <PermissionSection
-                    title="Effective"
-                    rows={[
-                      { label: 'request', policy: policy.effectivePolicy.request },
-                      { label: 'respond', policy: policy.effectivePolicy.respond }
-                    ]}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {peerPermissions.map((policy) => (
-              <div
-                key={policy.pubkey}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5"
-              >
-                <div className="font-mono text-sm text-blue-200">{policy.pubkey}</div>
-                <div className="flex flex-wrap gap-2 text-xs">
-                  {onPeerPermissionChange ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => onPeerPermissionChange(policy.pubkey, 'send', !policy.send)}
-                        className={`rounded border px-3 py-1.5 font-medium uppercase tracking-wide transition-colors ${
-                          policy.send
-                            ? 'border-green-500/50 bg-green-500/10 text-green-300 hover:bg-green-500/20'
-                            : 'border-red-500/50 bg-red-500/10 text-red-300 hover:bg-red-500/20'
-                        }`}
-                      >
-                        send: {policy.send ? 'allow' : 'deny'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onPeerPermissionChange(policy.pubkey, 'receive', !policy.receive)}
-                        className={`rounded border px-3 py-1.5 font-medium uppercase tracking-wide transition-colors ${
-                          policy.receive
-                            ? 'border-green-500/50 bg-green-500/10 text-green-300 hover:bg-green-500/20'
-                            : 'border-red-500/50 bg-red-500/10 text-red-300 hover:bg-red-500/20'
-                        }`}
-                      >
-                        receive: {policy.receive ? 'allow' : 'deny'}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="rounded-full bg-blue-500/20 px-2.5 py-1 text-blue-200">
-                        send: {policy.send ? 'allow' : 'deny'}
-                      </span>
-                      <span className="rounded-full bg-blue-500/20 px-2.5 py-1 text-blue-200">
-                        receive: {policy.receive ? 'allow' : 'deny'}
-                      </span>
-                    </>
-                  )}
                 </div>
               </div>
             ))}
@@ -326,99 +201,80 @@ export function OperatorPermissionsPanel({
 
 type PermissionSectionProps = {
   title: string;
-  rows: Array<
-    | {
-        label: string;
-        policy: OperatorMethodPermission | OperatorMethodPermissionOverride;
-        editable?: boolean;
-      }
-    | {
-        label: string;
-        emptyText: string;
-      }
-  >;
-  onChange?: (
-    direction: 'request' | 'respond',
-    method: keyof OperatorMethodPermissionOverride,
-    value: OperatorPolicyOverrideValue
-  ) => void;
+  direction: 'request' | 'respond';
+  policy: PolicyMethodState;
+  overrides?: PolicyMethodOverrideState;
+  onChange?: (method: keyof PolicyMethodOverrideState, value: PolicyOverrideValue) => void;
 };
 
-function PermissionSection({ title, rows, onChange }: PermissionSectionProps) {
+function PermissionSection({ title, direction, policy, overrides, onChange }: PermissionSectionProps) {
   return (
     <div className="space-y-2">
       <div className="text-[0.68rem] uppercase tracking-[0.18em] text-slate-400">{title}</div>
-      {rows.map((row) =>
-        'emptyText' in row ? (
-          <div key={row.label} className="rounded border border-dashed border-blue-900/20 px-3 py-2 text-xs text-gray-400">
-            {row.emptyText}
-          </div>
-        ) : (
-          <div key={row.label} className="rounded border border-blue-900/20 px-3 py-2">
-            <div className="mb-2 text-xs text-gray-400">{row.label}</div>
-            <div className="flex flex-wrap gap-2">
-              {(['ping', 'onboard', 'sign', 'ecdh'] as const).map((method) => (
-                <MethodToken
-                  key={method}
-                  method={method}
-                  value={row.policy[method]}
-                  editable={Boolean(row.editable)}
-                  onClick={
-                    row.editable && onChange
-                      ? () =>
-                          onChange(
-                            row.label.startsWith('request') ? 'request' : 'respond',
-                            method,
-                            nextOverrideValue(row.policy[method] as OperatorPolicyOverrideValue)
-                          )
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-          </div>
-        )
-      )}
+      <div className="rounded border border-blue-900/20 px-3 py-2">
+        <div className="flex flex-wrap gap-2">
+          {(['ping', 'onboard', 'sign', 'ecdh'] as const).map((method) => {
+            const effectiveValue = policy[method];
+            const overrideValue = overrides?.[method] ?? 'unset';
+            const label = effectiveValue ? 'allow' : 'deny';
+            return (
+              <MethodToken
+                key={method}
+                direction={direction}
+                method={method}
+                label={label}
+                value={effectiveValue}
+                editable={Boolean(onChange)}
+                onClick={
+                  onChange
+                    ? () => onChange(method, nextOverrideValue(effectiveValue, overrideValue))
+                    : undefined
+                }
+              />
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
 
-function nextOverrideValue(value: OperatorPolicyOverrideValue): OperatorPolicyOverrideValue {
-  if (value === 'unset') return 'allow';
-  if (value === 'allow') return 'deny';
-  return 'unset';
+function nextOverrideValue(effectiveValue: boolean, overrideValue: PolicyOverrideValue): PolicyOverrideValue {
+  if (overrideValue === 'allow') return 'deny';
+  if (overrideValue === 'deny') return 'unset';
+  return effectiveValue ? 'deny' : 'allow';
 }
 
 function MethodToken({
+  direction,
   method,
+  label,
   value,
   editable,
   onClick
 }: {
+  direction: 'request' | 'respond';
   method: string;
-  value: boolean | OperatorPolicyOverrideValue;
+  label: string;
+  value: boolean;
   editable?: boolean;
   onClick?: () => void;
 }) {
-  const tone =
-    value === 'allow' || value === true
-      ? 'border-green-500/40 bg-green-500/10 text-green-300'
-      : value === 'deny' || value === false
-        ? 'border-red-500/40 bg-red-500/10 text-red-300'
-        : 'border-slate-500/40 bg-slate-500/10 text-slate-300';
-  const label =
-    value === true ? 'allow' : value === false ? 'deny' : value;
+  const tone = value
+    ? 'border-green-500/40 bg-green-500/10 text-green-300'
+    : 'border-red-500/40 bg-red-500/10 text-red-300';
+  const content = `${direction} ${method}: ${label}`;
   return editable ? (
     <button
       type="button"
       onClick={onClick}
       className={`rounded border px-2.5 py-1 text-xs font-medium ${tone}`}
     >
-      {method}: {label}
+      {content}
     </button>
   ) : (
     <span className={`rounded border px-2.5 py-1 text-xs font-medium ${tone}`}>
-      {method}: {label}
+      {content}
     </span>
   );
 }

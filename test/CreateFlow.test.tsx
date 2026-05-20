@@ -6,6 +6,7 @@ import {
   CreateFlowDistributionCards,
   CreateFlowGenerateCard,
   CreateFlowLocalSaveCard,
+  RotateKeysetPanel,
   StoredProfilesLandingCard,
 } from '../src';
 
@@ -63,31 +64,21 @@ describe('shared host flow components', () => {
     expect(onDelete).toHaveBeenCalledWith('profile-2');
   });
 
-  it('dispatches create-flow edits and mode changes', () => {
+  it('dispatches create-flow keyset edits without rotation controls', () => {
     const onChangeForm = vi.fn();
     const onGenerate = vi.fn();
 
     render(
       <CreateFlowGenerateCard
-        form={{
-          mode: 'new',
-          groupName: '',
-          threshold: '2',
-          count: '3',
-          sourceProfileId: '',
-        }}
-        availableProfiles={[]}
-        rotationSources={[{ packageText: '', packagePassword: '' }]}
+        groupName=""
+        threshold="2"
+        count="3"
         onChangeForm={onChangeForm}
-        onChangeRotationSource={vi.fn()}
-        onAddRotationSource={vi.fn()}
-        onRemoveRotationSource={vi.fn()}
         onGenerate={onGenerate}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Rotate Existing Keyset' }));
-    expect(onChangeForm).toHaveBeenCalledWith('mode', 'rotate');
+    expect(screen.queryByRole('button', { name: 'Rotate Existing Keyset' })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Group Name'), {
       target: { value: 'Treasury Signers' },
@@ -96,6 +87,44 @@ describe('shared host flow components', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Generate Keyset' }));
     expect(onGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders rotate-keyset source and recovery share inputs separately', () => {
+    const onChangeSourceProfile = vi.fn();
+    const onChangeRotationSource = vi.fn();
+    const onAddRotationSource = vi.fn();
+    const onRemoveRotationSource = vi.fn();
+    const onRotate = vi.fn();
+
+    render(
+      <RotateKeysetPanel
+        sourceProfileId="profile-1"
+        availableProfiles={[{ id: 'profile-1', label: 'Primary Browser Device' }]}
+        rotationSources={[{ packageText: '', packagePassword: '' }]}
+        onChangeSourceProfile={onChangeSourceProfile}
+        onChangeRotationSource={onChangeRotationSource}
+        onAddRotationSource={onAddRotationSource}
+        onRemoveRotationSource={onRemoveRotationSource}
+        onRotate={onRotate}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Rotate Keyset' })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Source Profile'), {
+      target: { value: 'profile-1' },
+    });
+    expect(onChangeSourceProfile).toHaveBeenCalledWith('profile-1');
+
+    fireEvent.change(screen.getByLabelText('bfshare'), {
+      target: { value: 'bfshare1...' },
+    });
+    expect(onChangeRotationSource).toHaveBeenCalledWith(0, 'packageText', 'bfshare1...');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add bfshare Source' }));
+    expect(onAddRotationSource).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rotate Keyset' }));
+    expect(onRotate).toHaveBeenCalledTimes(1);
   });
 
   it('dispatches distribution field edits and actions', () => {
