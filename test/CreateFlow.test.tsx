@@ -10,7 +10,7 @@ import {
 } from '../src';
 
 describe('shared host flow components', () => {
-  it('renders stored profiles on landing, supports selection, and dispatches the explicit actions', () => {
+  it('renders stored profile card models on landing and dispatches explicit actions', () => {
     const onSelect = vi.fn();
     const onLoad = vi.fn();
     const onDelete = vi.fn();
@@ -21,15 +21,22 @@ describe('shared host flow components', () => {
           {
             id: 'profile-1',
             label: 'Primary Browser Device',
-            subtitle: 'abcd1234',
-            statusLabel: 'Available',
+            shortId: 'npub1qe3...7k4m',
+            thresholdLabel: '2/3',
+            publicKeyLabel: 'group-pub-1',
+            updatedLabel: 'Updated today',
+            state: 'available',
+            primaryActionLabel: 'Load Profile',
+            destructiveActionLabel: 'Delete',
           },
           {
             id: 'profile-2',
             label: 'Backup Device',
-            subtitle: 'efgh5678',
-            statusLabel: 'Locked',
-            loadLabel: 'Open Dashboard',
+            shortId: 'npub1backup...8mx',
+            thresholdLabel: '2/3',
+            state: 'locked',
+            primaryActionLabel: 'Open Dashboard',
+            destructiveActionLabel: 'Remove',
           }
         ]}
         selectedProfileId="profile-2"
@@ -40,6 +47,11 @@ describe('shared host flow components', () => {
     );
 
     expect(screen.getByText('Stored Profiles')).toBeInTheDocument();
+    expect(screen.getByText('npub1qe3...7k4m')).toBeInTheDocument();
+    expect(screen.getAllByText('2/3')).toHaveLength(2);
+    expect(screen.getByText('group-pub-1')).toBeInTheDocument();
+    expect(screen.getByText('Updated today')).toBeInTheDocument();
+    expect(screen.getByText('available')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Primary Browser Device').closest('button')!);
     expect(onSelect).toHaveBeenCalledWith('profile-1');
 
@@ -47,7 +59,7 @@ describe('shared host flow components', () => {
     fireEvent.click(within(backupCard).getByRole('button', { name: 'Open Dashboard' }));
     expect(onLoad).toHaveBeenCalledWith('profile-2');
 
-    fireEvent.click(within(backupCard).getByRole('button', { name: 'Delete Profile' }));
+    fireEvent.click(within(backupCard).getByRole('button', { name: 'Remove' }));
     expect(onDelete).toHaveBeenCalledWith('profile-2');
   });
 

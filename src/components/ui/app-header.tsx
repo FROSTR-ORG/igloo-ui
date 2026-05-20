@@ -2,14 +2,10 @@ import * as React from 'react';
 import { cn } from '../../lib/utils';
 
 type AppHeaderProps = {
-  mode?: 'welcome' | 'task' | 'profile' | 'dashboard';
-  title?: string;
-  subtitle?: React.ReactNode;
-  right?: React.ReactNode;
+  mode: 'welcome' | 'task' | 'profile' | 'dashboard';
   className?: string;
   logoSrc?: string;
   logoAlt?: string;
-  centered?: boolean;
   links?: Array<{ label: string; href: string }>;
   taskLabel?: string;
   profileName?: string;
@@ -24,53 +20,35 @@ const defaultLinks = [
 
 export function AppHeader({
   mode,
-  title = 'igloo',
-  subtitle,
-  right,
   className,
   logoSrc,
   logoAlt = 'FROSTR',
-  centered = false,
   links = defaultLinks,
   taskLabel,
   profileName,
   actions,
 }: AppHeaderProps) {
-  const shellMode = Boolean(mode);
-  const displayTitle = shellMode ? 'Igloo' : title;
-  const displaySubtitle = shellMode && subtitle === undefined ? 'Threshold Signing for Nostr' : subtitle;
-  const rightContent = right ?? renderShellRightContent({ mode, links, taskLabel, profileName, actions });
+  const rightContent = renderShellRightContent({ mode, links, taskLabel, profileName, actions });
 
   return (
-    <header className={cn(shellMode ? 'flex w-full justify-center px-5 py-5 sm:px-10 lg:px-20' : 'mb-6', className)}>
+    <header className={cn('flex w-full justify-center px-5 py-5 sm:px-10 lg:px-20', className)}>
       <div
-        className={cn(
-          shellMode
-            ? 'flex w-full max-w-[1000px] items-center justify-between rounded-xl border border-igloo-border bg-igloo-panel px-5 py-3.5'
-            : 'flex flex-wrap items-center gap-3',
-          centered ? 'justify-center text-center' : 'justify-between',
-        )}
+        className="flex w-full max-w-[1000px] items-center justify-between rounded-xl border border-igloo-border bg-igloo-panel px-5 py-3.5"
       >
-        <div className={cn('flex items-center gap-3 sm:gap-4', shellMode && 'gap-3.5', centered && 'justify-center')}>
+        <div className="flex items-center gap-3.5">
           {logoSrc && <img src={logoSrc} alt={logoAlt} className="h-9 w-9 object-contain sm:h-10 sm:w-10" />}
-          <div className={cn(shellMode && 'flex min-h-12 flex-col justify-center gap-0.5')}>
+          <div className="flex min-h-12 flex-col justify-center gap-0.5">
             <h1
-              className={cn(
-                shellMode
-                  ? 'text-[28px] font-bold leading-8 tracking-[-0.01em] text-igloo-primary'
-                  : 'bg-gradient-to-r from-blue-300 via-blue-200 to-cyan-300 bg-clip-text font-sharetech text-[2.05rem] font-bold uppercase leading-none tracking-[0.11em] text-transparent sm:text-[2.45rem]',
-              )}
+              className="text-[28px] font-bold leading-8 tracking-[-0.01em] text-igloo-primary"
             >
-              {displayTitle}
+              Igloo
             </h1>
-            {displaySubtitle && (
-              <p className={cn(shellMode ? 'text-xs leading-4 tracking-[0.01em] text-igloo-subtle' : 'mt-0.5 text-[0.8rem] text-blue-400', centered && 'mx-auto max-w-xl')}>
-                {displaySubtitle}
-              </p>
-            )}
+            <p className="text-xs leading-4 tracking-[0.01em] text-igloo-subtle">
+              Threshold Signing for Nostr
+            </p>
           </div>
         </div>
-        {rightContent && <div className={cn(shellMode ? 'flex items-center gap-5' : 'flex items-center gap-2', centered && 'w-full justify-center')}>{rightContent}</div>}
+        {rightContent && <div className="flex items-center gap-5">{rightContent}</div>}
       </div>
     </header>
   );
@@ -83,7 +61,7 @@ function renderShellRightContent({
   profileName,
   actions,
 }: {
-  mode?: AppHeaderProps['mode'];
+  mode: AppHeaderProps['mode'];
   links: NonNullable<AppHeaderProps['links']>;
   taskLabel?: string;
   profileName?: string;

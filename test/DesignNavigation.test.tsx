@@ -14,13 +14,16 @@ describe('design navigation primitives', () => {
     expect(screen.getByRole('link', { name: 'GitHub' })).toBeInTheDocument();
   });
 
-  it('renders task and profile header modes without custom right content', () => {
+  it('renders task, profile, and dashboard header modes without generic right content', () => {
     const { rerender } = render(<AppHeader mode="task" taskLabel="Create" />);
 
     expect(screen.getByText('Create')).toHaveClass('font-sharetech');
 
     rerender(<AppHeader mode="profile" profileName="My Signing Key" />);
     expect(screen.getByText('My Signing Key')).toHaveClass('text-igloo-muted');
+
+    rerender(<AppHeader mode="dashboard" actions={<button type="button">Lock</button>} />);
+    expect(screen.getByRole('button', { name: 'Lock' })).toBeInTheDocument();
   });
 
   it('renders a screen-level back link', () => {

@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { CRITICAL_E2E_TEST_IDS, type CriticalE2ETestId } from '../../lib/e2e-test-ids';
+import type { StoredProfileCardModel } from '../../models/view-models';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { ContentCard } from '../ui/content-card';
@@ -93,14 +94,6 @@ export function StepProgress({
   );
 }
 
-export type HostStoredProfileSummary = {
-  id: string;
-  label: string;
-  subtitle?: string;
-  statusLabel?: string;
-  loadLabel?: string;
-};
-
 export function StoredProfilesLandingCard({
   profiles,
   selectedProfileId,
@@ -112,19 +105,17 @@ export function StoredProfilesLandingCard({
   renderProfileDetail,
   loadDisabled = false,
   deleteDisabled = false,
-  deleteLabel = 'Delete Profile',
 }: {
-  profiles: HostStoredProfileSummary[];
+  profiles: StoredProfileCardModel[];
   selectedProfileId?: string | null;
   onSelect?: (profileId: string) => void;
   onLoad: (profileId: string) => void;
   onDelete?: (profileId: string) => void;
   description?: string;
   emptyMessage?: string;
-  renderProfileDetail?: (profile: HostStoredProfileSummary, isSelected: boolean) => React.ReactNode;
+  renderProfileDetail?: (profile: StoredProfileCardModel, isSelected: boolean) => React.ReactNode;
   loadDisabled?: boolean;
   deleteDisabled?: boolean;
-  deleteLabel?: string;
 }) {
   return (
     <Card>
@@ -142,13 +133,16 @@ export function StoredProfilesLandingCard({
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <strong>{profile.label || 'Unnamed device'}</strong>
-                  {profile.subtitle ? (
-                    <div className="text-xs text-slate-400">{profile.subtitle}</div>
-                  ) : null}
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                    <span>{profile.shortId}</span>
+                    {profile.thresholdLabel ? <span>{profile.thresholdLabel}</span> : null}
+                    {profile.publicKeyLabel ? <span>{profile.publicKeyLabel}</span> : null}
+                    {profile.updatedLabel ? <span>{profile.updatedLabel}</span> : null}
+                  </div>
                 </div>
-                {profile.statusLabel ? (
+                {profile.state ? (
                   <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[11px] font-medium text-cyan-200">
-                    {profile.statusLabel}
+                    {profile.state}
                   </span>
                 ) : null}
               </div>
@@ -185,7 +179,7 @@ export function StoredProfilesLandingCard({
                       onClick={() => onLoad(profile.id)}
                       disabled={loadDisabled}
                     >
-                      {profile.loadLabel ?? 'Load Profile'}
+                      {profile.primaryActionLabel ?? 'Load Profile'}
                     </Button>
                     {onDelete ? (
                       <Button
@@ -195,7 +189,7 @@ export function StoredProfilesLandingCard({
                         onClick={() => onDelete(profile.id)}
                         disabled={deleteDisabled}
                       >
-                        {deleteLabel}
+                        {profile.destructiveActionLabel ?? 'Delete'}
                       </Button>
                     ) : null}
                   </div>
