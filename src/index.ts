@@ -2,6 +2,7 @@ export * from './lib/utils';
 export * from './lib/e2e-test-ids';
 export * from './tokens/design-tokens';
 export * from './models/view-models';
+export * from './adapters/runtime-view-models';
 export * from './components/OnboardingInstructions';
 export * from './components/flows/CreateFlow';
 export * from './components/flows/CreateImportPanel';

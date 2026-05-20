@@ -53,7 +53,10 @@ export type PeerPolicyRowModel = {
   pubkey: string;
   request: PolicyMethodState;
   respond: PolicyMethodState;
-  manualOverride?: PolicyMethodOverrideState;
+  manualOverride?: {
+    request: PolicyMethodOverrideState;
+    respond: PolicyMethodOverrideState;
+  };
 };
 
 export type SitePolicyRowModel = {
