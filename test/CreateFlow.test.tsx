@@ -1,3 +1,4 @@
+import type { FormEvent } from 'react';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,6 +11,7 @@ import {
   StoredProfilesLandingCard,
   WelcomeEntryHero,
   WelcomeReturningHero,
+  WelcomeUnlockModal,
 } from '../src';
 
 afterEach(() => {
@@ -17,6 +19,51 @@ afterEach(() => {
 });
 
 describe('shared host flow components', () => {
+  const returningProfiles = [
+    {
+      id: 'profile-1',
+      label: 'My Signing Key',
+      thresholdLabel: '2/3',
+      memberLabel: '#0',
+      publicKeyLabel: 'npub1qe3...7k4m',
+    },
+    {
+      id: 'profile-2',
+      label: 'Work Key',
+      thresholdLabel: '2/3',
+      memberLabel: '#1',
+      publicKeyLabel: 'npub1work...8mx2',
+    },
+    {
+      id: 'profile-3',
+      label: 'Travel Key',
+      thresholdLabel: '2/3',
+      memberLabel: '#2',
+      publicKeyLabel: 'npub1travel...9px3',
+    },
+    {
+      id: 'profile-4',
+      label: 'Archive Key',
+      thresholdLabel: '3/5',
+      memberLabel: '#3',
+      publicKeyLabel: 'npub1archive...4va4',
+    },
+    {
+      id: 'profile-5',
+      label: 'Cold Key',
+      thresholdLabel: '3/5',
+      memberLabel: '#4',
+      publicKeyLabel: 'npub1cold...5qk5',
+    },
+    {
+      id: 'profile-6',
+      label: 'Family Key',
+      thresholdLabel: '3/5',
+      memberLabel: '#5',
+      publicKeyLabel: 'npub1family...6jf6',
+    },
+  ];
+
   it('renders the first-launch Paper welcome entry actions', () => {
     const onNewKeyset = vi.fn();
     const onImportProfile = vi.fn();
@@ -54,13 +101,8 @@ describe('shared host flow components', () => {
     render(
       <WelcomeReturningHero
         logoSrc="/igloo-mark.png"
-        profile={{
-          id: 'profile-1',
-          label: 'My Signing Key',
-          thresholdLabel: '2/3',
-          memberLabel: '#0',
-          publicKeyLabel: 'npub1qe3...7k4m',
-        }}
+        layout="single"
+        profiles={[returningProfiles[0]]}
         onUnlock={onUnlock}
         onRotate={onRotate}
         onNewKeyset={onNewKeyset}
@@ -90,6 +132,96 @@ describe('shared host flow components', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Onboard' }));
     expect(onOnboard).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the returning Paper welcome multi-profile layout', () => {
+    const onUnlock = vi.fn();
+    const onRotate = vi.fn();
+
+    render(
+      <WelcomeReturningHero
+        layout="multi"
+        profiles={returningProfiles.slice(0, 3)}
+        onUnlock={onUnlock}
+        onRotate={onRotate}
+        onNewKeyset={vi.fn()}
+        onImportProfile={vi.fn()}
+        onOnboard={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('My Signing Key')).toBeInTheDocument();
+    expect(screen.getByText('Work Key')).toBeInTheDocument();
+    expect(screen.getByText('Travel Key')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Unlock' })).toHaveLength(3);
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Unlock' })[1]);
+    expect(onUnlock).toHaveBeenCalledWith('profile-2');
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Rotate' })[2]);
+    expect(onRotate).toHaveBeenCalledWith('profile-3');
+  });
+
+  it('renders the returning Paper welcome many-profile layout', () => {
+    render(
+      <WelcomeReturningHero
+        layout="many"
+        profiles={returningProfiles}
+        onUnlock={vi.fn()}
+        onRotate={vi.fn()}
+        onNewKeyset={vi.fn()}
+        onImportProfile={vi.fn()}
+        onOnboard={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Family Key')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Unlock' })).toHaveLength(6);
+    expect(screen.getByText('New Keyset')).toBeInTheDocument();
+    expect(screen.getByText('Import Device Profile')).toBeInTheDocument();
+    expect(screen.getByText('Onboard')).toBeInTheDocument();
+  });
+
+  it('renders the returning Paper welcome unlock modal states', () => {
+    const onPasswordChange = vi.fn();
+    const onSubmit = vi.fn((event: FormEvent<HTMLFormElement>) => event.preventDefault());
+    const onClose = vi.fn();
+
+    const { rerender } = render(
+      <WelcomeUnlockModal
+        open
+        profile={returningProfiles[0]}
+        password=""
+        error={null}
+        submitting={false}
+        onPasswordChange={onPasswordChange}
+        onSubmit={onSubmit}
+        onClose={onClose}
+      />,
+    );
+
+    expect(screen.getByText('Unlock Profile')).toBeInTheDocument();
+    expect(screen.getByText('My Signing Key · 2/3 · #0')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Profile Password'), { target: { value: 'secret' } });
+    expect(onPasswordChange).toHaveBeenCalledWith('secret');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <WelcomeUnlockModal
+        open
+        profile={returningProfiles[0]}
+        password="wrong"
+        error="Incorrect password. Please try again."
+        submitting={false}
+        onPasswordChange={onPasswordChange}
+        onSubmit={onSubmit}
+        onClose={onClose}
+      />,
+    );
+
+    expect(screen.getByText('Incorrect password. Please try again.')).toBeInTheDocument();
   });
 
   it('renders stored profile card models on landing and dispatches explicit actions', () => {

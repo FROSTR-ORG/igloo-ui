@@ -472,6 +472,17 @@
     gap: 1rem;
   }
 
+  .igloo-welcome-profile-list {
+    display: flex;
+    width: 30rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .igloo-welcome-returning-stack.is-many .igloo-welcome-profile-list {
+    min-height: 42.5rem;
+  }
+
   .igloo-welcome-profile-row {
     display: flex;
     width: 30rem;
@@ -551,6 +562,77 @@
   .igloo-welcome-profile-actions button {
     width: 6rem;
     height: 2rem;
+  }
+
+  .igloo-welcome-unlock-modal {
+    width: 28rem;
+    border-color: rgba(30, 58, 138, 0.3);
+    border-radius: 0.75rem;
+    background: rgba(15, 23, 42, 0.96);
+    padding: 1.5rem;
+  }
+
+  .igloo-welcome-unlock-form {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .igloo-welcome-unlock-heading {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .igloo-welcome-unlock-heading h2 {
+    margin: 0;
+    font-family: var(--igloo-font-share-tech-mono);
+    color: #93c5fd;
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+
+  .igloo-welcome-unlock-heading p {
+    margin: 0;
+    color: #8494a7;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-welcome-unlock-field {
+    display: grid;
+    gap: 0.5rem;
+    color: #e2e8f0;
+    font-size: 0.875rem;
+  }
+
+  .igloo-welcome-unlock-field input {
+    height: 2.5rem;
+    border: 1px solid rgba(30, 58, 138, 0.45);
+    border-radius: 0.5rem;
+    background: rgba(15, 23, 42, 0.85);
+    color: #f8fafc;
+    padding: 0 0.75rem;
+    outline: none;
+  }
+
+  .igloo-welcome-unlock-field input:focus {
+    border-color: rgba(96, 165, 250, 0.75);
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.18);
+  }
+
+  .igloo-welcome-unlock-error {
+    margin: 0;
+    color: #f87171;
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+  }
+
+  .igloo-welcome-unlock-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .igloo-welcome-unlock-actions button {
+    width: 6rem;
   }
 
   .igloo-panel-grid {

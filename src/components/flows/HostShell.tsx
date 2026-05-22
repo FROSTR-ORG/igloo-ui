@@ -6,6 +6,7 @@ import type { StoredProfileCardModel } from '../../models/view-models';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { ContentCard } from '../ui/content-card';
+import { Modal } from '../ui/modal';
 
 export function WelcomeEntryHero({
   logoSrc,
@@ -80,7 +81,8 @@ export type WelcomeReturningProfileModel = {
 export function WelcomeReturningHero({
   logoSrc,
   logoAlt = 'Igloo',
-  profile,
+  layout,
+  profiles,
   onUnlock,
   onRotate,
   onNewKeyset,
@@ -89,7 +91,8 @@ export function WelcomeReturningHero({
 }: {
   logoSrc?: string;
   logoAlt?: string;
-  profile: WelcomeReturningProfileModel;
+  layout: 'single' | 'multi' | 'many';
+  profiles: WelcomeReturningProfileModel[];
   onUnlock: (profileId: string) => void;
   onRotate: (profileId: string) => void;
   onNewKeyset: () => void;
@@ -106,29 +109,33 @@ export function WelcomeReturningHero({
         </div>
       </div>
 
-      <div className="igloo-welcome-returning-stack">
-        <div className="igloo-welcome-profile-row">
-          <div className="igloo-welcome-profile-icon" aria-hidden="true">
-            <Lock size={20} />
-          </div>
-          <div className="igloo-welcome-profile-copy">
-            <h3>{profile.label}</h3>
-            <div className="igloo-welcome-profile-meta">
-              <span>{profile.thresholdLabel}</span>
-              <span className="igloo-welcome-profile-dot">.</span>
-              <span>{profile.memberLabel}</span>
-              <span className="igloo-welcome-profile-dot">.</span>
-              <span className="igloo-welcome-profile-key">{profile.publicKeyLabel}</span>
+      <div className={`igloo-welcome-returning-stack is-${layout}`}>
+        <div className="igloo-welcome-profile-list">
+          {profiles.map((profile) => (
+            <div className="igloo-welcome-profile-row" key={profile.id}>
+              <div className="igloo-welcome-profile-icon" aria-hidden="true">
+                <Lock size={20} />
+              </div>
+              <div className="igloo-welcome-profile-copy">
+                <h3>{profile.label}</h3>
+                <div className="igloo-welcome-profile-meta">
+                  <span>{profile.thresholdLabel}</span>
+                  <span className="igloo-welcome-profile-dot">.</span>
+                  <span>{profile.memberLabel}</span>
+                  <span className="igloo-welcome-profile-dot">.</span>
+                  <span className="igloo-welcome-profile-key">{profile.publicKeyLabel}</span>
+                </div>
+              </div>
+              <div className="igloo-welcome-profile-actions">
+                <Button type="button" onClick={() => onUnlock(profile.id)}>
+                  Unlock
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => onRotate(profile.id)}>
+                  Rotate
+                </Button>
+              </div>
             </div>
-          </div>
-          <div className="igloo-welcome-profile-actions">
-            <Button type="button" onClick={() => onUnlock(profile.id)}>
-              Unlock
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => onRotate(profile.id)}>
-              Rotate
-            </Button>
-          </div>
+          ))}
         </div>
 
         <div className="igloo-welcome-entry-secondary">
@@ -152,6 +159,59 @@ export function WelcomeReturningHero({
         <Feather size={16} />
       </div>
     </section>
+  );
+}
+
+export function WelcomeUnlockModal({
+  open,
+  profile,
+  password,
+  error,
+  submitting = false,
+  onPasswordChange,
+  onSubmit,
+  onClose,
+}: {
+  open: boolean;
+  profile: WelcomeReturningProfileModel | null;
+  password: string;
+  error?: string | null;
+  submitting?: boolean;
+  onPasswordChange: (value: string) => void;
+  onSubmit: React.FormEventHandler<HTMLFormElement>;
+  onClose: () => void;
+}) {
+  if (!profile) return null;
+
+  const profileSummary = `${profile.label} · ${profile.thresholdLabel} · ${profile.memberLabel}`;
+
+  return (
+    <Modal open={open} onClose={onClose} className="igloo-welcome-unlock-modal">
+      <form className="igloo-welcome-unlock-form" onSubmit={onSubmit}>
+        <div className="igloo-welcome-unlock-heading">
+          <h2>Unlock Profile</h2>
+          <p>{profileSummary}</p>
+        </div>
+
+        <label className="igloo-welcome-unlock-field">
+          <span>Profile Password</span>
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => onPasswordChange(event.target.value)}
+            autoFocus
+          />
+        </label>
+
+        {error ? <p className="igloo-welcome-unlock-error">{error}</p> : null}
+
+        <div className="igloo-welcome-unlock-actions">
+          <Button type="submit" disabled={submitting}>
+            Unlock
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 
