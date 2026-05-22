@@ -438,10 +438,45 @@ describe('shared host flow components', () => {
     });
     expect(onChangeDraft).toHaveBeenCalledWith(2, 'packagePassword', 'remote-pass');
 
-    fireEvent.click(screen.getByRole('button', { name: 'QR' }));
-    expect(onDistribute).toHaveBeenCalledWith(2, 'qr');
+    fireEvent.click(screen.getByRole('button', { name: 'Create package' }));
+    expect(onDistribute).toHaveBeenCalledWith(2, 'prepare');
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Finish' }));
+  it('renders distribution completion when every remote package is ready', () => {
+    const onFinish = vi.fn();
+
+    render(
+      <CreateFlowDistributionCards
+        shares={[
+          {
+            name: 'Remote Tablet',
+            member_idx: 2,
+            share_public_key: 'share-pub-2',
+          },
+        ]}
+        drafts={{
+          2: {
+            label: 'Remote Tablet',
+            packagePassword: 'remote-pass',
+            confirmPassword: 'remote-pass',
+          },
+        }}
+        results={{
+          2: {
+            kind: 'prepared',
+            label: 'Remote Tablet',
+            packageText: 'bfonboard1example',
+          },
+        }}
+        onChangeDraft={vi.fn()}
+        onDistribute={vi.fn()}
+        onFinish={onFinish}
+      />,
+    );
+
+    expect(screen.getByText('Distribution Status')).toBeInTheDocument();
+    expect(screen.getByText('All remote packages complete')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Finish Distribution' }));
     expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
@@ -513,8 +548,8 @@ describe('shared host flow components', () => {
     const section = within(view.container);
     expect(section.getByText('Distribute the Keyset')).toBeInTheDocument();
     expect(section.getByText('runtime panel')).toBeInTheDocument();
-    expect(section.getByRole('heading', { name: 'Remaining Shares' })).toBeInTheDocument();
+    expect(section.getByText('Remaining Shares')).toBeInTheDocument();
     expect(section.getByLabelText('Share label')).toBeInTheDocument();
-    expect(section.getByRole('button', { name: 'Finish' })).toBeInTheDocument();
+    expect(section.getByRole('button', { name: 'Continue to Completion' })).toBeDisabled();
   });
 });
