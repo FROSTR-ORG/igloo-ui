@@ -29,18 +29,25 @@ export type SharedDistributionDraft = {
 };
 
 export type SharedDistributionResult = {
-  kind: 'prepared' | 'copied' | 'qr' | 'saved';
+  kind: 'package_ready' | 'handoff_pending' | 'completed';
   label: string;
   packageText?: string;
 };
 
-export type SharedDistributionAction = 'prepare' | 'copy' | 'qr' | 'save';
+export type SharedDistributionAction = 'prepare' | 'copy' | 'qr' | 'save' | 'mark';
 
 export type SharedLocalSaveDraft = {
   label: string;
   relayUrls: string;
   primarySecret: string;
   secondarySecret?: string;
+};
+
+export type SharedOnboardProfilePreview = {
+  label: string;
+  sharePublicKey: string;
+  groupPublicKey: string;
+  relays: string[];
 };
 
 export function CreateFlowTaskBanner({
@@ -599,10 +606,9 @@ function shortKey(value: string) {
 
 function resultLabel(result?: SharedDistributionResult) {
   if (!result) return 'Package not created';
-  if (result.kind === 'copied') return `Copied for ${result.label}`;
-  if (result.kind === 'qr') return `QR ready for ${result.label}`;
-  if (result.kind === 'saved') return `Saved for ${result.label}`;
-  return `Ready for ${result.label}`;
+  if (result.kind === 'completed') return `Marked distributed`;
+  if (result.kind === 'handoff_pending') return `Waiting for handoff`;
+  return `Ready to distribute`;
 }
 
 function packagePreview(result?: SharedDistributionResult) {
@@ -638,7 +644,7 @@ export function CreateFlowDistributionCompletion({
                   <small>{result?.label ?? share.name}</small>
                 </span>
               </div>
-              <em>{result?.kind === 'qr' ? 'QR prepared' : result?.kind === 'copied' ? 'Copied' : result?.kind === 'saved' ? 'Saved' : 'Marked distributed'}</em>
+              <em>{result?.kind === 'completed' ? 'Marked distributed' : 'Completed'}</em>
             </div>
           );
         })}
@@ -671,17 +677,19 @@ function CreateFlowDistributionCard({
   ) => void;
   onDistribute: (memberIdx: number, kind: SharedDistributionAction) => void;
 }) {
-  const isReady = Boolean(result);
+  const hasPackage = Boolean(result);
+  const isComplete = result?.kind === 'completed';
+  const statusClass = hasPackage ? 'igloo-create-distribution-status is-ready' : 'igloo-create-distribution-status';
 
   return (
-    <section className={isReady ? 'igloo-create-distribution-card is-ready' : 'igloo-create-distribution-card'}>
+    <section className={hasPackage ? 'igloo-create-distribution-card is-ready' : 'igloo-create-distribution-card'}>
       <header>
         <div>
           <h3>{share.name} · Index {share.member_idx}</h3>
           <p>{draft.label || share.name}</p>
         </div>
-        <span className={isReady ? 'igloo-create-distribution-status is-ready' : 'igloo-create-distribution-status'}>
-          {isReady ? <Check size={12} aria-hidden="true" /> : null}
+        <span className={statusClass}>
+          {hasPackage ? <Check size={12} aria-hidden="true" /> : null}
           {resultLabel(result)}
         </span>
       </header>
@@ -726,7 +734,7 @@ function CreateFlowDistributionCard({
         </div>
       </div>
 
-      {!isReady ? (
+      {!hasPackage ? (
         <>
           <Button type="button" className="igloo-create-package-action" onClick={() => onDistribute(share.member_idx, 'prepare')}>
             <KeyRound size={14} aria-hidden="true" />
@@ -747,9 +755,9 @@ function CreateFlowDistributionCard({
           <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'save')}>
             Save file
           </Button>
-          <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'prepare')}>
+          <Button type="button" size="sm" variant="secondary" disabled={isComplete} onClick={() => onDistribute(share.member_idx, 'mark')}>
             <Check size={13} aria-hidden="true" />
-            Mark distributed
+            {isComplete ? 'Distributed' : 'Mark distributed'}
           </Button>
         </div>
       )}
@@ -780,7 +788,7 @@ export function CreateFlowDistributionCards({
   localShare?: SharedGeneratedShare | null;
   localProfileName?: string;
 }) {
-  const allComplete = shares.length > 0 && shares.every((share) => results[share.member_idx]);
+  const allComplete = shares.length > 0 && shares.every((share) => results[share.member_idx]?.kind === 'completed');
 
   if (allComplete) {
     return <CreateFlowDistributionCompletion shares={shares} results={results} onFinish={onFinish} />;
@@ -861,7 +869,7 @@ export function CreateFlowDistributionSection({
   localShare?: SharedGeneratedShare | null;
   localProfileName?: string;
 }) {
-  const allComplete = shares.length > 0 && shares.every((share) => results[share.member_idx]);
+  const allComplete = shares.length > 0 && shares.every((share) => results[share.member_idx]?.kind === 'completed');
 
   return (
     <section className="igloo-create-distribution-form">
@@ -890,5 +898,169 @@ export function CreateFlowDistributionSection({
         localProfileName={localProfileName}
       />
     </section>
+  );
+}
+
+export function OnboardPackageEntry({
+  packageText,
+  password,
+  onPackageTextChange,
+  onPasswordChange,
+  onConnect,
+}: {
+  packageText: string;
+  password: string;
+  onPackageTextChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onConnect: () => void;
+}) {
+  return (
+    <div className="igloo-onboard-form">
+      <section className="igloo-onboard-panel">
+        <header>
+          <span>Onboarding Package</span>
+          <h3>Enter bfonboard Package</h3>
+          <p>Paste the package and password from the inviting device to start the onboarding handshake.</p>
+        </header>
+        <label className="igloo-onboard-field">
+          <span>bfonboard</span>
+          <Textarea
+            aria-label="bfonboard"
+            value={packageText}
+            onChange={(event) => onPackageTextChange(event.target.value)}
+            placeholder="Paste bfonboard1..."
+          />
+        </label>
+        <label className="igloo-onboard-field">
+          <span>Decryption Password</span>
+          <input
+            aria-label="Decryption Password"
+            type="password"
+            value={password}
+            onChange={(event) => onPasswordChange(event.target.value)}
+          />
+        </label>
+      </section>
+      <Button type="button" className="igloo-create-primary-action" onClick={onConnect}>
+        Connect
+      </Button>
+    </div>
+  );
+}
+
+export function OnboardHandshakePanel() {
+  return (
+    <section className="igloo-onboard-panel igloo-onboard-handshake">
+      <span>Handshake</span>
+      <h3>Connecting to Inviter</h3>
+      <p>The package is being decoded and this browser is negotiating the onboarding handshake with the sponsor device.</p>
+      <div className="igloo-onboard-progress" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+    </section>
+  );
+}
+
+export function OnboardFailedPanel({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="igloo-onboard-form">
+      <section className="igloo-onboard-panel igloo-onboard-failed">
+        <span>Onboarding Failed</span>
+        <h3>Could not complete handshake</h3>
+        <p>{message}</p>
+      </section>
+      <Button type="button" className="igloo-create-primary-action" onClick={onRetry}>
+        Try Again
+      </Button>
+    </div>
+  );
+}
+
+export function OnboardCompletePanel({
+  preview,
+  draft,
+  onLabelChange,
+  onPasswordChange,
+  onConfirmPasswordChange,
+  onSave,
+}: {
+  preview: SharedOnboardProfilePreview;
+  draft: { label: string; password: string; confirmPassword: string };
+  onLabelChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onConfirmPasswordChange: (value: string) => void;
+  onSave: () => void;
+}) {
+  const rows = [
+    { label: 'Device Label', value: preview.label },
+    { label: 'Share Public Key', value: shortKey(preview.sharePublicKey) },
+    { label: 'Group Public Key', value: shortKey(preview.groupPublicKey) },
+    { label: 'Relays', value: `${preview.relays.length} connected` },
+  ];
+
+  return (
+    <div className="igloo-onboard-form">
+      <section className="igloo-onboard-panel">
+        <header>
+          <span>Handshake Complete</span>
+          <h3>Review Onboarded Profile</h3>
+          <p>The onboarding package resolved successfully. Confirm the profile, then save this device locally.</p>
+        </header>
+        <div className="igloo-create-review-summary">
+          {rows.map((row) => (
+            <div className="igloo-create-review-row" key={row.label}>
+              <span>{row.label}</span>
+              <strong>{row.value}</strong>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="igloo-onboard-panel">
+        <header>
+          <span>Local Save</span>
+          <h3>Save Device</h3>
+          <p>This password encrypts the onboarded profile in this browser.</p>
+        </header>
+        <label className="igloo-onboard-field">
+          <span>Device Name</span>
+          <input
+            aria-label="Device Name"
+            value={draft.label}
+            onChange={(event) => onLabelChange(event.target.value)}
+          />
+        </label>
+        <div className="igloo-create-profile-passwords">
+          <label>
+            <span>Password</span>
+            <input
+              aria-label="Password"
+              type="password"
+              value={draft.password}
+              onChange={(event) => onPasswordChange(event.target.value)}
+            />
+          </label>
+          <label>
+            <span>Confirm Password</span>
+            <input
+              aria-label="Confirm Password"
+              type="password"
+              value={draft.confirmPassword}
+              onChange={(event) => onConfirmPasswordChange(event.target.value)}
+            />
+          </label>
+        </div>
+      </section>
+      <Button type="button" className="igloo-create-primary-action" onClick={onSave}>
+        Save Device
+      </Button>
+    </div>
   );
 }

@@ -8,6 +8,10 @@ import {
   CreateFlowGenerateCard,
   CreateFlowLocalSaveCard,
   CreateFlowProfileSetup,
+  OnboardCompletePanel,
+  OnboardFailedPanel,
+  OnboardHandshakePanel,
+  OnboardPackageEntry,
   RotateKeysetPanel,
   StoredProfilesLandingCard,
   WelcomeEntryHero,
@@ -463,7 +467,7 @@ describe('shared host flow components', () => {
         }}
         results={{
           2: {
-            kind: 'prepared',
+            kind: 'completed',
             label: 'Remote Tablet',
             packageText: 'bfonboard1example',
           },
@@ -478,6 +482,90 @@ describe('shared host flow components', () => {
     expect(screen.getByText('All remote packages complete')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Finish Distribution' }));
     expect(onFinish).toHaveBeenCalledTimes(1);
+  });
+
+  it('dispatches onboarding package entry edits and connect', () => {
+    const onPackageTextChange = vi.fn();
+    const onPasswordChange = vi.fn();
+    const onConnect = vi.fn();
+
+    render(
+      <OnboardPackageEntry
+        packageText=""
+        password=""
+        onPackageTextChange={onPackageTextChange}
+        onPasswordChange={onPasswordChange}
+        onConnect={onConnect}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Enter bfonboard Package' })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('bfonboard'), {
+      target: { value: 'bfonboard1example' },
+    });
+    expect(onPackageTextChange).toHaveBeenCalledWith('bfonboard1example');
+
+    fireEvent.change(screen.getByLabelText('Decryption Password'), {
+      target: { value: 'package-pass' },
+    });
+    expect(onPasswordChange).toHaveBeenCalledWith('package-pass');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    expect(onConnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders onboarding handshake and failure panels', () => {
+    const onRetry = vi.fn();
+    const { rerender } = render(<OnboardHandshakePanel />);
+
+    expect(screen.getByRole('heading', { name: 'Connecting to Inviter' })).toBeInTheDocument();
+
+    rerender(<OnboardFailedPanel message="Relay handshake timed out." onRetry={onRetry} />);
+    expect(screen.getByText('Relay handshake timed out.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('dispatches onboarding completion edits and save', () => {
+    const onLabelChange = vi.fn();
+    const onPasswordChange = vi.fn();
+    const onConfirmPasswordChange = vi.fn();
+    const onSave = vi.fn();
+
+    render(
+      <OnboardCompletePanel
+        preview={{
+          label: 'Remote Tablet',
+          sharePublicKey: 'share-pub-2',
+          groupPublicKey: 'group-pub-1',
+          relays: ['wss://relay.primal.net'],
+        }}
+        draft={{ label: 'Remote Tablet', password: '', confirmPassword: '' }}
+        onLabelChange={onLabelChange}
+        onPasswordChange={onPasswordChange}
+        onConfirmPasswordChange={onConfirmPasswordChange}
+        onSave={onSave}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Review Onboarded Profile' })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Device Name'), {
+      target: { value: 'Remote Phone' },
+    });
+    expect(onLabelChange).toHaveBeenCalledWith('Remote Phone');
+
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'device-pass' },
+    });
+    expect(onPasswordChange).toHaveBeenCalledWith('device-pass');
+
+    fireEvent.change(screen.getByLabelText('Confirm Password'), {
+      target: { value: 'device-pass' },
+    });
+    expect(onConfirmPasswordChange).toHaveBeenCalledWith('device-pass');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Device' }));
+    expect(onSave).toHaveBeenCalledTimes(1);
   });
 
   it('renders the shared local-save form contract', () => {
