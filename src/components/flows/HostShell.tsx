@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BookOpen, Feather, Github, Globe, Info, Lock, Plus } from 'lucide-react';
+import { BookOpen, Check, Feather, Github, Globe, Info, Lock, Plus } from 'lucide-react';
 
 import { CRITICAL_E2E_TEST_IDS, type CriticalE2ETestId } from '../../lib/e2e-test-ids';
 import type { StoredProfileCardModel } from '../../models/view-models';
@@ -311,13 +311,24 @@ export function StepProgress({
   return (
     <div className="igloo-step-progress" aria-label="Flow progress">
       {steps.map((step, index) => (
-        <div
-          key={step}
-          className={index === active ? 'igloo-step-chip is-active' : 'igloo-step-chip'}
-        >
-          <span>{index + 1}</span>
-          <strong>{step}</strong>
-        </div>
+        <React.Fragment key={step}>
+          {index > 0 ? (
+            <div
+              className={index <= active ? 'igloo-step-connector is-complete' : 'igloo-step-connector'}
+              aria-hidden="true"
+            />
+          ) : null}
+          <div
+            className={[
+              'igloo-step-chip',
+              index < active ? 'is-complete' : '',
+              index === active ? 'is-active' : '',
+            ].filter(Boolean).join(' ')}
+          >
+            <span>{index < active ? <Check size={14} aria-hidden="true" /> : index + 1}</span>
+            <strong>{step}</strong>
+          </div>
+        </React.Fragment>
       ))}
     </div>
   );

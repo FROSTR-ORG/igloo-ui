@@ -802,6 +802,234 @@
     font-weight: 600;
   }
 
+  .igloo-create-profile-form {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .igloo-create-profile-panel,
+  .igloo-create-profile-section {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .igloo-create-profile-panel {
+    border: 1px solid rgba(30, 58, 138, 0.3);
+    border-radius: 0.75rem;
+    background: rgba(23, 37, 84, 0.25);
+    padding: 1.25rem;
+  }
+
+  .igloo-create-profile-panel header,
+  .igloo-create-profile-section header {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .igloo-create-profile-panel h3,
+  .igloo-create-profile-section h3 {
+    margin: 0;
+    color: #bfdbfe;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.25rem;
+  }
+
+  .igloo-create-profile-panel p,
+  .igloo-create-profile-section p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+  }
+
+  .igloo-create-share-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .igloo-create-share-option {
+    display: grid;
+    min-height: 4rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid rgba(30, 58, 138, 0.2);
+    border-radius: 0.625rem;
+    background: rgba(15, 23, 42, 0.4);
+    color: #64748b;
+    padding: 0.875rem 1rem;
+    text-align: left;
+  }
+
+  .igloo-create-share-option.is-selected {
+    border-width: 2px;
+    border-color: #2563eb;
+    background: rgba(23, 37, 84, 0.5);
+  }
+
+  .igloo-create-share-radio {
+    display: grid;
+    width: 1.125rem;
+    height: 1.125rem;
+    place-items: center;
+    border: 2px solid #475569;
+    border-radius: 999px;
+  }
+
+  .igloo-create-share-option.is-selected .igloo-create-share-radio {
+    border-color: #2563eb;
+  }
+
+  .igloo-create-share-option.is-selected .igloo-create-share-radio::after {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: #2563eb;
+  }
+
+  .igloo-create-share-copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.125rem;
+  }
+
+  .igloo-create-share-copy strong {
+    color: #e2e8f0;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.125rem;
+  }
+
+  .igloo-create-share-copy small,
+  .igloo-create-share-state {
+    color: #64748b;
+    font-size: 0.6875rem;
+    line-height: 0.875rem;
+  }
+
+  .igloo-create-share-option.is-selected .igloo-create-share-state {
+    border: 1px solid rgba(37, 99, 235, 0.4);
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.15);
+    color: #60a5fa;
+    padding: 0.1875rem 0.625rem;
+    font-weight: 500;
+  }
+
+  .igloo-create-profile-summary {
+    display: flex;
+    gap: 2rem;
+    padding-top: 0.25rem;
+  }
+
+  .igloo-create-profile-summary div {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .igloo-create-profile-summary span {
+    color: #64748b;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    line-height: 1rem;
+    text-transform: uppercase;
+  }
+
+  .igloo-create-profile-summary strong {
+    color: #93c5fd;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.125rem;
+  }
+
+  .igloo-create-profile-field {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .igloo-create-profile-field > span,
+  .igloo-create-profile-section h3 {
+    color: rgba(147, 197, 253, 0.8);
+  }
+
+  .igloo-create-profile-field small {
+    color: #8494a7;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-create-profile-field input,
+  .igloo-create-profile-passwords input {
+    min-height: 2.625rem;
+    border: 1px solid rgba(30, 58, 138, 0.3);
+    border-radius: 0.5rem;
+    background: rgba(15, 23, 42, 0.6);
+    color: #cbd5e1;
+    font-family: var(--igloo-font-share-tech-mono);
+    padding: 0.625rem 0.875rem;
+    outline: none;
+  }
+
+  .igloo-create-profile-passwords {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .igloo-create-profile-passwords label {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .igloo-create-profile-passwords span {
+    color: #cfe0ff;
+    font-size: 0.875rem;
+    line-height: 0.875rem;
+  }
+
+  .igloo-create-relay-box {
+    display: grid;
+    overflow: hidden;
+    border: 1px solid rgba(30, 58, 138, 0.3);
+    border-radius: 0.75rem;
+    background: rgba(15, 23, 42, 0.6);
+  }
+
+  .igloo-create-relay-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-bottom: 1px solid rgba(30, 58, 138, 0.2);
+    padding: 0.75rem 1rem;
+  }
+
+  .igloo-create-relay-row span {
+    color: #60a5fa;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.8125rem;
+    line-height: 1rem;
+  }
+
+  .igloo-create-relay-row small {
+    color: rgba(34, 197, 94, 0.6);
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .igloo-create-relay-box textarea {
+    min-height: 5.5rem;
+    border: 0;
+    border-radius: 0;
+    background: rgba(15, 23, 42, 0.8);
+    font-family: var(--igloo-font-share-tech-mono);
+    resize: vertical;
+  }
+
   .igloo-panel-grid {
     display: grid;
     gap: 12px;
@@ -982,6 +1210,23 @@
   .igloo-flow-root input::placeholder,
   .igloo-flow-root textarea::placeholder {
     color: var(--igloo-shell-muted);
+  }
+
+  .igloo-flow-root .igloo-create-input-shell input,
+  .igloo-flow-root .igloo-create-counter input,
+  .igloo-flow-root .igloo-create-profile-field input,
+  .igloo-flow-root .igloo-create-profile-passwords input {
+    background: rgba(15, 23, 42, 0.6);
+  }
+
+  .igloo-flow-root .igloo-create-profile-field input,
+  .igloo-flow-root .igloo-create-profile-passwords input {
+    min-height: 2.625rem;
+    border: 1px solid rgba(30, 58, 138, 0.3);
+    border-radius: 0.5rem;
+    color: #cbd5e1;
+    font-family: var(--igloo-font-share-tech-mono);
+    padding: 0.625rem 0.875rem;
   }
 
   .igloo-flow-root .igloo-create-input-shell input,
@@ -1248,44 +1493,69 @@
 
   .igloo-step-progress {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 4px;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 0.25rem;
   }
 
   .igloo-step-chip {
-    display: inline-flex;
+    display: flex;
+    width: 10rem;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(96, 165, 250, 0.16);
-    background: rgba(15, 23, 42, 0.42);
-    color: var(--igloo-shell-muted);
-    font-size: 0.74rem;
-    line-height: 1;
+    gap: 0.5rem;
+    color: rgba(148, 163, 184, 0.6);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
   }
 
   .igloo-step-chip span {
     display: inline-grid;
     place-items: center;
-    inline-size: 18px;
-    block-size: 18px;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 2px solid rgba(30, 58, 138, 0.3);
     border-radius: 999px;
-    background: rgba(59, 130, 246, 0.12);
-    color: #dbeafe;
-    font-size: 0.72rem;
+    color: rgba(148, 163, 184, 0.6);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.125rem;
+  }
+
+  .igloo-step-chip strong {
+    font-weight: 500;
   }
 
   .igloo-step-chip.is-active {
-    border-color: rgba(96, 165, 250, 0.38);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(15, 23, 42, 0.84));
-    color: #eff6ff;
+    color: #60a5fa;
   }
 
   .igloo-step-chip.is-active span {
-    background: rgba(96, 165, 250, 0.24);
-    color: #eff6ff;
+    border-color: #2563eb;
+    color: #60a5fa;
+  }
+
+  .igloo-step-chip.is-complete {
+    color: #60a5fa;
+  }
+
+  .igloo-step-chip.is-complete span {
+    border-color: #2563eb;
+    background: #2563eb;
+    color: #fff;
+  }
+
+  .igloo-step-connector {
+    width: min(4rem, 7vw);
+    height: 0.125rem;
+    margin-top: 1.0625rem;
+    background: rgba(30, 58, 138, 0.3);
+  }
+
+  .igloo-step-connector.is-complete {
+    background: #2563eb;
   }
 
   .igloo-confirm-shell {

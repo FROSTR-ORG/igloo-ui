@@ -7,6 +7,7 @@ import {
   CreateFlowDistributionCards,
   CreateFlowGenerateCard,
   CreateFlowLocalSaveCard,
+  CreateFlowProfileSetup,
   RotateKeysetPanel,
   StoredProfilesLandingCard,
   WelcomeEntryHero,
@@ -305,6 +306,60 @@ describe('shared host flow components', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Create Keyset' }));
     expect(onGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the Paper create-profile setup surface', () => {
+    const onSelectShare = vi.fn();
+    const onLabelChange = vi.fn();
+    const onPrimarySecretChange = vi.fn();
+    const onSecondarySecretChange = vi.fn();
+    const onRelayUrlsChange = vi.fn();
+    const onAction = vi.fn();
+
+    render(
+      <CreateFlowProfileSetup
+        shares={[
+          { name: 'Share 1', member_idx: 0, share_public_key: 'share-pub-1' },
+          { name: 'Share 2', member_idx: 1, share_public_key: 'share-pub-2' },
+          { name: 'Share 3', member_idx: 2, share_public_key: 'share-pub-3' },
+        ]}
+        selectedMemberIdx={1}
+        keysetName="My Signing Key"
+        draft={{
+          label: 'Igloo Web',
+          relayUrls: 'wss://relay.primal.net',
+          primarySecret: '',
+          secondarySecret: '',
+        }}
+        actionLabel="Continue to Review"
+        onSelectShare={onSelectShare}
+        onLabelChange={onLabelChange}
+        onPrimarySecretChange={onPrimarySecretChange}
+        onSecondarySecretChange={onSecondarySecretChange}
+        onRelayUrlsChange={onRelayUrlsChange}
+        onAction={onAction}
+      />,
+    );
+
+    expect(screen.getByText('Choose Local Share')).toBeInTheDocument();
+    expect(screen.getByText('Index 1 · Encrypted')).toBeInTheDocument();
+    expect(screen.getByText('Save to this device')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Share 3/i }));
+    expect(onSelectShare).toHaveBeenCalledWith(2);
+
+    fireEvent.change(screen.getByLabelText('Device Profile Name'), {
+      target: { value: 'Primary Browser Device' },
+    });
+    expect(onLabelChange).toHaveBeenCalledWith('Primary Browser Device');
+
+    fireEvent.change(screen.getByLabelText('Device Password'), {
+      target: { value: 'secret' },
+    });
+    expect(onPrimarySecretChange).toHaveBeenCalledWith('secret');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to Review' }));
+    expect(onAction).toHaveBeenCalledTimes(1);
   });
 
   it('renders rotate-keyset source and recovery share inputs separately', () => {

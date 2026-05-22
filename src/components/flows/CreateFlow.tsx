@@ -396,6 +396,149 @@ export function CreateFlowLocalSaveCard({
   );
 }
 
+export function CreateFlowProfileSetup({
+  shares,
+  selectedMemberIdx,
+  keysetName,
+  draft,
+  actionLabel,
+  onSelectShare,
+  onLabelChange,
+  onPrimarySecretChange,
+  onSecondarySecretChange,
+  onRelayUrlsChange,
+  onAction,
+}: {
+  shares: SharedGeneratedShare[];
+  selectedMemberIdx: number | null;
+  keysetName: string;
+  draft: SharedLocalSaveDraft;
+  actionLabel: string;
+  onSelectShare: (memberIdx: number) => void;
+  onLabelChange: (value: string) => void;
+  onPrimarySecretChange: (value: string) => void;
+  onSecondarySecretChange: (value: string) => void;
+  onRelayUrlsChange: (value: string) => void;
+  onAction: () => void;
+}) {
+  const selectedShare =
+    shares.find((share) => share.member_idx === selectedMemberIdx) ?? shares[0] ?? null;
+  const relayRows = draft.relayUrls
+    .split(/\r?\n/)
+    .map((relay) => relay.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="igloo-create-profile-form">
+      <section className="igloo-create-profile-panel">
+        <header>
+          <h3>Choose Local Share</h3>
+          <p>One share saves locally; the rest become bfonboard packages on the next step.</p>
+        </header>
+        <div className="igloo-create-share-list">
+          {shares.map((share) => {
+            const isSelected = share.member_idx === selectedShare?.member_idx;
+            return (
+              <button
+                type="button"
+                key={share.member_idx}
+                className={isSelected ? 'igloo-create-share-option is-selected' : 'igloo-create-share-option'}
+                onClick={() => onSelectShare(share.member_idx)}
+                aria-pressed={isSelected}
+              >
+                <span className="igloo-create-share-radio" aria-hidden="true" />
+                <span className="igloo-create-share-copy">
+                  <strong>{share.name}</strong>
+                  <small>Index {share.member_idx} · {keysetName}</small>
+                </span>
+                <span className="igloo-create-share-state">
+                  {isSelected ? 'Save to this device' : 'Distribute remotely'}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {selectedShare ? (
+          <div className="igloo-create-profile-summary">
+            <div>
+              <span>Local Share</span>
+              <strong>Index {selectedShare.member_idx} · Encrypted</strong>
+            </div>
+            <div>
+              <span>Keyset</span>
+              <strong>{keysetName}</strong>
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      <label className="igloo-create-profile-field">
+        <span>Profile Name</span>
+        <small>A name for this profile to identify it in the peer list.</small>
+        <input
+          aria-label="Device Profile Name"
+          value={draft.label}
+          onChange={(event) => onLabelChange(event.target.value)}
+        />
+      </label>
+
+      <section className="igloo-create-profile-section">
+        <header>
+          <h3>Profile Password</h3>
+          <p>This password encrypts your profile on this device. You'll need it each time you unlock it.</p>
+        </header>
+        <div className="igloo-create-profile-passwords">
+          <label>
+            <span>Password</span>
+            <input
+              aria-label="Device Password"
+              type="password"
+              value={draft.primarySecret}
+              onChange={(event) => onPrimarySecretChange(event.target.value)}
+            />
+          </label>
+          <label>
+            <span>Confirm Password</span>
+            <input
+              aria-label="Confirm Password"
+              type="password"
+              value={draft.secondarySecret ?? ''}
+              onChange={(event) => onSecondarySecretChange(event.target.value)}
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="igloo-create-profile-section">
+        <header>
+          <h3>Relays</h3>
+        </header>
+        <div className="igloo-create-relay-box">
+          {relayRows.map((relay) => (
+            <div className="igloo-create-relay-row" key={relay}>
+              <span>{relay}</span>
+              <small>Connected</small>
+            </div>
+          ))}
+          <label>
+            <span className="sr-only">Relays</span>
+            <Textarea
+              aria-label="Relays"
+              value={draft.relayUrls}
+              onChange={(event) => onRelayUrlsChange(event.target.value)}
+              placeholder="wss://"
+            />
+          </label>
+        </div>
+      </section>
+
+      <Button type="button" className="igloo-create-primary-action" onClick={onAction}>
+        {actionLabel}
+      </Button>
+    </div>
+  );
+}
+
 export function CreateFlowReviewPanel({
   profileName,
   sharePublicKey,
