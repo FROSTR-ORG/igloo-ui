@@ -635,6 +635,173 @@
     width: 6rem;
   }
 
+  .igloo-public-task-screen {
+    display: flex;
+    width: min(40rem, calc(100vw - 2rem));
+    min-height: calc(100vh - 7.5rem);
+    flex-direction: column;
+    gap: 1.25rem;
+    margin: 0 auto;
+    padding: 1rem 0 3.5rem;
+  }
+
+  .igloo-public-task-title {
+    display: grid;
+    gap: 0.5rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .igloo-public-task-title h2 {
+    margin: 0;
+    color: #93c5fd;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .igloo-public-task-title p {
+    margin: 0;
+    color: #8494a7;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-create-keyset-form {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .igloo-create-field {
+    display: grid;
+    gap: 0.375rem;
+    color: rgba(147, 197, 253, 0.8);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1rem;
+  }
+
+  .igloo-create-field small,
+  .igloo-create-threshold-help {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1rem;
+  }
+
+  .igloo-create-label-with-help {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .igloo-create-label-with-help svg {
+    color: #60a5fa;
+  }
+
+  .igloo-create-input-shell {
+    display: flex;
+    min-height: 2.625rem;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid rgba(30, 58, 138, 0.3);
+    border-radius: 0.5rem;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 0.625rem 0.875rem;
+  }
+
+  .igloo-create-input-shell svg {
+    flex: none;
+    color: #475569;
+  }
+
+  .igloo-create-input-shell input {
+    min-width: 0;
+    flex: 1 1 auto;
+    border: 0;
+    background: transparent;
+    color: #cbd5e1;
+    padding: 0;
+    outline: none;
+  }
+
+  .igloo-create-private-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+  }
+
+  .igloo-create-private-row button {
+    height: 2.625rem;
+    border-color: rgba(30, 58, 138, 0.5);
+    color: #93c5fd;
+    padding-inline: 1rem;
+  }
+
+  .igloo-create-threshold-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 1rem;
+    align-items: end;
+  }
+
+  .igloo-create-threshold-divider {
+    color: #475569;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 1.25rem;
+    line-height: 2.625rem;
+  }
+
+  .igloo-create-counter {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr) 2.5rem;
+    height: 2.625rem;
+    overflow: hidden;
+    border: 1px solid rgba(30, 58, 138, 0.3);
+    border-radius: 0.5rem;
+    background: rgba(15, 23, 42, 0.6);
+  }
+
+  .igloo-create-counter button {
+    width: 2.5rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #60a5fa;
+    padding: 0;
+  }
+
+  .igloo-create-counter button:first-child {
+    border-right: 1px solid rgba(30, 58, 138, 0.2);
+    color: #64748b;
+  }
+
+  .igloo-create-counter button:last-child {
+    border-left: 1px solid rgba(30, 58, 138, 0.2);
+  }
+
+  .igloo-create-counter input {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: #e2e8f0;
+    font-family: var(--igloo-font-share-tech-mono);
+    text-align: center;
+    outline: none;
+  }
+
+  .igloo-create-counter input::-webkit-outer-spin-button,
+  .igloo-create-counter input::-webkit-inner-spin-button {
+    margin: 0;
+    appearance: none;
+  }
+
+  .igloo-create-primary-action {
+    height: 2.75rem;
+    width: 100%;
+    font-weight: 600;
+  }
+
   .igloo-panel-grid {
     display: grid;
     gap: 12px;
@@ -815,6 +982,18 @@
   .igloo-flow-root input::placeholder,
   .igloo-flow-root textarea::placeholder {
     color: var(--igloo-shell-muted);
+  }
+
+  .igloo-flow-root .igloo-create-input-shell input,
+  .igloo-flow-root .igloo-create-counter input {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+  }
+
+  .igloo-flow-root .igloo-create-counter button {
+    border-radius: 0;
   }
 
   .igloo-pwa-entry-shell {

@@ -60,12 +60,7 @@ export function WelcomeEntryHero({
         </div>
       </div>
 
-      <div className="igloo-welcome-entry-footer" aria-hidden="true">
-        <Globe size={16} />
-        <BookOpen size={16} />
-        <Github size={16} />
-        <Feather size={16} />
-      </div>
+      <PublicFocusFooter />
     </section>
   );
 }
@@ -77,6 +72,36 @@ export type WelcomeReturningProfileModel = {
   memberLabel: string;
   publicKeyLabel: string;
 };
+
+export function PublicFocusFooter() {
+  return (
+    <div className="igloo-welcome-entry-footer" aria-hidden="true">
+      <Globe size={16} />
+      <BookOpen size={16} />
+      <Github size={16} />
+      <Feather size={16} />
+    </div>
+  );
+}
+
+export function PublicTaskShell({ children }: { children: React.ReactNode }) {
+  return <section className="igloo-public-task-screen igloo-flow-root">{children}</section>;
+}
+
+export function PublicTaskTitle({
+  title,
+  description,
+}: {
+  title: string;
+  description: React.ReactNode;
+}) {
+  return (
+    <div className="igloo-public-task-title">
+      <h2>{title}</h2>
+      <p>{description}</p>
+    </div>
+  );
+}
 
 export function WelcomeReturningHero({
   logoSrc,
@@ -152,12 +177,7 @@ export function WelcomeReturningHero({
         </div>
       </div>
 
-      <div className="igloo-welcome-entry-footer" aria-hidden="true">
-        <Globe size={16} />
-        <BookOpen size={16} />
-        <Github size={16} />
-        <Feather size={16} />
-      </div>
+      <PublicFocusFooter />
     </section>
   );
 }

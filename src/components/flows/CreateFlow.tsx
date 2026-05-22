@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { EyeOff, HelpCircle, Pencil } from 'lucide-react';
 
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -78,48 +79,115 @@ export function CreateFlowGenerateCard({
   ) => void;
   onGenerate: () => void;
 }) {
+  const thresholdValue = Number.parseInt(threshold, 10) || 2;
+  const countValue = Number.parseInt(count, 10) || 3;
+  const thresholdSummary = `Any ${thresholdValue} of ${countValue} shares can sign - min threshold is 2, min shares is 3`;
+
+  const adjustNumber = (field: 'threshold' | 'count', direction: -1 | 1) => {
+    const currentValue = field === 'threshold' ? thresholdValue : countValue;
+    const nextValue = Math.max(2, currentValue + direction);
+    onChangeForm(field, String(nextValue));
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create Keyset</CardTitle>
-        <CardDescription>Provide the target threshold geometry for a new keyset.</CardDescription>
-      </CardHeader>
-      <CardContent className="igloo-stack">
-        <label>
-          Group Name
+    <div className="igloo-create-keyset-form">
+      <label className="igloo-create-field">
+        <span>Keyset Name</span>
+        <div className="igloo-create-input-shell">
+          <Pencil size={16} aria-hidden="true" />
           <input
+            aria-label="Group Name"
             value={groupName}
             onChange={(event) => onChangeForm('groupName', event.target.value)}
-            placeholder="e.g. Treasury Signers"
+            placeholder="e.g. My Signing Key, Work Key..."
           />
-        </label>
-        <div className="igloo-two-up">
-          <label>
-            Threshold
-            <input
-              type="number"
-              min={2}
-              value={threshold}
-              onChange={(event) => onChangeForm('threshold', event.target.value)}
-            />
-          </label>
-          <label>
-            Total Keys
-            <input
-              type="number"
-              min={2}
-              value={count}
-              onChange={(event) => onChangeForm('count', event.target.value)}
-            />
-          </label>
         </div>
-        <div className="igloo-button-row">
-          <Button type="button" size="sm" onClick={onGenerate}>
-            Generate Keyset
+        <small>A friendly name for this keyset's group profile. Visible to all peers in the keyset.</small>
+      </label>
+
+      <label className="igloo-create-field">
+        <span className="igloo-create-label-with-help">
+          Private Key (nsec)
+          <HelpCircle size={14} aria-hidden="true" />
+        </span>
+        <div className="igloo-create-private-row">
+          <div className="igloo-create-input-shell">
+            <input
+              aria-label="Private Key (nsec)"
+              placeholder="Paste your existing nsec or generate a new one"
+              readOnly
+            />
+            <EyeOff size={16} aria-hidden="true" />
+          </div>
+          <Button type="button" variant="secondary" disabled>
+            Generate
           </Button>
         </div>
-      </CardContent>
-    </Card>
+        <small>Paste your existing nsec or leave blank to generate a new one.</small>
+      </label>
+
+      <div className="igloo-create-threshold-row">
+        <CreateCounterControl
+          label="Threshold"
+          value={threshold}
+          onDecrease={() => adjustNumber('threshold', -1)}
+          onIncrease={() => adjustNumber('threshold', 1)}
+          onChange={(value) => onChangeForm('threshold', value)}
+        />
+        <span className="igloo-create-threshold-divider">/</span>
+        <CreateCounterControl
+          label="Total Shares"
+          value={count}
+          onDecrease={() => adjustNumber('count', -1)}
+          onIncrease={() => adjustNumber('count', 1)}
+          onChange={(value) => onChangeForm('count', value)}
+        />
+      </div>
+
+      <p className="igloo-create-threshold-help">{thresholdSummary}</p>
+
+      <Button type="button" className="igloo-create-primary-action" onClick={onGenerate}>
+        Create Keyset
+      </Button>
+    </div>
+  );
+}
+
+function CreateCounterControl({
+  label,
+  value,
+  onDecrease,
+  onIncrease,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onDecrease: () => void;
+  onIncrease: () => void;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="igloo-create-field">
+      <span className="igloo-create-label-with-help">
+        {label}
+        <HelpCircle size={14} aria-hidden="true" />
+      </span>
+      <div className="igloo-create-counter">
+        <button type="button" aria-label={`Decrease ${label}`} onClick={onDecrease}>
+          -
+        </button>
+        <input
+          aria-label={label}
+          type="number"
+          min={2}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
+        <button type="button" aria-label={`Increase ${label}`} onClick={onIncrease}>
+          +
+        </button>
+      </div>
+    </label>
   );
 }
 

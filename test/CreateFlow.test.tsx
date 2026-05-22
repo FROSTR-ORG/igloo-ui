@@ -292,13 +292,18 @@ describe('shared host flow components', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'Rotate Existing Keyset' })).not.toBeInTheDocument();
+    expect(screen.getByText('Private Key (nsec)')).toBeInTheDocument();
+    expect(screen.getByText('Any 2 of 3 shares can sign - min threshold is 2, min shares is 3')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Group Name'), {
       target: { value: 'Treasury Signers' },
     });
     expect(onChangeForm).toHaveBeenCalledWith('groupName', 'Treasury Signers');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Generate Keyset' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Increase Threshold' }));
+    expect(onChangeForm).toHaveBeenCalledWith('threshold', '3');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Keyset' }));
     expect(onGenerate).toHaveBeenCalledTimes(1);
   });
 
