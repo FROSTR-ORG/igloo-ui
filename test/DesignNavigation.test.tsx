@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { AppHeader, PageBackLink } from '../src';
+import { AppHeader, PageBackLink, PageLayout } from '../src';
 
 describe('design navigation primitives', () => {
   it('renders the welcome header links', () => {
@@ -33,5 +33,16 @@ describe('design navigation primitives', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to Welcome' }));
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the welcome page layout without the default padded shell', () => {
+    const { container } = render(
+      <PageLayout surface="welcome" maxWidth="max-w-none">
+        <main>Welcome</main>
+      </PageLayout>,
+    );
+
+    expect(container.firstElementChild).toHaveClass('p-0');
+    expect(container.firstElementChild).not.toHaveClass('p-3');
   });
 });

@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CreateFlowDistributionSection,
@@ -8,9 +8,90 @@ import {
   CreateFlowLocalSaveCard,
   RotateKeysetPanel,
   StoredProfilesLandingCard,
+  WelcomeEntryHero,
+  WelcomeReturningHero,
 } from '../src';
 
+afterEach(() => {
+  cleanup();
+});
+
 describe('shared host flow components', () => {
+  it('renders the first-launch Paper welcome entry actions', () => {
+    const onNewKeyset = vi.fn();
+    const onImportProfile = vi.fn();
+    const onOnboard = vi.fn();
+
+    render(
+      <WelcomeEntryHero
+        logoSrc="/igloo-mark.png"
+        onNewKeyset={onNewKeyset}
+        onImportProfile={onImportProfile}
+        onOnboard={onOnboard}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Igloo Web' })).toBeInTheDocument();
+    expect(screen.getByText('Split your Nostr key. Sign from anywhere.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'New Keyset' }));
+    expect(onNewKeyset).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Import Device Profile' }));
+    expect(onImportProfile).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Onboard' }));
+    expect(onOnboard).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the returning Paper welcome profile actions', () => {
+    const onUnlock = vi.fn();
+    const onRotate = vi.fn();
+    const onNewKeyset = vi.fn();
+    const onImportProfile = vi.fn();
+    const onOnboard = vi.fn();
+
+    render(
+      <WelcomeReturningHero
+        logoSrc="/igloo-mark.png"
+        profile={{
+          id: 'profile-1',
+          label: 'My Signing Key',
+          thresholdLabel: '2/3',
+          memberLabel: '#0',
+          publicKeyLabel: 'npub1qe3...7k4m',
+        }}
+        onUnlock={onUnlock}
+        onRotate={onRotate}
+        onNewKeyset={onNewKeyset}
+        onImportProfile={onImportProfile}
+        onOnboard={onOnboard}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Igloo Web' })).toBeInTheDocument();
+    expect(screen.getByText('Welcome back.')).toBeInTheDocument();
+    expect(screen.getByText('My Signing Key')).toBeInTheDocument();
+    expect(screen.getByText('2/3')).toBeInTheDocument();
+    expect(screen.getByText('#0')).toBeInTheDocument();
+    expect(screen.getByText('npub1qe3...7k4m')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
+    expect(onUnlock).toHaveBeenCalledWith('profile-1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rotate' }));
+    expect(onRotate).toHaveBeenCalledWith('profile-1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'New Keyset' }));
+    expect(onNewKeyset).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Import Device Profile' }));
+    expect(onImportProfile).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Onboard' }));
+    expect(onOnboard).toHaveBeenCalledTimes(1);
+  });
+
   it('renders stored profile card models on landing and dispatches explicit actions', () => {
     const onSelect = vi.fn();
     const onLoad = vi.fn();

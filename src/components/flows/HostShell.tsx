@@ -1,10 +1,159 @@
 import * as React from 'react';
+import { BookOpen, Feather, Github, Globe, Info, Lock, Plus } from 'lucide-react';
 
 import { CRITICAL_E2E_TEST_IDS, type CriticalE2ETestId } from '../../lib/e2e-test-ids';
 import type { StoredProfileCardModel } from '../../models/view-models';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { ContentCard } from '../ui/content-card';
+
+export function WelcomeEntryHero({
+  logoSrc,
+  logoAlt = 'Igloo',
+  onNewKeyset,
+  onImportProfile,
+  onOnboard,
+}: {
+  logoSrc?: string;
+  logoAlt?: string;
+  onNewKeyset: () => void;
+  onImportProfile: () => void;
+  onOnboard: () => void;
+}) {
+  return (
+    <section className="igloo-welcome-entry" aria-labelledby="igloo-welcome-entry-title">
+      <div className="igloo-welcome-entry-brand">
+        {logoSrc ? <img src={logoSrc} alt={logoAlt} className="igloo-welcome-entry-logo" /> : null}
+        <div className="igloo-welcome-entry-copy">
+          <h2 id="igloo-welcome-entry-title">Igloo Web</h2>
+          <p>Split your Nostr key. Sign from anywhere.</p>
+        </div>
+      </div>
+
+      <div className="igloo-welcome-entry-panel">
+        <div className="igloo-welcome-entry-panel-body">
+          <div className="igloo-welcome-entry-panel-heading">
+            <span className="igloo-welcome-entry-plus" aria-hidden="true">
+              <Plus size={16} />
+            </span>
+            <div className="igloo-welcome-entry-title-row">
+              <h3>New Keyset</h3>
+              <Info size={14} aria-hidden="true" />
+            </div>
+          </div>
+          <p>Generate a new threshold keyset and set up its first device profile.</p>
+        </div>
+        <div className="igloo-welcome-entry-primary">
+          <Button type="button" onClick={onNewKeyset}>
+            New Keyset
+          </Button>
+        </div>
+        <div className="igloo-welcome-entry-secondary">
+          <span>or</span>
+          <Button type="button" size="sm" variant="secondary" onClick={onImportProfile}>
+            Import Device Profile
+          </Button>
+          <Button type="button" size="sm" variant="secondary" onClick={onOnboard}>
+            Onboard
+          </Button>
+        </div>
+      </div>
+
+      <div className="igloo-welcome-entry-footer" aria-hidden="true">
+        <Globe size={16} />
+        <BookOpen size={16} />
+        <Github size={16} />
+        <Feather size={16} />
+      </div>
+    </section>
+  );
+}
+
+export type WelcomeReturningProfileModel = {
+  id: string;
+  label: string;
+  thresholdLabel: string;
+  memberLabel: string;
+  publicKeyLabel: string;
+};
+
+export function WelcomeReturningHero({
+  logoSrc,
+  logoAlt = 'Igloo',
+  profile,
+  onUnlock,
+  onRotate,
+  onNewKeyset,
+  onImportProfile,
+  onOnboard,
+}: {
+  logoSrc?: string;
+  logoAlt?: string;
+  profile: WelcomeReturningProfileModel;
+  onUnlock: (profileId: string) => void;
+  onRotate: (profileId: string) => void;
+  onNewKeyset: () => void;
+  onImportProfile: () => void;
+  onOnboard: () => void;
+}) {
+  return (
+    <section className="igloo-welcome-entry" aria-labelledby="igloo-welcome-returning-title">
+      <div className="igloo-welcome-entry-brand">
+        {logoSrc ? <img src={logoSrc} alt={logoAlt} className="igloo-welcome-entry-logo" /> : null}
+        <div className="igloo-welcome-entry-copy">
+          <h2 id="igloo-welcome-returning-title">Igloo Web</h2>
+          <p>Welcome back.</p>
+        </div>
+      </div>
+
+      <div className="igloo-welcome-returning-stack">
+        <div className="igloo-welcome-profile-row">
+          <div className="igloo-welcome-profile-icon" aria-hidden="true">
+            <Lock size={20} />
+          </div>
+          <div className="igloo-welcome-profile-copy">
+            <h3>{profile.label}</h3>
+            <div className="igloo-welcome-profile-meta">
+              <span>{profile.thresholdLabel}</span>
+              <span className="igloo-welcome-profile-dot">.</span>
+              <span>{profile.memberLabel}</span>
+              <span className="igloo-welcome-profile-dot">.</span>
+              <span className="igloo-welcome-profile-key">{profile.publicKeyLabel}</span>
+            </div>
+          </div>
+          <div className="igloo-welcome-profile-actions">
+            <Button type="button" onClick={() => onUnlock(profile.id)}>
+              Unlock
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => onRotate(profile.id)}>
+              Rotate
+            </Button>
+          </div>
+        </div>
+
+        <div className="igloo-welcome-entry-secondary">
+          <span>or</span>
+          <Button type="button" size="sm" variant="secondary" onClick={onNewKeyset}>
+            New Keyset
+          </Button>
+          <Button type="button" size="sm" variant="secondary" onClick={onImportProfile}>
+            Import Device Profile
+          </Button>
+          <Button type="button" size="sm" variant="secondary" onClick={onOnboard}>
+            Onboard
+          </Button>
+        </div>
+      </div>
+
+      <div className="igloo-welcome-entry-footer" aria-hidden="true">
+        <Globe size={16} />
+        <BookOpen size={16} />
+        <Github size={16} />
+        <Feather size={16} />
+      </div>
+    </section>
+  );
+}
 
 function LandingIcon({ children }: { children: React.ReactNode }) {
   return <div className="igloo-pwa-entry-icon" aria-hidden="true">{children}</div>;
