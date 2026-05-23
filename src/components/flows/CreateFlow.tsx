@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Check, Copy, EyeOff, HelpCircle, KeyRound, Pencil, QrCode } from 'lucide-react';
+import { AlertTriangle, Check, Copy, EyeOff, HelpCircle, KeyRound, Pencil, QrCode } from 'lucide-react';
 
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -789,6 +789,10 @@ export function CreateFlowDistributionCards({
   localProfileName?: string;
 }) {
   const allComplete = shares.length > 0 && shares.every((share) => results[share.member_idx]?.kind === 'completed');
+  const orderedItems = [
+    ...shares.map((share) => ({ kind: 'remote' as const, share })),
+    ...(localShare ? [{ kind: 'local' as const, share: localShare }] : []),
+  ].sort((a, b) => a.share.member_idx - b.share.member_idx);
 
   if (allComplete) {
     return <CreateFlowDistributionCompletion shares={shares} results={results} onFinish={onFinish} />;
@@ -796,17 +800,33 @@ export function CreateFlowDistributionCards({
 
   return (
     <div className="igloo-create-distribution-list">
-      {shares.map((share) => {
-        const form = drafts[share.member_idx] ?? {
-          label: share.name,
+      {orderedItems.map((item) => {
+        if (item.kind === 'local') {
+          return (
+            <section className="igloo-create-local-share-card" key={`local-${item.share.member_idx}`}>
+              <header>
+                <h3>{item.share.name}</h3>
+                <span>Index {item.share.member_idx}</span>
+              </header>
+              <div>
+                <Check size={13} aria-hidden="true" />
+                <strong>Saved to {localProfileName}</strong>
+              </div>
+              <code>Saved securely in this browser</code>
+            </section>
+          );
+        }
+
+        const form = drafts[item.share.member_idx] ?? {
+          label: item.share.name,
           packagePassword: '',
           confirmPassword: '',
         };
-        const result = results[share.member_idx];
+        const result = results[item.share.member_idx];
         return (
           <CreateFlowDistributionCard
-            key={`distribution-${share.member_idx}`}
-            share={share}
+            key={`distribution-${item.share.member_idx}`}
+            share={item.share}
             draft={form}
             result={result}
             onChangeDraft={onChangeDraft}
@@ -814,19 +834,6 @@ export function CreateFlowDistributionCards({
           />
         );
       })}
-      {localShare ? (
-        <section className="igloo-create-local-share-card">
-          <header>
-            <h3>{localShare.name}</h3>
-            <span>Index {localShare.member_idx}</span>
-          </header>
-          <div>
-            <Check size={13} aria-hidden="true" />
-            <strong>Saved to {localProfileName}</strong>
-          </div>
-          <code>Saved securely in this browser</code>
-        </section>
-      ) : null}
       <Button type="button" className="igloo-create-primary-action" disabled>
         Continue to Completion
       </Button>
@@ -992,13 +999,22 @@ export function OnboardFailedPanel({
   return (
     <div className="igloo-onboard-form">
       <section className="igloo-onboard-panel igloo-onboard-failed">
-        <span>Onboarding Failed</span>
-        <h3>Could not complete handshake</h3>
-        <p>{message}</p>
+        <div className="igloo-onboard-warning-row">
+          <AlertTriangle size={16} aria-hidden="true" />
+          <div>
+            <h3>Package Did Not Apply</h3>
+            <p>{message}</p>
+          </div>
+        </div>
       </section>
-      <Button type="button" className="igloo-create-primary-action" onClick={onRetry}>
-        Try Again
-      </Button>
+      <div className="igloo-onboard-action-row">
+        <Button type="button" onClick={onRetry}>
+          Retry
+        </Button>
+        <Button type="button" variant="secondary" onClick={onRetry}>
+          Back to Onboarding
+        </Button>
+      </div>
     </div>
   );
 }
@@ -1027,9 +1043,18 @@ export function OnboardCompletePanel({
 
   return (
     <div className="igloo-onboard-form">
+      <section className="igloo-onboard-complete-hero">
+        <span aria-hidden="true">
+          <Check size={22} />
+        </span>
+        <div>
+          <h3>Onboarding Complete</h3>
+          <p>Review your configuration and set or confirm a local password before launching the signer.</p>
+        </div>
+      </section>
       <section className="igloo-onboard-panel">
         <header>
-          <span>Handshake Complete</span>
+          <span>Device Profile</span>
           <h3>Review Onboarded Profile</h3>
           <p>The onboarding package resolved successfully. Confirm the profile, then save this device locally.</p>
         </header>
@@ -1078,7 +1103,7 @@ export function OnboardCompletePanel({
         </div>
       </section>
       <Button type="button" className="igloo-create-primary-action" onClick={onSave}>
-        Save Device
+        Save & Launch Signer
       </Button>
     </div>
   );

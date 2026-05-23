@@ -1266,6 +1266,7 @@
     display: grid;
     gap: 0.75rem;
     border-color: rgba(34, 197, 94, 0.24);
+    background: rgba(6, 78, 59, 0.12);
   }
 
   .igloo-create-local-share-card header span {
@@ -1490,13 +1491,74 @@
   }
 
   .igloo-onboard-failed {
-    border-color: rgba(248, 113, 113, 0.36);
-    background: rgba(69, 10, 10, 0.24);
+    border-color: rgba(234, 179, 8, 0.45);
+    background: rgba(113, 63, 18, 0.22);
   }
 
-  .igloo-onboard-failed > span,
-  .igloo-onboard-failed h3 {
-    color: #fca5a5;
+  .igloo-onboard-warning-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .igloo-onboard-warning-row svg {
+    flex: none;
+    margin-top: 0.125rem;
+    color: #facc15;
+  }
+
+  .igloo-onboard-warning-row h3 {
+    color: #fde68a;
+  }
+
+  .igloo-onboard-warning-row p {
+    color: #fef3c7;
+  }
+
+  .igloo-onboard-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .igloo-onboard-action-row button {
+    min-height: 2.5rem;
+    padding-inline: 1.25rem;
+  }
+
+  .igloo-onboard-complete-hero {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .igloo-onboard-complete-hero > span {
+    display: grid;
+    flex: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    place-items: center;
+    border-radius: 999px;
+    background: #22c55e;
+    color: #ecfdf5;
+  }
+
+  .igloo-onboard-complete-hero h3 {
+    margin: 0;
+    color: #93c5fd;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 1.35rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    line-height: 1.75rem;
+  }
+
+  .igloo-onboard-complete-hero p {
+    margin: 0.75rem 0 0;
+    max-width: 41rem;
+    color: #94a3b8;
+    font-size: 0.9375rem;
+    line-height: 1.4rem;
   }
 
   @keyframes igloo-onboard-pulse {

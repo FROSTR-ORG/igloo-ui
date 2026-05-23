@@ -522,7 +522,7 @@ describe('shared host flow components', () => {
 
     rerender(<OnboardFailedPanel message="Relay handshake timed out." onRetry={onRetry} />);
     expect(screen.getByText('Relay handshake timed out.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
@@ -564,7 +564,7 @@ describe('shared host flow components', () => {
     });
     expect(onConfirmPasswordChange).toHaveBeenCalledWith('device-pass');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save Device' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save & Launch Signer' }));
     expect(onSave).toHaveBeenCalledTimes(1);
   });
 
