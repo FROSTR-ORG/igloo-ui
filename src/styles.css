@@ -1355,6 +1355,35 @@
     gap: 1.25rem;
   }
 
+  .igloo-onboard-package-section {
+    display: grid;
+    gap: 0.625rem;
+  }
+
+  .igloo-onboard-scan-row {
+    display: flex;
+  }
+
+  .igloo-onboard-scan-row button {
+    min-height: 2.5rem;
+    gap: 0.45rem;
+    border-color: rgba(30, 58, 138, 0.42);
+    color: #bfdbfe;
+    padding-inline: 0.9rem;
+  }
+
+  .igloo-onboard-valid-status {
+    margin: 0;
+    color: #22c55e;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-onboard-divider {
+    height: 1px;
+    background: rgba(30, 58, 138, 0.28);
+  }
+
   .igloo-onboard-panel {
     display: grid;
     gap: 0.875rem;
@@ -1399,6 +1428,12 @@
     gap: 0.45rem;
   }
 
+  .igloo-onboard-field small {
+    color: #8494a7;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
   .igloo-onboard-field > span {
     color: rgba(147, 197, 253, 0.8);
     font-size: 0.6875rem;
@@ -1421,7 +1456,7 @@
   }
 
   .igloo-onboard-field textarea {
-    min-height: 7rem;
+    min-height: 4.5rem;
     resize: vertical;
   }
 

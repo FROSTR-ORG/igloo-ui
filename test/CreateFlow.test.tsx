@@ -499,18 +499,18 @@ describe('shared host flow components', () => {
       />,
     );
 
-    expect(screen.getByRole('heading', { name: 'Enter bfonboard Package' })).toBeInTheDocument();
+    expect(screen.getByText('Onboarding Package')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('bfonboard'), {
       target: { value: 'bfonboard1example' },
     });
     expect(onPackageTextChange).toHaveBeenCalledWith('bfonboard1example');
 
-    fireEvent.change(screen.getByLabelText('Decryption Password'), {
+    fireEvent.change(screen.getByLabelText('Package Password'), {
       target: { value: 'package-pass' },
     });
     expect(onPasswordChange).toHaveBeenCalledWith('package-pass');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Apply Onboarding Package' }));
     expect(onConnect).toHaveBeenCalledTimes(1);
   });
 

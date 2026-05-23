@@ -914,35 +914,54 @@ export function OnboardPackageEntry({
   onPasswordChange: (value: string) => void;
   onConnect: () => void;
 }) {
+  const hasPackage = packageText.trim().startsWith('bfonboard1');
+
   return (
     <div className="igloo-onboard-form">
-      <section className="igloo-onboard-panel">
-        <header>
-          <span>Onboarding Package</span>
-          <h3>Enter bfonboard Package</h3>
-          <p>Paste the package and password from the inviting device to start the onboarding handshake.</p>
-        </header>
+      <section className="igloo-onboard-package-section">
         <label className="igloo-onboard-field">
-          <span>bfonboard</span>
+          <span className="igloo-create-label-with-help">
+            Onboarding Package
+            <HelpCircle size={14} aria-hidden="true" />
+          </span>
+          <small>Paste a bfonboard1... package or scan its QR code.</small>
           <Textarea
             aria-label="bfonboard"
             value={packageText}
             onChange={(event) => onPackageTextChange(event.target.value)}
-            placeholder="Paste bfonboard1..."
+            placeholder="bfonboard1..."
           />
         </label>
+        <div className="igloo-onboard-scan-row">
+          <Button type="button" variant="secondary">
+            <QrCode size={15} aria-hidden="true" />
+            Scan QR
+          </Button>
+        </div>
+        {hasPackage ? (
+          <p className="igloo-onboard-valid-status">Valid package format</p>
+        ) : null}
+      </section>
+      <div className="igloo-onboard-divider" />
+      <section className="igloo-onboard-package-section">
         <label className="igloo-onboard-field">
-          <span>Decryption Password</span>
-          <input
-            aria-label="Decryption Password"
-            type="password"
-            value={password}
-            onChange={(event) => onPasswordChange(event.target.value)}
-          />
+          <span className="igloo-create-label-with-help">
+            Package Password
+            <HelpCircle size={14} aria-hidden="true" />
+          </span>
+          <div className="igloo-create-input-shell">
+            <input
+              aria-label="Package Password"
+              type="password"
+              value={password}
+              onChange={(event) => onPasswordChange(event.target.value)}
+            />
+            <EyeOff size={16} aria-hidden="true" />
+          </div>
         </label>
       </section>
       <Button type="button" className="igloo-create-primary-action" onClick={onConnect}>
-        Connect
+        Apply Onboarding Package
       </Button>
     </div>
   );
