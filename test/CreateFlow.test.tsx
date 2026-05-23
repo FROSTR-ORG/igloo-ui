@@ -331,10 +331,14 @@ describe('shared host flow components', () => {
         keysetName="My Signing Key"
         draft={{
           label: 'Igloo Web',
-          relayUrls: 'wss://relay.primal.net',
+          relayUrls: 'wss://relay.primal.net\nwss://relay.example.com',
           primarySecret: '',
           secondarySecret: '',
         }}
+        peerPermissions={[
+          { label: 'Peer #0', detail: '02d7e1...3b9e', enabled: ['sign', 'ecdh', 'ping', 'onboard'] },
+          { label: 'Peer #1', detail: '029c4a...1f5e', enabled: ['sign', 'ecdh', 'onboard'] },
+        ]}
         actionLabel="Continue to Review"
         onSelectShare={onSelectShare}
         onLabelChange={onLabelChange}
@@ -348,6 +352,10 @@ describe('shared host flow components', () => {
     expect(screen.getByText('Choose Local Share')).toBeInTheDocument();
     expect(screen.getByText('Index 1 · Encrypted')).toBeInTheDocument();
     expect(screen.getByText('Save to this device')).toBeInTheDocument();
+    expect(screen.getByText('wss://relay.example.com')).toBeInTheDocument();
+    expect(screen.getByText('Peer Permissions')).toBeInTheDocument();
+    expect(screen.getByText('Peer #0')).toBeInTheDocument();
+    expect(screen.getAllByText('SIGN')).toHaveLength(2);
 
     fireEvent.click(screen.getByRole('button', { name: /Share 3/i }));
     expect(onSelectShare).toHaveBeenCalledWith(2);
@@ -441,6 +449,8 @@ describe('shared host flow components', () => {
       target: { value: 'remote-pass' },
     });
     expect(onChangeDraft).toHaveBeenCalledWith(2, 'packagePassword', 'remote-pass');
+    expect(onChangeDraft).toHaveBeenCalledWith(2, 'confirmPassword', 'remote-pass');
+    expect(screen.queryByLabelText('Confirm password')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Create package' }));
     expect(onDistribute).toHaveBeenCalledWith(2, 'prepare');
@@ -516,12 +526,24 @@ describe('shared host flow components', () => {
 
   it('renders onboarding handshake and failure panels', () => {
     const onRetry = vi.fn();
-    const { rerender } = render(<OnboardHandshakePanel />);
+    const { rerender } = render(
+      <OnboardHandshakePanel
+        packageText="bfonboard1paperdemo"
+        keysetName="My Signing Key"
+        thresholdLabel="2/3"
+        activeStep="applying"
+        onCancel={vi.fn()}
+      />,
+    );
 
-    expect(screen.getByRole('heading', { name: 'Connecting to Inviter' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Onboarding...' })).toBeInTheDocument();
+    expect(screen.getByText('Validated package')).toBeInTheDocument();
+    expect(screen.getByText('Matched keyset')).toBeInTheDocument();
+    expect(screen.getByText('Applying share data')).toBeInTheDocument();
+    expect(screen.getByText('Onboarding package: bfonboard1paperdemo')).toBeInTheDocument();
 
-    rerender(<OnboardFailedPanel message="Relay handshake timed out." onRetry={onRetry} />);
-    expect(screen.getByText('Relay handshake timed out.')).toBeInTheDocument();
+    rerender(<OnboardFailedPanel onRetry={onRetry} />);
+    expect(screen.getByText('Check the package, password, and group details, then retry onboarding.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
@@ -540,6 +562,10 @@ describe('shared host flow components', () => {
           groupPublicKey: 'group-pub-1',
           relays: ['wss://relay.primal.net'],
         }}
+        groupName="My Signing Key"
+        thresholdLabel="2 of 3"
+        shareLabel="#0 (Index 0)"
+        peerPolicyCount={3}
         draft={{ label: 'Remote Tablet', password: '', confirmPassword: '' }}
         onLabelChange={onLabelChange}
         onPasswordChange={onPasswordChange}
@@ -548,11 +574,13 @@ describe('shared host flow components', () => {
       />,
     );
 
-    expect(screen.getByRole('heading', { name: 'Review Onboarded Profile' })).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Device Name'), {
-      target: { value: 'Remote Phone' },
-    });
-    expect(onLabelChange).toHaveBeenCalledWith('Remote Phone');
+    expect(screen.getByRole('heading', { name: 'Onboarding Complete' })).toBeInTheDocument();
+    expect(screen.getByText('Group Profile')).toBeInTheDocument();
+    expect(screen.getByText('My Signing Key')).toBeInTheDocument();
+    expect(screen.getByText('2 of 3')).toBeInTheDocument();
+    expect(screen.getByText('#0 (Index 0)')).toBeInTheDocument();
+    expect(screen.getByText('3 total')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Device Name')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Password'), {
       target: { value: 'device-pass' },

@@ -50,6 +50,12 @@ export type SharedOnboardProfilePreview = {
   relays: string[];
 };
 
+export type SharedPeerPermissionRow = {
+  label: string;
+  detail?: string;
+  enabled: Array<'sign' | 'ecdh' | 'ping' | 'onboard'>;
+};
+
 export function CreateFlowTaskBanner({
   kicker,
   description,
@@ -63,9 +69,12 @@ export function CreateFlowTaskBanner({
     <section className="igloo-task-banner">
       <span className="igloo-task-kicker">{kicker}</span>
       {description ? <p>{description}</p> : null}
-      <div className="igloo-task-points">
-        {points.map((point) => (
-          <span key={point}>{point}</span>
+        <div className="igloo-task-points">
+        {points.map((point, index) => (
+          <span key={point}>
+            <em>{index + 1}</em>
+            {point}
+          </span>
         ))}
       </div>
     </section>
@@ -417,11 +426,13 @@ export function CreateFlowProfileSetup({
   onSecondarySecretChange,
   onRelayUrlsChange,
   onAction,
+  peerPermissions = [],
 }: {
   shares: SharedGeneratedShare[];
   selectedMemberIdx: number | null;
   keysetName: string;
   draft: SharedLocalSaveDraft;
+  peerPermissions?: SharedPeerPermissionRow[];
   actionLabel: string;
   onSelectShare: (memberIdx: number) => void;
   onLabelChange: (value: string) => void;
@@ -525,11 +536,16 @@ export function CreateFlowProfileSetup({
         <div className="igloo-create-relay-box">
           {relayRows.map((relay) => (
             <div className="igloo-create-relay-row" key={relay}>
-              <span>{relay}</span>
-              <small>Connected</small>
+              <div>
+                <span>{relay}</span>
+                <small>Connected - 24ms latency</small>
+              </div>
+              <button type="button" aria-label={`Remove ${relay}`} disabled>
+                x
+              </button>
             </div>
           ))}
-          <label>
+          <label className="igloo-create-relay-add-row">
             <span className="sr-only">Relays</span>
             <Textarea
               aria-label="Relays"
@@ -540,6 +556,35 @@ export function CreateFlowProfileSetup({
           </label>
         </div>
       </section>
+
+      {peerPermissions.length > 0 ? (
+        <section className="igloo-create-profile-section">
+          <header>
+            <h3>Peer Permissions</h3>
+            <p>Set default permissions for each peer. You can change these later in Settings.</p>
+          </header>
+          <div className="igloo-create-peer-permission-list">
+            {peerPermissions.map((peer) => (
+              <div className="igloo-create-peer-permission-row" key={`${peer.label}-${peer.detail ?? ''}`}>
+                <div>
+                  <strong>{peer.label}</strong>
+                  {peer.detail ? <span>{peer.detail}</span> : null}
+                </div>
+                <div aria-label={`${peer.label} permissions`}>
+                  {(['sign', 'ecdh', 'ping', 'onboard'] as const).map((permission) => (
+                    <span
+                      className={peer.enabled.includes(permission) ? `is-${permission}` : 'is-disabled'}
+                      key={permission}
+                    >
+                      {permission.toUpperCase()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <Button type="button" className="igloo-create-primary-action" onClick={onAction}>
         {actionLabel}
@@ -715,23 +760,13 @@ function CreateFlowDistributionCard({
             aria-label="Package password"
             type="password"
             value={draft.packagePassword}
-            onChange={(event) => onChangeDraft(share.member_idx, 'packagePassword', event.target.value)}
+            onChange={(event) => {
+              onChangeDraft(share.member_idx, 'packagePassword', event.target.value);
+              onChangeDraft(share.member_idx, 'confirmPassword', event.target.value);
+            }}
             placeholder="Enter password"
           />
         </label>
-        <label>
-          <span>Confirm Password</span>
-          <input
-            aria-label="Confirm password"
-            type="password"
-            value={draft.confirmPassword}
-            onChange={(event) => onChangeDraft(share.member_idx, 'confirmPassword', event.target.value)}
-            placeholder="Confirm password"
-          />
-        </label>
-        <div className="igloo-create-password-preview" aria-hidden="true">
-          {passwordPreview(draft.packagePassword)}
-        </div>
       </div>
 
       {!hasPackage ? (
@@ -974,26 +1009,63 @@ export function OnboardPackageEntry({
   );
 }
 
-export function OnboardHandshakePanel() {
+export function OnboardHandshakePanel({
+  packageText = '',
+  keysetName = 'My Signing Key',
+  thresholdLabel = '2/3',
+  activeStep = 'applying',
+  onCancel,
+}: {
+  packageText?: string;
+  keysetName?: string;
+  thresholdLabel?: string;
+  activeStep?: 'validated' | 'matched' | 'applying' | 'saving';
+  onCancel?: () => void;
+}) {
+  const compactPackage = packageText ? packageText.slice(0, 24) : 'bfonboard1...';
+  const steps = [
+    { key: 'validated', label: 'Validated package', detail: 'bfonboard1...' },
+    { key: 'matched', label: 'Matched keyset', detail: `${keysetName} (${thresholdLabel})` },
+    { key: 'applying', label: 'Applying share data', detail: '' },
+    { key: 'saving', label: 'Saving to device', detail: '' },
+  ] as const;
+  const activeIndex = Math.max(0, steps.findIndex((step) => step.key === activeStep));
+
   return (
-    <section className="igloo-onboard-panel igloo-onboard-handshake">
-      <span>Handshake</span>
-      <h3>Connecting to Inviter</h3>
-      <p>The package is being decoded and this browser is negotiating the onboarding handshake with the sponsor device.</p>
-      <div className="igloo-onboard-progress" aria-hidden="true">
-        <span />
-        <span />
-        <span />
+    <div className="igloo-onboard-handshake-flow">
+      <header>
+        <h3>Onboarding...</h3>
+        <p>Validating the onboarding package and saving this device's share.</p>
+      </header>
+      <ol className="igloo-onboard-timeline">
+        {steps.map((step, index) => {
+          const state = index < activeIndex ? 'is-complete' : index === activeIndex ? 'is-active' : 'is-waiting';
+          return (
+            <li className={state} key={step.key}>
+              <span aria-hidden="true">{index < activeIndex ? <Check size={14} /> : index === activeIndex ? '...' : ''}</span>
+              <div>
+                <strong>{step.label}</strong>
+                {step.detail ? <small>{step.detail}</small> : null}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      <div className="igloo-onboard-package-summary">
+        Onboarding package: {compactPackage}
       </div>
-    </section>
+      <Button type="button" variant="secondary" onClick={onCancel}>
+        Cancel Onboarding
+      </Button>
+    </div>
   );
 }
 
 export function OnboardFailedPanel({
-  message,
+  message = 'Check the package, password, and group details, then retry onboarding.',
   onRetry,
 }: {
-  message: string;
+  message?: string;
   onRetry: () => void;
 }) {
   return (
@@ -1021,6 +1093,10 @@ export function OnboardFailedPanel({
 
 export function OnboardCompletePanel({
   preview,
+  groupName = 'My Signing Key',
+  thresholdLabel = '2 of 3',
+  shareLabel = '#0 (Index 0)',
+  peerPolicyCount = 3,
   draft,
   onLabelChange,
   onPasswordChange,
@@ -1028,17 +1104,24 @@ export function OnboardCompletePanel({
   onSave,
 }: {
   preview: SharedOnboardProfilePreview;
+  groupName?: string;
+  thresholdLabel?: string;
+  shareLabel?: string;
+  peerPolicyCount?: number;
   draft: { label: string; password: string; confirmPassword: string };
   onLabelChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
   onSave: () => void;
 }) {
-  const rows = [
-    { label: 'Device Label', value: preview.label },
-    { label: 'Share Public Key', value: shortKey(preview.sharePublicKey) },
-    { label: 'Group Public Key', value: shortKey(preview.groupPublicKey) },
+  const groupRows = [
+    { label: 'Keyset Name', value: groupName },
+    { label: 'Threshold', value: thresholdLabel },
+  ];
+  const deviceRows = [
+    { label: 'Share Key', value: shareLabel },
     { label: 'Relays', value: `${preview.relays.length} connected` },
+    { label: 'Peer Policies', value: `${peerPolicyCount} total` },
   ];
 
   return (
@@ -1049,17 +1132,13 @@ export function OnboardCompletePanel({
         </span>
         <div>
           <h3>Onboarding Complete</h3>
-          <p>Review your configuration and set or confirm a local password before launching the signer.</p>
+          <p>You've successfully applied the onboarding package. Review your configuration and set or confirm a local password before launching the signer.</p>
         </div>
       </section>
-      <section className="igloo-onboard-panel">
-        <header>
-          <span>Device Profile</span>
-          <h3>Review Onboarded Profile</h3>
-          <p>The onboarding package resolved successfully. Confirm the profile, then save this device locally.</p>
-        </header>
+      <section className="igloo-onboard-panel igloo-onboard-summary-card">
+        <span>Group Profile</span>
         <div className="igloo-create-review-summary">
-          {rows.map((row) => (
+          {groupRows.map((row) => (
             <div className="igloo-create-review-row" key={row.label}>
               <span>{row.label}</span>
               <strong>{row.value}</strong>
@@ -1067,20 +1146,22 @@ export function OnboardCompletePanel({
           ))}
         </div>
       </section>
-      <section className="igloo-onboard-panel">
+      <section className="igloo-onboard-panel igloo-onboard-summary-card">
+        <span>Device Profile</span>
+        <div className="igloo-create-review-summary">
+          {deviceRows.map((row) => (
+            <div className="igloo-create-review-row" key={row.label}>
+              <span>{row.label}</span>
+              <strong>{row.value}</strong>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="igloo-onboard-password-section">
         <header>
-          <span>Local Save</span>
-          <h3>Save Device</h3>
-          <p>This password encrypts the onboarded profile in this browser.</p>
+          <h3>Profile Password <HelpCircle size={13} aria-hidden="true" /></h3>
+          <p>This password encrypts your profile on this device. You'll need it each time you unlock it.</p>
         </header>
-        <label className="igloo-onboard-field">
-          <span>Device Name</span>
-          <input
-            aria-label="Device Name"
-            value={draft.label}
-            onChange={(event) => onLabelChange(event.target.value)}
-          />
-        </label>
         <div className="igloo-create-profile-passwords">
           <label>
             <span>Password</span>

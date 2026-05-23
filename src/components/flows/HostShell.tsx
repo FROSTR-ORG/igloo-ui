@@ -98,7 +98,7 @@ export function PublicTaskTitle({
   return (
     <div className="igloo-public-task-title">
       <h2>{title}</h2>
-      <p>{description}</p>
+      {description ? <p>{description}</p> : null}
     </div>
   );
 }
