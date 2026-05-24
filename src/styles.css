@@ -2248,22 +2248,47 @@
 
   .igloo-task-points {
     display: grid;
-    gap: 0.45rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem;
   }
 
   .igloo-task-points span {
     display: flex;
-    gap: 0.45rem;
+    gap: 0.5rem;
     align-items: flex-start;
     color: var(--igloo-shell-muted);
     font-size: 0.76rem;
     line-height: 1.45;
   }
 
-  .igloo-task-points span::before {
-    content: "•";
-    color: var(--igloo-shell-accent);
+  .igloo-task-points em {
+    display: inline-flex;
     flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 1.45rem;
+    height: 1.45rem;
+    border: 1px solid rgba(125, 211, 252, 0.3);
+    border-radius: 999px;
+    background: rgba(14, 165, 233, 0.12);
+    color: #e0f2fe;
+    font-size: 0.72rem;
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .igloo-task-points strong {
+    display: grid;
+    gap: 0.15rem;
+    color: #f8fafc;
+    font-weight: 700;
+  }
+
+  .igloo-task-points small {
+    color: var(--igloo-shell-muted);
+    font-size: 0.74rem;
+    font-weight: 500;
+    line-height: 1.4;
   }
 
   .igloo-step-progress {
@@ -2445,6 +2470,10 @@
 
   @media (max-width: 720px) {
     .igloo-confirm-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .igloo-task-points {
       grid-template-columns: 1fr;
     }
   }

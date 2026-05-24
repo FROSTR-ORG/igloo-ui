@@ -69,13 +69,24 @@ export function CreateFlowTaskBanner({
     <section className="igloo-task-banner">
       <span className="igloo-task-kicker">{kicker}</span>
       {description ? <p>{description}</p> : null}
-        <div className="igloo-task-points">
-        {points.map((point, index) => (
-          <span key={point}>
-            <em>{index + 1}</em>
-            {point}
-          </span>
-        ))}
+      <div className="igloo-task-points">
+        {points.map((point, index) => {
+          const [title, ...detailParts] = point.split('|');
+          const detail = detailParts.join('|');
+          return (
+            <span key={point}>
+              <em>{index + 1}</em>
+              {detail ? (
+                <strong>
+                  {title}
+                  <small>{detail}</small>
+                </strong>
+              ) : (
+                point
+              )}
+            </span>
+          );
+        })}
       </div>
     </section>
   );
