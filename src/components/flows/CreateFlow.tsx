@@ -1168,6 +1168,16 @@ export function OnboardCompletePanel({
           ))}
         </div>
       </section>
+      <section className="igloo-onboard-panel">
+        <label className="igloo-onboard-field">
+          <span>Device Name</span>
+          <input
+            aria-label="Device Name"
+            value={draft.label}
+            onChange={(event) => onLabelChange(event.target.value)}
+          />
+        </label>
+      </section>
       <section className="igloo-onboard-password-section">
         <header>
           <h3>Profile Password <HelpCircle size={13} aria-hidden="true" /></h3>

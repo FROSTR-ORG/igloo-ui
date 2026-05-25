@@ -583,7 +583,12 @@ describe('shared host flow components', () => {
     expect(screen.getByText('2 of 3')).toBeInTheDocument();
     expect(screen.getByText('#0 (Index 0)')).toBeInTheDocument();
     expect(screen.getByText('3 total')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Device Name')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Device Name')).toHaveValue('Remote Tablet');
+
+    fireEvent.change(screen.getByLabelText('Device Name'), {
+      target: { value: 'Remote Browser' },
+    });
+    expect(onLabelChange).toHaveBeenCalledWith('Remote Browser');
 
     fireEvent.change(screen.getByLabelText('Password'), {
       target: { value: 'device-pass' },
