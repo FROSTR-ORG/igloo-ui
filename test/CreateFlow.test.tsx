@@ -86,13 +86,16 @@ describe('shared host flow components', () => {
     expect(screen.getByRole('heading', { name: 'Igloo Web' })).toBeInTheDocument();
     expect(screen.getByText('Split your Nostr key. Sign from anywhere.')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'New Keyset' }));
+    expect(screen.getByRole('heading', { name: 'Generate New Keyset' })).toBeInTheDocument();
+    expect(screen.queryByTestId('welcome-new-keyset-plus')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
     expect(onNewKeyset).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Import Device Profile' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Import Existing Device' }));
     expect(onImportProfile).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Onboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Onboard New Device' }));
     expect(onOnboard).toHaveBeenCalledTimes(1);
   });
 
@@ -129,13 +132,13 @@ describe('shared host flow components', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Rotate' }));
     expect(onRotate).toHaveBeenCalledWith('profile-1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'New Keyset' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
     expect(onNewKeyset).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Import Device Profile' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Import Existing Device' }));
     expect(onImportProfile).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Onboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Onboard New Device' }));
     expect(onOnboard).toHaveBeenCalledTimes(1);
   });
 
@@ -182,9 +185,9 @@ describe('shared host flow components', () => {
 
     expect(screen.getByText('Family Key')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Unlock' })).toHaveLength(6);
-    expect(screen.getByText('New Keyset')).toBeInTheDocument();
-    expect(screen.getByText('Import Device Profile')).toBeInTheDocument();
-    expect(screen.getByText('Onboard')).toBeInTheDocument();
+    expect(screen.getByText('Generate')).toBeInTheDocument();
+    expect(screen.getByText('Import Existing Device')).toBeInTheDocument();
+    expect(screen.getByText('Onboard New Device')).toBeInTheDocument();
   });
 
   it('renders the returning Paper welcome unlock modal states', () => {

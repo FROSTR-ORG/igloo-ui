@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BookOpen, Check, Feather, Github, Globe, Info, Lock, Plus } from 'lucide-react';
+import { BookOpen, Check, Feather, Github, Globe, Info, Lock } from 'lucide-react';
 
 import { CRITICAL_E2E_TEST_IDS, type CriticalE2ETestId } from '../../lib/e2e-test-ids';
 import type { StoredProfileCardModel } from '../../models/view-models';
@@ -34,11 +34,8 @@ export function WelcomeEntryHero({
       <div className="igloo-welcome-entry-panel">
         <div className="igloo-welcome-entry-panel-body">
           <div className="igloo-welcome-entry-panel-heading">
-            <span className="igloo-welcome-entry-plus" aria-hidden="true">
-              <Plus size={16} />
-            </span>
             <div className="igloo-welcome-entry-title-row">
-              <h3>New Keyset</h3>
+              <h3>Generate New Keyset</h3>
               <Info size={14} aria-hidden="true" />
             </div>
           </div>
@@ -46,16 +43,16 @@ export function WelcomeEntryHero({
         </div>
         <div className="igloo-welcome-entry-primary">
           <Button type="button" onClick={onNewKeyset}>
-            New Keyset
+            Generate
           </Button>
         </div>
         <div className="igloo-welcome-entry-secondary">
           <span>or</span>
           <Button type="button" size="sm" variant="secondary" onClick={onImportProfile}>
-            Import Device Profile
+            Import Existing Device
           </Button>
           <Button type="button" size="sm" variant="secondary" onClick={onOnboard}>
-            Onboard
+            Onboard New Device
           </Button>
         </div>
       </div>
@@ -166,13 +163,13 @@ export function WelcomeReturningHero({
         <div className="igloo-welcome-entry-secondary">
           <span>or</span>
           <Button type="button" size="sm" variant="secondary" onClick={onNewKeyset}>
-            New Keyset
+            Generate
           </Button>
           <Button type="button" size="sm" variant="secondary" onClick={onImportProfile}>
-            Import Device Profile
+            Import Existing Device
           </Button>
           <Button type="button" size="sm" variant="secondary" onClick={onOnboard}>
-            Onboard
+            Onboard New Device
           </Button>
         </div>
       </div>

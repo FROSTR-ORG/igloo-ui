@@ -399,17 +399,6 @@
     gap: 0.875rem;
   }
 
-  .igloo-welcome-entry-plus {
-    display: grid;
-    place-items: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border: 1px solid rgba(30, 58, 138, 0.35);
-    border-radius: 0.625rem;
-    background: rgba(30, 58, 138, 0.25);
-    color: #60a5fa;
-  }
-
   .igloo-welcome-entry-title-row {
     display: inline-flex;
     align-items: center;
@@ -448,6 +437,21 @@
     color: rgba(132, 148, 167, 0.6);
     font-size: 0.8125rem;
     line-height: 1.25rem;
+  }
+
+  .igloo-welcome-entry-secondary button {
+    height: 1.875rem;
+    padding: 0.25rem 0.625rem;
+    border-color: rgba(30, 58, 138, 0.2);
+    background: rgba(30, 58, 138, 0.15);
+    color: rgba(96, 165, 250, 0.7);
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-welcome-entry-secondary button:hover {
+    background: rgba(30, 58, 138, 0.25);
+    color: rgba(96, 165, 250, 0.85);
   }
 
   .igloo-welcome-entry-footer {
