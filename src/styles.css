@@ -652,6 +652,25 @@
     background: #b91c1c;
   }
 
+  .igloo-recover-key-field {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    background: rgba(15, 23, 42, 0.6);
+    font-family: var(--igloo-font-share-tech-mono, monospace);
+    color: #86efac;
+    word-break: break-all;
+  }
+
+  .igloo-recover-encrypt-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   .igloo-welcome-unlock-form {
     display: grid;
     gap: 1rem;

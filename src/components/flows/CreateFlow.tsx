@@ -230,6 +230,9 @@ export function RotateKeysetPanel({
   onAddRotationSource,
   onRemoveRotationSource,
   onRotate,
+  title = 'Rotate Keyset',
+  description = 'Select the source profile and add recovery shares for the existing keyset.',
+  actionLabel = 'Rotate Keyset',
 }: {
   sourceProfileId: string;
   availableProfiles: Array<{ id: string; label: string }>;
@@ -239,12 +242,15 @@ export function RotateKeysetPanel({
   onAddRotationSource: () => void;
   onRemoveRotationSource: (index: number) => void;
   onRotate: () => void;
+  title?: string;
+  description?: string;
+  actionLabel?: string;
 }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Rotate Keyset</CardTitle>
-        <CardDescription>Select the source profile and add recovery shares for the existing keyset.</CardDescription>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="igloo-stack">
         <label>
@@ -300,7 +306,7 @@ export function RotateKeysetPanel({
         </div>
         <div className="igloo-button-row">
           <Button type="button" size="sm" onClick={onRotate}>
-            Rotate Keyset
+            {actionLabel}
           </Button>
         </div>
       </CardContent>
