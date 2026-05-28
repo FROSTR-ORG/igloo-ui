@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BookOpen, Check, Feather, Github, Globe, Info, Lock } from 'lucide-react';
+import { BookOpen, Check, Feather, Github, Globe, Info, Lock, MoreVertical } from 'lucide-react';
 
 import { CRITICAL_E2E_TEST_IDS, type CriticalE2ETestId } from '../../lib/e2e-test-ids';
 import type { StoredProfileCardModel } from '../../models/view-models';
@@ -43,7 +43,7 @@ export function WelcomeEntryHero({
         </div>
         <div className="igloo-welcome-entry-primary">
           <Button type="button" onClick={onNewKeyset}>
-            Generate
+            Generate Keyset
           </Button>
         </div>
         <div className="igloo-welcome-entry-secondary">
@@ -107,6 +107,8 @@ export function WelcomeReturningHero({
   profiles,
   onUnlock,
   onRotate,
+  onRecover,
+  onDelete,
   onNewKeyset,
   onImportProfile,
   onOnboard,
@@ -117,10 +119,13 @@ export function WelcomeReturningHero({
   profiles: WelcomeReturningProfileModel[];
   onUnlock: (profileId: string) => void;
   onRotate: (profileId: string) => void;
+  onRecover?: (profileId: string) => void;
+  onDelete: (profileId: string) => void;
   onNewKeyset: () => void;
   onImportProfile: () => void;
   onOnboard: () => void;
 }) {
+  const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
   return (
     <section className="igloo-welcome-entry" aria-labelledby="igloo-welcome-returning-title">
       <div className="igloo-welcome-entry-brand">
@@ -152,9 +157,55 @@ export function WelcomeReturningHero({
                 <Button type="button" onClick={() => onUnlock(profile.id)}>
                   Unlock
                 </Button>
-                <Button type="button" variant="secondary" onClick={() => onRotate(profile.id)}>
-                  Rotate
-                </Button>
+                <div className="igloo-welcome-profile-menu">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    aria-label="More actions"
+                    aria-haspopup="menu"
+                    aria-expanded={openMenuId === profile.id}
+                    onClick={() => setOpenMenuId(openMenuId === profile.id ? null : profile.id)}
+                  >
+                    <MoreVertical size={16} aria-hidden="true" />
+                  </Button>
+                  {openMenuId === profile.id ? (
+                    <div className="igloo-welcome-profile-dropdown" role="menu">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setOpenMenuId(null);
+                          onRotate(profile.id);
+                        }}
+                      >
+                        Rotate
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        disabled={!onRecover}
+                        onClick={() => {
+                          setOpenMenuId(null);
+                          onRecover?.(profile.id);
+                        }}
+                      >
+                        Recover
+                      </button>
+                      <div className="igloo-welcome-profile-dropdown-divider" aria-hidden="true" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="is-destructive"
+                        onClick={() => {
+                          setOpenMenuId(null);
+                          onDelete(profile.id);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
           ))}
@@ -163,7 +214,7 @@ export function WelcomeReturningHero({
         <div className="igloo-welcome-entry-secondary">
           <span>or</span>
           <Button type="button" size="sm" variant="secondary" onClick={onNewKeyset}>
-            Generate
+            Generate Keyset
           </Button>
           <Button type="button" size="sm" variant="secondary" onClick={onImportProfile}>
             Import Existing Device
@@ -228,6 +279,47 @@ export function WelcomeUnlockModal({
           </Button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+export function WelcomeDeleteModal({
+  open,
+  profile,
+  onConfirm,
+  onClose,
+}: {
+  open: boolean;
+  profile: WelcomeReturningProfileModel | null;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  if (!profile) return null;
+
+  const profileSummary = `${profile.label} · ${profile.thresholdLabel} · ${profile.memberLabel}`;
+
+  return (
+    <Modal open={open} onClose={onClose} className="igloo-welcome-delete-modal">
+      <div className="igloo-welcome-unlock-form">
+        <div className="igloo-welcome-unlock-heading">
+          <h2>Delete Profile</h2>
+          <p>{profileSummary}</p>
+        </div>
+
+        <p className="igloo-welcome-delete-warning">
+          This permanently removes this profile and its encrypted share from this device. You can
+          only restore it from a backup, and this cannot be undone.
+        </p>
+
+        <div className="igloo-welcome-unlock-actions igloo-welcome-delete-actions">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="button" className="igloo-welcome-delete-confirm" onClick={onConfirm}>
+            Delete Profile
+          </Button>
+        </div>
+      </div>
     </Modal>
   );
 }

@@ -57,7 +57,8 @@ Primary flow exports:
 - `CreateFlowTaskBanner`
 - `CreateFlowGenerateCard`
 - `CreateFlowLocalSaveCard`
-- `CreateFlowReviewPanel`
+- `CreateFlowShareSelection`
+- `CreateFlowProfileSetup`
 - `CreateFlowDistributionCards`
 - `CreateFlowDistributionSection`
 - `DesktopAppShell`

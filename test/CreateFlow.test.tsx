@@ -6,6 +6,7 @@ import {
   CreateFlowDistributionSection,
   CreateFlowDistributionCards,
   CreateFlowGenerateCard,
+  CreateFlowShareSelection,
   CreateFlowLocalSaveCard,
   CreateFlowProfileSetup,
   OnboardCompletePanel,
@@ -89,7 +90,7 @@ describe('shared host flow components', () => {
     expect(screen.getByRole('heading', { name: 'Generate New Keyset' })).toBeInTheDocument();
     expect(screen.queryByTestId('welcome-new-keyset-plus')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Generate Keyset' }));
     expect(onNewKeyset).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Import Existing Device' }));
@@ -102,6 +103,7 @@ describe('shared host flow components', () => {
   it('renders the returning Paper welcome profile actions', () => {
     const onUnlock = vi.fn();
     const onRotate = vi.fn();
+    const onDelete = vi.fn();
     const onNewKeyset = vi.fn();
     const onImportProfile = vi.fn();
     const onOnboard = vi.fn();
@@ -113,6 +115,7 @@ describe('shared host flow components', () => {
         profiles={[returningProfiles[0]]}
         onUnlock={onUnlock}
         onRotate={onRotate}
+        onDelete={onDelete}
         onNewKeyset={onNewKeyset}
         onImportProfile={onImportProfile}
         onOnboard={onOnboard}
@@ -129,10 +132,12 @@ describe('shared host flow components', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
     expect(onUnlock).toHaveBeenCalledWith('profile-1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Rotate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'More actions' }));
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Rotate' }));
     expect(onRotate).toHaveBeenCalledWith('profile-1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Generate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Generate Keyset' }));
     expect(onNewKeyset).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Import Existing Device' }));
@@ -152,6 +157,7 @@ describe('shared host flow components', () => {
         profiles={returningProfiles.slice(0, 3)}
         onUnlock={onUnlock}
         onRotate={onRotate}
+        onDelete={vi.fn()}
         onNewKeyset={vi.fn()}
         onImportProfile={vi.fn()}
         onOnboard={vi.fn()}
@@ -166,7 +172,8 @@ describe('shared host flow components', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Unlock' })[1]);
     expect(onUnlock).toHaveBeenCalledWith('profile-2');
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Rotate' })[2]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'More actions' })[2]);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Rotate' }));
     expect(onRotate).toHaveBeenCalledWith('profile-3');
   });
 
@@ -177,6 +184,7 @@ describe('shared host flow components', () => {
         profiles={returningProfiles}
         onUnlock={vi.fn()}
         onRotate={vi.fn()}
+        onDelete={vi.fn()}
         onNewKeyset={vi.fn()}
         onImportProfile={vi.fn()}
         onOnboard={vi.fn()}
@@ -185,7 +193,7 @@ describe('shared host flow components', () => {
 
     expect(screen.getByText('Family Key')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Unlock' })).toHaveLength(6);
-    expect(screen.getByText('Generate')).toBeInTheDocument();
+    expect(screen.getByText('Generate Keyset')).toBeInTheDocument();
     expect(screen.getByText('Import Existing Device')).toBeInTheDocument();
     expect(screen.getByText('Onboard New Device')).toBeInTheDocument();
   });
@@ -285,7 +293,7 @@ describe('shared host flow components', () => {
     expect(onDelete).toHaveBeenCalledWith('profile-2');
   });
 
-  it('dispatches create-flow keyset edits without rotation controls', () => {
+  it('dispatches create-flow keyset edits with the Paper four-step copy', () => {
     const onChangeForm = vi.fn();
     const onGenerate = vi.fn();
 
@@ -294,13 +302,15 @@ describe('shared host flow components', () => {
         groupName=""
         threshold="2"
         count="3"
+        privateKey=""
         onChangeForm={onChangeForm}
         onGenerate={onGenerate}
       />,
     );
 
-    expect(screen.queryByRole('button', { name: 'Rotate Existing Keyset' })).not.toBeInTheDocument();
-    expect(screen.getByText('Private Key (nsec)')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Generate' })).not.toBeInTheDocument();
+    expect(screen.getByText('Threshold')).toBeInTheDocument();
+    expect(screen.getByText('Existing Private Key (optional)')).toBeInTheDocument();
     expect(screen.getByText('Any 2 of 3 shares can sign - min threshold is 2, min shares is 3')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Group Name'), {
@@ -308,15 +318,52 @@ describe('shared host flow components', () => {
     });
     expect(onChangeForm).toHaveBeenCalledWith('groupName', 'Treasury Signers');
 
+    fireEvent.change(screen.getByLabelText('Existing Private Key (optional)'), {
+      target: { value: 'nsec1existing' },
+    });
+    expect(onChangeForm).toHaveBeenCalledWith('privateKey', 'nsec1existing');
+
     fireEvent.click(screen.getByRole('button', { name: 'Increase Threshold' }));
     expect(onChangeForm).toHaveBeenCalledWith('threshold', '3');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create Keyset' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next Step' }));
     expect(onGenerate).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the Paper create-profile setup surface', () => {
+  it('renders the Paper select-share step with group public key copy', () => {
     const onSelectShare = vi.fn();
+    const onCopyGroupPublicKey = vi.fn();
+    const onAction = vi.fn();
+
+    render(
+      <CreateFlowShareSelection
+        shares={[
+          { name: 'Share 1', member_idx: 0, share_public_key: 'share-pub-1' },
+          { name: 'Share 2', member_idx: 1, share_public_key: 'share-pub-2' },
+          { name: 'Share 3', member_idx: 2, share_public_key: 'share-pub-3' },
+        ]}
+        selectedMemberIdx={1}
+        keysetName="My Signing Key"
+        groupPublicKey="group-pub-1"
+        onSelectShare={onSelectShare}
+        onCopyGroupPublicKey={onCopyGroupPublicKey}
+        onAction={onAction}
+      />,
+    );
+
+    expect(screen.getByText('Choose Local Share')).toBeInTheDocument();
+    expect(screen.getByText('group-pub-1')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy group public key' }));
+    expect(onCopyGroupPublicKey).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /Share 3/i }));
+    expect(onSelectShare).toHaveBeenCalledWith(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next Step' }));
+    expect(onAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the Paper save-profile setup surface without peer permissions', () => {
     const onLabelChange = vi.fn();
     const onPrimarySecretChange = vi.fn();
     const onSecondarySecretChange = vi.fn();
@@ -325,25 +372,13 @@ describe('shared host flow components', () => {
 
     render(
       <CreateFlowProfileSetup
-        shares={[
-          { name: 'Share 1', member_idx: 0, share_public_key: 'share-pub-1' },
-          { name: 'Share 2', member_idx: 1, share_public_key: 'share-pub-2' },
-          { name: 'Share 3', member_idx: 2, share_public_key: 'share-pub-3' },
-        ]}
-        selectedMemberIdx={1}
-        keysetName="My Signing Key"
         draft={{
           label: 'Igloo Web',
           relayUrls: 'wss://relay.primal.net\nwss://relay.example.com',
           primarySecret: '',
           secondarySecret: '',
         }}
-        peerPermissions={[
-          { label: 'Peer #0', detail: '02d7e1...3b9e', enabled: ['sign', 'ecdh', 'ping', 'onboard'] },
-          { label: 'Peer #1', detail: '029c4a...1f5e', enabled: ['sign', 'ecdh', 'onboard'] },
-        ]}
-        actionLabel="Continue to Review"
-        onSelectShare={onSelectShare}
+        actionLabel="Next Step"
         onLabelChange={onLabelChange}
         onPrimarySecretChange={onPrimarySecretChange}
         onSecondarySecretChange={onSecondarySecretChange}
@@ -352,16 +387,10 @@ describe('shared host flow components', () => {
       />,
     );
 
-    expect(screen.getByText('Choose Local Share')).toBeInTheDocument();
-    expect(screen.getByText('Index 1 · Encrypted')).toBeInTheDocument();
-    expect(screen.getByText('Save to this device')).toBeInTheDocument();
+    expect(screen.getByLabelText('Device Profile Name')).toBeInTheDocument();
     expect(screen.getByText('wss://relay.example.com')).toBeInTheDocument();
-    expect(screen.getByText('Peer Permissions')).toBeInTheDocument();
-    expect(screen.getByText('Peer #0')).toBeInTheDocument();
-    expect(screen.getAllByText('SIGN')).toHaveLength(2);
-
-    fireEvent.click(screen.getByRole('button', { name: /Share 3/i }));
-    expect(onSelectShare).toHaveBeenCalledWith(2);
+    expect(screen.queryByText('Choose Local Share')).not.toBeInTheDocument();
+    expect(screen.queryByText('Peer Permissions')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Device Profile Name'), {
       target: { value: 'Primary Browser Device' },
@@ -373,7 +402,7 @@ describe('shared host flow components', () => {
     });
     expect(onPrimarySecretChange).toHaveBeenCalledWith('secret');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue to Review' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next Step' }));
     expect(onAction).toHaveBeenCalledTimes(1);
   });
 
@@ -443,11 +472,6 @@ describe('shared host flow components', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText('Share label'), {
-      target: { value: 'Remote Phone' },
-    });
-    expect(onChangeDraft).toHaveBeenCalledWith(2, 'label', 'Remote Phone');
-
     fireEvent.change(screen.getByLabelText('Package password'), {
       target: { value: 'remote-pass' },
     });
@@ -459,7 +483,7 @@ describe('shared host flow components', () => {
     expect(onDistribute).toHaveBeenCalledWith(2, 'prepare');
   });
 
-  it('renders distribution completion when every remote package is ready', () => {
+  it('keeps completed distribution cards on the launch signer screen', () => {
     const onFinish = vi.fn();
 
     render(
@@ -491,9 +515,9 @@ describe('shared host flow components', () => {
       />,
     );
 
-    expect(screen.getByText('Distribution Status')).toBeInTheDocument();
-    expect(screen.getByText('All remote packages complete')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Finish Distribution' }));
+    expect(screen.queryByText('Distribution Status')).not.toBeInTheDocument();
+    expect(screen.getByText('Package distributed and marked complete.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Launch Signer' }));
     expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
@@ -619,7 +643,7 @@ describe('shared host flow components', () => {
         labelInputLabel="Device Profile Name"
         primarySecretLabel="Device Password"
         secondarySecretLabel="Confirm Password"
-        actionLabel="Continue to Review"
+        actionLabel="Next Step"
         onLabelChange={vi.fn()}
         onPrimarySecretChange={vi.fn()}
         onSecondarySecretChange={vi.fn()}
@@ -632,7 +656,7 @@ describe('shared host flow components', () => {
     expect(screen.getByLabelText('Device Password')).toBeInTheDocument();
     expect(screen.getByLabelText('Confirm Password')).toBeInTheDocument();
     expect(screen.getByLabelText('Relay URLs')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Continue to Review' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next Step' }));
     expect(onAction).toHaveBeenCalledTimes(1);
   });
 
@@ -670,10 +694,10 @@ describe('shared host flow components', () => {
     );
 
     const section = within(view.container);
-    expect(section.getByText('Distribute the Keyset')).toBeInTheDocument();
+    expect(section.queryByText('Distribute the Keyset')).not.toBeInTheDocument();
     expect(section.getByText('runtime panel')).toBeInTheDocument();
     expect(section.getByText('Remaining Shares')).toBeInTheDocument();
-    expect(section.getByLabelText('Share label')).toBeInTheDocument();
-    expect(section.getByRole('button', { name: 'Continue to Completion' })).toBeDisabled();
+    expect(section.getByLabelText('Package password')).toBeInTheDocument();
+    expect(section.getByRole('button', { name: 'Launch Signer' })).toBeEnabled();
   });
 });

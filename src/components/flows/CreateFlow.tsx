@@ -9,6 +9,7 @@ export type SharedCreateFormState = {
   groupName: string;
   threshold: string;
   count: string;
+  privateKey?: string;
 };
 
 export type SharedRotationSource = {
@@ -96,14 +97,16 @@ export function CreateFlowGenerateCard({
   groupName,
   threshold,
   count,
+  privateKey = '',
   onChangeForm,
   onGenerate,
 }: {
   groupName: string;
   threshold: string;
   count: string;
+  privateKey?: string;
   onChangeForm: (
-    field: 'groupName' | 'threshold' | 'count',
+    field: 'groupName' | 'threshold' | 'count' | 'privateKey',
     value: string,
   ) => void;
   onGenerate: () => void;
@@ -134,27 +137,6 @@ export function CreateFlowGenerateCard({
         <small>A friendly name for this keyset's group profile. Visible to all peers in the keyset.</small>
       </label>
 
-      <label className="igloo-create-field">
-        <span className="igloo-create-label-with-help">
-          Private Key (nsec)
-          <HelpCircle size={14} aria-hidden="true" />
-        </span>
-        <div className="igloo-create-private-row">
-          <div className="igloo-create-input-shell">
-            <input
-              aria-label="Private Key (nsec)"
-              placeholder="Paste your existing nsec or generate a new one"
-              readOnly
-            />
-            <EyeOff size={16} aria-hidden="true" />
-          </div>
-          <Button type="button" variant="secondary" disabled>
-            Generate
-          </Button>
-        </div>
-        <small>Paste your existing nsec or leave blank to generate a new one.</small>
-      </label>
-
       <div className="igloo-create-threshold-row">
         <CreateCounterControl
           label="Threshold"
@@ -175,8 +157,27 @@ export function CreateFlowGenerateCard({
 
       <p className="igloo-create-threshold-help">{thresholdSummary}</p>
 
+      <label className="igloo-create-field">
+        <span className="igloo-create-label-with-help">
+          Existing Private Key (optional)
+          <HelpCircle size={14} aria-hidden="true" />
+        </span>
+        <div className="igloo-create-private-row">
+          <div className="igloo-create-input-shell">
+            <input
+              aria-label="Existing Private Key (optional)"
+              value={privateKey}
+              onChange={(event) => onChangeForm('privateKey', event.target.value)}
+              placeholder="Paste an nsec1... key or leave blank"
+            />
+            <EyeOff size={16} aria-hidden="true" />
+          </div>
+        </div>
+        <small>Provide an existing key, otherwise a new one will be generated for you in the next step.</small>
+      </label>
+
       <Button type="button" className="igloo-create-primary-action" onClick={onGenerate}>
-        Create Keyset
+        Next Step
       </Button>
     </div>
   );
@@ -425,46 +426,50 @@ export function CreateFlowLocalSaveCard({
   );
 }
 
-export function CreateFlowProfileSetup({
+export function CreateFlowShareSelection({
   shares,
   selectedMemberIdx,
   keysetName,
-  draft,
-  actionLabel,
+  groupPublicKey,
+  actionLabel = 'Next Step',
   onSelectShare,
-  onLabelChange,
-  onPrimarySecretChange,
-  onSecondarySecretChange,
-  onRelayUrlsChange,
+  onCopyGroupPublicKey,
   onAction,
-  peerPermissions = [],
 }: {
   shares: SharedGeneratedShare[];
   selectedMemberIdx: number | null;
   keysetName: string;
-  draft: SharedLocalSaveDraft;
-  peerPermissions?: SharedPeerPermissionRow[];
-  actionLabel: string;
+  groupPublicKey: string;
+  actionLabel?: string;
   onSelectShare: (memberIdx: number) => void;
-  onLabelChange: (value: string) => void;
-  onPrimarySecretChange: (value: string) => void;
-  onSecondarySecretChange: (value: string) => void;
-  onRelayUrlsChange: (value: string) => void;
+  onCopyGroupPublicKey: () => void;
   onAction: () => void;
 }) {
-  const selectedShare =
-    shares.find((share) => share.member_idx === selectedMemberIdx) ?? shares[0] ?? null;
-  const relayRows = draft.relayUrls
-    .split(/\r?\n/)
-    .map((relay) => relay.trim())
-    .filter(Boolean);
+  const selectedShare = shares.find((share) => share.member_idx === selectedMemberIdx) ?? shares[0] ?? null;
 
   return (
     <div className="igloo-create-profile-form">
       <section className="igloo-create-profile-panel">
         <header>
+          <h3>Group Public Key</h3>
+          <p>Copy this key when you need to identify the new keyset outside this device.</p>
+        </header>
+        <div className="igloo-create-profile-summary">
+          <div>
+            <span>{keysetName}</span>
+            <strong>{groupPublicKey}</strong>
+          </div>
+          <Button type="button" size="sm" variant="secondary" onClick={onCopyGroupPublicKey}>
+            <Copy size={13} aria-hidden="true" />
+            Copy group public key
+          </Button>
+        </div>
+      </section>
+
+      <section className="igloo-create-profile-panel">
+        <header>
           <h3>Choose Local Share</h3>
-          <p>One share saves locally; the rest become bfonboard packages on the next step.</p>
+          <p>One share saves locally; the rest become remote onboarding packages.</p>
         </header>
         <div className="igloo-create-share-list">
           {shares.map((share) => {
@@ -480,7 +485,7 @@ export function CreateFlowProfileSetup({
                 <span className="igloo-create-share-radio" aria-hidden="true" />
                 <span className="igloo-create-share-copy">
                   <strong>{share.name}</strong>
-                  <small>Index {share.member_idx} · {keysetName}</small>
+                  <small>{share.share_public_key}</small>
                 </span>
                 <span className="igloo-create-share-state">
                   {isSelected ? 'Save to this device' : 'Distribute remotely'}
@@ -489,20 +494,41 @@ export function CreateFlowProfileSetup({
             );
           })}
         </div>
-        {selectedShare ? (
-          <div className="igloo-create-profile-summary">
-            <div>
-              <span>Local Share</span>
-              <strong>Index {selectedShare.member_idx} · Encrypted</strong>
-            </div>
-            <div>
-              <span>Keyset</span>
-              <strong>{keysetName}</strong>
-            </div>
-          </div>
-        ) : null}
       </section>
 
+      <Button type="button" className="igloo-create-primary-action" onClick={onAction}>
+        {actionLabel}
+      </Button>
+    </div>
+  );
+}
+
+export function CreateFlowProfileSetup({
+  draft,
+  actionLabel,
+  onLabelChange,
+  onPrimarySecretChange,
+  onSecondarySecretChange,
+  onRelayUrlsChange,
+  onAction,
+  lockIdentity = false,
+}: {
+  draft: SharedLocalSaveDraft;
+  actionLabel: string;
+  onLabelChange: (value: string) => void;
+  onPrimarySecretChange: (value: string) => void;
+  onSecondarySecretChange: (value: string) => void;
+  onRelayUrlsChange: (value: string) => void;
+  onAction: () => void;
+  lockIdentity?: boolean;
+}) {
+  const relayRows = draft.relayUrls
+    .split(/\r?\n/)
+    .map((relay) => relay.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="igloo-create-profile-form">
       <label className="igloo-create-profile-field">
         <span>Profile Name</span>
         <small>A name for this profile to identify it in the peer list.</small>
@@ -510,6 +536,7 @@ export function CreateFlowProfileSetup({
           aria-label="Device Profile Name"
           value={draft.label}
           onChange={(event) => onLabelChange(event.target.value)}
+          readOnly={lockIdentity}
         />
       </label>
 
@@ -556,46 +583,19 @@ export function CreateFlowProfileSetup({
               </button>
             </div>
           ))}
-          <label className="igloo-create-relay-add-row">
-            <span className="sr-only">Relays</span>
-            <Textarea
-              aria-label="Relays"
-              value={draft.relayUrls}
-              onChange={(event) => onRelayUrlsChange(event.target.value)}
-              placeholder="wss://"
-            />
-          </label>
+          {lockIdentity ? null : (
+            <label className="igloo-create-relay-add-row">
+              <span className="sr-only">Relays</span>
+              <Textarea
+                aria-label="Relays"
+                value={draft.relayUrls}
+                onChange={(event) => onRelayUrlsChange(event.target.value)}
+                placeholder="wss://"
+              />
+            </label>
+          )}
         </div>
       </section>
-
-      {peerPermissions.length > 0 ? (
-        <section className="igloo-create-profile-section">
-          <header>
-            <h3>Peer Permissions</h3>
-            <p>Set default permissions for each peer. You can change these later in Settings.</p>
-          </header>
-          <div className="igloo-create-peer-permission-list">
-            {peerPermissions.map((peer) => (
-              <div className="igloo-create-peer-permission-row" key={`${peer.label}-${peer.detail ?? ''}`}>
-                <div>
-                  <strong>{peer.label}</strong>
-                  {peer.detail ? <span>{peer.detail}</span> : null}
-                </div>
-                <div aria-label={`${peer.label} permissions`}>
-                  {(['sign', 'ecdh', 'ping', 'onboard'] as const).map((permission) => (
-                    <span
-                      className={peer.enabled.includes(permission) ? `is-${permission}` : 'is-disabled'}
-                      key={permission}
-                    >
-                      {permission.toUpperCase()}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       <Button type="button" className="igloo-create-primary-action" onClick={onAction}>
         {actionLabel}
@@ -676,42 +676,38 @@ function passwordPreview(value: string) {
   return value ? '••••••••' : 'Enter password';
 }
 
-export function CreateFlowDistributionCompletion({
-  shares,
-  results,
-  onFinish,
+export type SharedDistributionPermission = 'sign' | 'ecdh' | 'ping' | 'onboard';
+
+function CreatePermissionToggles({
+  share,
+  enabled,
+  onTogglePermission,
 }: {
-  shares: SharedGeneratedShare[];
-  results: Record<number, SharedDistributionResult>;
-  onFinish: () => void;
+  share: SharedGeneratedShare;
+  enabled: SharedDistributionPermission[];
+  onTogglePermission?: (memberIdx: number, permission: SharedDistributionPermission, enabled: boolean) => void;
 }) {
   return (
-    <div className="igloo-create-distribution-completion">
-      <section className="igloo-create-completion-status">
-        <span>Distribution Status</span>
-        {shares.map((share) => {
-          const result = results[share.member_idx];
+    <div className="igloo-create-peer-permission-row">
+      <div>
+        <strong>Permissions</strong>
+      </div>
+      <div aria-label={`${share.name} permissions`}>
+        {(['sign', 'ecdh', 'ping', 'onboard'] as const).map((permission) => {
+          const isEnabled = enabled.includes(permission);
           return (
-            <div className="igloo-create-completion-row" key={share.member_idx}>
-              <div>
-                <Check size={16} aria-hidden="true" />
-                <span>
-                  <strong>{share.name} · Index {share.member_idx}</strong>
-                  <small>{result?.label ?? share.name}</small>
-                </span>
-              </div>
-              <em>{result?.kind === 'completed' ? 'Marked distributed' : 'Completed'}</em>
-            </div>
+            <button
+              type="button"
+              key={permission}
+              className={isEnabled ? `is-${permission}` : 'is-disabled'}
+              aria-pressed={isEnabled}
+              onClick={() => onTogglePermission?.(share.member_idx, permission, !isEnabled)}
+            >
+              {permission.toUpperCase()}
+            </button>
           );
         })}
-      </section>
-      <section className="igloo-create-completion-callout">
-        <strong>All remote packages complete</strong>
-        <p>{shares.length} of {shares.length} remote bfonboard packages are complete. Handoff is accounted for.</p>
-      </section>
-      <Button type="button" className="igloo-create-primary-action" onClick={onFinish}>
-        Finish Distribution
-      </Button>
+      </div>
     </div>
   );
 }
@@ -720,12 +716,16 @@ function CreateFlowDistributionCard({
   share,
   draft,
   result,
+  permissions,
+  onTogglePermission,
   onChangeDraft,
   onDistribute,
 }: {
   share: SharedGeneratedShare;
   draft: SharedDistributionDraft;
   result?: SharedDistributionResult;
+  permissions?: SharedDistributionPermission[];
+  onTogglePermission?: (memberIdx: number, permission: SharedDistributionPermission, enabled: boolean) => void;
   onChangeDraft: (
     memberIdx: number,
     field: keyof SharedDistributionDraft,
@@ -736,76 +736,76 @@ function CreateFlowDistributionCard({
   const hasPackage = Boolean(result);
   const isComplete = result?.kind === 'completed';
   const statusClass = hasPackage ? 'igloo-create-distribution-status is-ready' : 'igloo-create-distribution-status';
+  const enabledPermissions = permissions ?? ['sign', 'ecdh', 'ping', 'onboard'];
 
   return (
-    <section className={hasPackage ? 'igloo-create-distribution-card is-ready' : 'igloo-create-distribution-card'}>
+    <section className={isComplete ? 'igloo-create-distribution-card is-ready' : hasPackage ? 'igloo-create-distribution-card is-ready' : 'igloo-create-distribution-card'}>
       <header>
         <div>
-          <h3>{share.name} · Index {share.member_idx}</h3>
-          <p>{draft.label || share.name}</p>
+          <h3>{share.name}</h3>
         </div>
         <span className={statusClass}>
           {hasPackage ? <Check size={12} aria-hidden="true" /> : null}
-          {resultLabel(result)}
+          {isComplete ? 'Done' : resultLabel(result)}
         </span>
       </header>
 
-      <label className="igloo-create-distribution-label">
-        <span>Share label</span>
-        <input
-          aria-label="Share label"
-          value={draft.label}
-          onChange={(event) => onChangeDraft(share.member_idx, 'label', event.target.value)}
-        />
-      </label>
+      <CreatePermissionToggles
+        share={share}
+        enabled={enabledPermissions}
+        onTogglePermission={onTogglePermission}
+      />
 
-      <div className="igloo-create-package-preview">
-        <span>bfonboard Package</span>
-        <code>{packagePreview(result)}</code>
-      </div>
-
-      <div className="igloo-create-package-password">
-        <label>
-          <span>Package Password</span>
-          <input
-            aria-label="Package password"
-            type="password"
-            value={draft.packagePassword}
-            onChange={(event) => {
-              onChangeDraft(share.member_idx, 'packagePassword', event.target.value);
-              onChangeDraft(share.member_idx, 'confirmPassword', event.target.value);
-            }}
-            placeholder="Enter password"
-          />
-        </label>
-      </div>
+      {!isComplete ? (
+        <div className="igloo-create-package-password">
+          <label>
+            <span>Package Password</span>
+            <input
+              aria-label="Package password"
+              type="password"
+              value={draft.packagePassword}
+              onChange={(event) => {
+                onChangeDraft(share.member_idx, 'packagePassword', event.target.value);
+                onChangeDraft(share.member_idx, 'confirmPassword', event.target.value);
+              }}
+              placeholder="Enter password"
+            />
+          </label>
+        </div>
+      ) : null}
 
       {!hasPackage ? (
-        <>
-          <Button type="button" className="igloo-create-package-action" onClick={() => onDistribute(share.member_idx, 'prepare')}>
-            <KeyRound size={14} aria-hidden="true" />
-            Create package
-          </Button>
-          <p className="igloo-create-distribution-help">Copy, QR, and manual mark unlock after the password creates this package.</p>
-        </>
-      ) : (
-        <div className="igloo-create-distribution-actions">
-          <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'copy')}>
-            <Copy size={13} aria-hidden="true" />
-            Copy package
-          </Button>
-          <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'qr')}>
-            <QrCode size={13} aria-hidden="true" />
-            QR code
-          </Button>
-          <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'save')}>
-            Save file
-          </Button>
-          <Button type="button" size="sm" variant="secondary" disabled={isComplete} onClick={() => onDistribute(share.member_idx, 'mark')}>
-            <Check size={13} aria-hidden="true" />
-            {isComplete ? 'Distributed' : 'Mark distributed'}
-          </Button>
+        <Button type="button" className="igloo-create-package-action" onClick={() => onDistribute(share.member_idx, 'prepare')}>
+          <KeyRound size={14} aria-hidden="true" />
+          Create package
+        </Button>
+      ) : isComplete ? (
+        <div className="igloo-create-package-preview">
+          <code>Package distributed and marked complete.</code>
         </div>
+      ) : (
+        <>
+          <div className="igloo-create-package-preview">
+            <code>{packagePreview(result)}</code>
+          </div>
+          <div className="igloo-create-distribution-actions">
+            <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'copy')}>
+              <Copy size={13} aria-hidden="true" />
+              Copy
+            </Button>
+            <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'save')}>
+              Save
+            </Button>
+            <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'qr')}>
+              <QrCode size={13} aria-hidden="true" />
+              QR code
+            </Button>
+            <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'mark')}>
+              <Check size={13} aria-hidden="true" />
+              Done
+            </Button>
+          </div>
+        </>
       )}
     </section>
   );
@@ -815,6 +815,8 @@ export function CreateFlowDistributionCards({
   shares,
   drafts,
   results,
+  permissions = {},
+  onTogglePermission,
   onChangeDraft,
   onDistribute,
   onFinish,
@@ -824,6 +826,8 @@ export function CreateFlowDistributionCards({
   shares: SharedGeneratedShare[];
   drafts: Record<number, SharedDistributionDraft>;
   results: Record<number, SharedDistributionResult>;
+  permissions?: Record<number, SharedDistributionPermission[]>;
+  onTogglePermission?: (memberIdx: number, permission: SharedDistributionPermission, enabled: boolean) => void;
   onChangeDraft: (
     memberIdx: number,
     field: keyof SharedDistributionDraft,
@@ -834,15 +838,10 @@ export function CreateFlowDistributionCards({
   localShare?: SharedGeneratedShare | null;
   localProfileName?: string;
 }) {
-  const allComplete = shares.length > 0 && shares.every((share) => results[share.member_idx]?.kind === 'completed');
   const orderedItems = [
     ...shares.map((share) => ({ kind: 'remote' as const, share })),
     ...(localShare ? [{ kind: 'local' as const, share: localShare }] : []),
   ].sort((a, b) => a.share.member_idx - b.share.member_idx);
-
-  if (allComplete) {
-    return <CreateFlowDistributionCompletion shares={shares} results={results} onFinish={onFinish} />;
-  }
 
   return (
     <div className="igloo-create-distribution-list">
@@ -852,7 +851,7 @@ export function CreateFlowDistributionCards({
             <section className="igloo-create-local-share-card" key={`local-${item.share.member_idx}`}>
               <header>
                 <h3>{item.share.name}</h3>
-                <span>Index {item.share.member_idx}</span>
+                <span>Local</span>
               </header>
               <div>
                 <Check size={13} aria-hidden="true" />
@@ -875,27 +874,28 @@ export function CreateFlowDistributionCards({
             share={item.share}
             draft={form}
             result={result}
+            permissions={permissions[item.share.member_idx]}
+            onTogglePermission={onTogglePermission}
             onChangeDraft={onChangeDraft}
             onDistribute={onDistribute}
           />
         );
       })}
-      <Button type="button" className="igloo-create-primary-action" disabled>
-        Continue to Completion
+      <Button type="button" className="igloo-create-primary-action" onClick={onFinish}>
+        Launch Signer
       </Button>
     </div>
   );
 }
 
 export function CreateFlowDistributionSection({
-  bannerKicker,
-  bannerDescription,
-  bannerPoints,
   sectionTitle,
   sectionDescription,
   shares,
   drafts,
   results,
+  permissions,
+  onTogglePermission,
   onChangeDraft,
   onDistribute,
   onFinish,
@@ -903,14 +903,16 @@ export function CreateFlowDistributionSection({
   localShare,
   localProfileName,
 }: {
-  bannerKicker: string;
-  bannerDescription: React.ReactNode;
-  bannerPoints: string[];
+  bannerKicker?: string;
+  bannerDescription?: React.ReactNode;
+  bannerPoints?: string[];
   sectionTitle: string;
   sectionDescription: string;
   shares: SharedGeneratedShare[];
   drafts: Record<number, SharedDistributionDraft>;
   results: Record<number, SharedDistributionResult>;
+  permissions?: Record<number, SharedDistributionPermission[]>;
+  onTogglePermission?: (memberIdx: number, permission: SharedDistributionPermission, enabled: boolean) => void;
   onChangeDraft: (
     memberIdx: number,
     field: keyof SharedDistributionDraft,
@@ -922,28 +924,19 @@ export function CreateFlowDistributionSection({
   localShare?: SharedGeneratedShare | null;
   localProfileName?: string;
 }) {
-  const allComplete = shares.length > 0 && shares.every((share) => results[share.member_idx]?.kind === 'completed');
-
   return (
     <section className="igloo-create-distribution-form">
       {beforeCards}
-      {!allComplete ? (
-        <>
-          <CreateFlowTaskBanner
-            kicker={bannerKicker}
-            description={bannerDescription}
-            points={bannerPoints}
-          />
-          <div className="igloo-create-distribution-heading">
-            <h3>{sectionTitle}</h3>
-            <p>{sectionDescription}</p>
-          </div>
-        </>
-      ) : null}
+      <div className="igloo-create-distribution-heading">
+        <h3>{sectionTitle}</h3>
+        <p>{sectionDescription}</p>
+      </div>
       <CreateFlowDistributionCards
         shares={shares}
         drafts={drafts}
         results={results}
+        permissions={permissions}
+        onTogglePermission={onTogglePermission}
         onChangeDraft={onChangeDraft}
         onDistribute={onDistribute}
         onFinish={onFinish}
@@ -960,12 +953,14 @@ export function OnboardPackageEntry({
   onPackageTextChange,
   onPasswordChange,
   onConnect,
+  actionLabel = 'Apply Onboarding Package',
 }: {
   packageText: string;
   password: string;
   onPackageTextChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onConnect: () => void;
+  actionLabel?: string;
 }) {
   const hasPackage = packageText.trim().startsWith('bfonboard1');
 
@@ -1014,7 +1009,7 @@ export function OnboardPackageEntry({
         </label>
       </section>
       <Button type="button" className="igloo-create-primary-action" onClick={onConnect}>
-        Apply Onboarding Package
+        {actionLabel}
       </Button>
     </div>
   );
@@ -1026,12 +1021,14 @@ export function OnboardHandshakePanel({
   thresholdLabel = '2/3',
   activeStep = 'applying',
   onCancel,
+  title = 'Onboarding...',
 }: {
   packageText?: string;
   keysetName?: string;
   thresholdLabel?: string;
   activeStep?: 'validated' | 'matched' | 'applying' | 'saving';
   onCancel?: () => void;
+  title?: string;
 }) {
   const compactPackage = packageText ? packageText.slice(0, 24) : 'bfonboard1...';
   const steps = [
@@ -1045,7 +1042,7 @@ export function OnboardHandshakePanel({
   return (
     <div className="igloo-onboard-handshake-flow">
       <header>
-        <h3>Onboarding...</h3>
+        <h3>{title}</h3>
         <p>Validating the onboarding package and saving this device's share.</p>
       </header>
       <ol className="igloo-onboard-timeline">
