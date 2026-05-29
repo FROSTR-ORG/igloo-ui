@@ -86,6 +86,12 @@ export type DialogProps = {
   onClose: () => void;
   title?: React.ReactNode;
   description?: React.ReactNode;
+  /**
+   * Explicit accessible-name reference for callers that render their own
+   * titled heading inside `children` (e.g. ConfirmDialog) instead of passing
+   * `title`. Without this the `role="dialog"` would lack an accessible name.
+   */
+  ariaLabelledBy?: string;
   initialFocusRef?: React.RefObject<HTMLElement>;
   preventDismissOnBackdrop?: boolean;
   preventDismissOnEscape?: boolean;
@@ -98,6 +104,7 @@ export function Dialog({
   onClose,
   title,
   description,
+  ariaLabelledBy,
   initialFocusRef,
   preventDismissOnBackdrop = false,
   preventDismissOnEscape = false,
@@ -183,7 +190,7 @@ export function Dialog({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
+        aria-labelledby={title ? titleId : ariaLabelledBy}
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={cn(
@@ -232,8 +239,13 @@ export function ConfirmDialog({
   onCancel,
   variant = 'danger',
 }: ConfirmDialogProps) {
+  // The styled <h3> title lives inside `children`, so the dialog cannot derive
+  // its accessible name from the Dialog `title` prop without losing the
+  // icon+heading layout. Give the heading a stable id and reference it via
+  // `ariaLabelledBy` so `role="dialog"` is named for assistive tech.
+  const titleId = React.useId();
   return (
-    <Dialog open={open} onClose={onCancel} className="max-w-md">
+    <Dialog open={open} onClose={onCancel} className="max-w-md" ariaLabelledBy={titleId}>
       <div className="flex items-start gap-4">
         <div
           className={cn(
@@ -249,7 +261,7 @@ export function ConfirmDialog({
           />
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-blue-200">{title}</h3>
+          <h3 id={titleId} className="text-lg font-semibold text-blue-200">{title}</h3>
           <p className="mt-2 text-sm text-gray-400">{message}</p>
         </div>
       </div>
