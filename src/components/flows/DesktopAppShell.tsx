@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { Alert } from '../ui/alert';
+
 export type DesktopShellTab = {
   key: string;
   label: string;
@@ -107,7 +109,7 @@ export function DesktopAppShell({
           </div>
         </header>
 
-        {error ? <div className="igloo-shell-alert">{error}</div> : null}
+        {error ? <Alert tone="danger">{error}</Alert> : null}
         {children}
       </main>
     </div>

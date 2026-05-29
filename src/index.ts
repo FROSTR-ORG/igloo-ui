@@ -33,6 +33,7 @@ export * from './components/ui/log-entry';
 export * from './components/ui/modal';
 export * from './components/ui/page-layout';
 export * from './components/ui/page-back-link';
+export * from './components/ui/password-field';
 export * from './components/ui/peer-list';
 export * from './components/ui/relay-input';
 export * from './components/ui/status-indicator';

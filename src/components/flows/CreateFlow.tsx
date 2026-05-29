@@ -1,8 +1,10 @@
 import * as React from 'react';
-import { AlertTriangle, Check, Copy, EyeOff, HelpCircle, KeyRound, Pencil, QrCode } from 'lucide-react';
+import { AlertTriangle, Check, Copy, EyeOff, HelpCircle, KeyRound, Loader2, Pencil, Play, QrCode, RefreshCw, RotateCcw, Square, X } from 'lucide-react';
 
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { PasswordField } from '../ui/password-field';
+import { StatusDot } from '../ui/status-indicator';
 import { Textarea } from '../ui/textarea';
 
 export type SharedCreateFormState = {
@@ -29,13 +31,15 @@ export type SharedDistributionDraft = {
   confirmPassword: string;
 };
 
+export type SharedDistributionStatus = 'draft' | 'packaged' | 'delivered' | 'saved' | 'onboarded';
+
 export type SharedDistributionResult = {
-  kind: 'package_ready' | 'handoff_pending' | 'completed';
+  status: SharedDistributionStatus;
   label: string;
   packageText?: string;
 };
 
-export type SharedDistributionAction = 'prepare' | 'copy' | 'qr' | 'save' | 'mark';
+export type SharedDistributionAction = 'prepare' | 'copy' | 'qr' | 'save' | 'mark' | 'cancel' | 'revert';
 
 export type SharedLocalSaveDraft = {
   label: string;
@@ -93,6 +97,18 @@ export function CreateFlowTaskBanner({
   );
 }
 
+function CreateActionRow({ onBack, children }: { onBack?: () => void; children: React.ReactNode }) {
+  if (!onBack) return <>{children}</>;
+  return (
+    <div className="igloo-create-action-row">
+      <Button type="button" variant="secondary" className="igloo-create-back-action" onClick={onBack}>
+        Go Back
+      </Button>
+      {children}
+    </div>
+  );
+}
+
 export function CreateFlowGenerateCard({
   groupName,
   threshold,
@@ -100,6 +116,7 @@ export function CreateFlowGenerateCard({
   privateKey = '',
   onChangeForm,
   onGenerate,
+  onBack,
 }: {
   groupName: string;
   threshold: string;
@@ -110,6 +127,7 @@ export function CreateFlowGenerateCard({
     value: string,
   ) => void;
   onGenerate: () => void;
+  onBack?: () => void;
 }) {
   const thresholdValue = Number.parseInt(threshold, 10) || 2;
   const countValue = Number.parseInt(count, 10) || 3;
@@ -176,9 +194,11 @@ export function CreateFlowGenerateCard({
         <small>Provide an existing key, otherwise a new one will be generated for you in the next step.</small>
       </label>
 
-      <Button type="button" className="igloo-create-primary-action" onClick={onGenerate}>
-        Next Step
-      </Button>
+      <CreateActionRow onBack={onBack}>
+        <Button type="button" className="igloo-create-primary-action" onClick={onGenerate}>
+          Next Step
+        </Button>
+      </CreateActionRow>
     </div>
   );
 }
@@ -441,6 +461,7 @@ export function CreateFlowShareSelection({
   onSelectShare,
   onCopyGroupPublicKey,
   onAction,
+  onBack,
 }: {
   shares: SharedGeneratedShare[];
   selectedMemberIdx: number | null;
@@ -450,6 +471,7 @@ export function CreateFlowShareSelection({
   onSelectShare: (memberIdx: number) => void;
   onCopyGroupPublicKey: () => void;
   onAction: () => void;
+  onBack?: () => void;
 }) {
   const selectedShare = shares.find((share) => share.member_idx === selectedMemberIdx) ?? shares[0] ?? null;
 
@@ -502,9 +524,125 @@ export function CreateFlowShareSelection({
         </div>
       </section>
 
-      <Button type="button" className="igloo-create-primary-action" onClick={onAction}>
-        {actionLabel}
-      </Button>
+      <CreateActionRow onBack={onBack}>
+        <Button type="button" className="igloo-create-primary-action" onClick={onAction}>
+          {actionLabel}
+        </Button>
+      </CreateActionRow>
+    </div>
+  );
+}
+
+export type RelayPingFn = (url: string) => Promise<{ latencyMs?: number; error?: string }>;
+
+type RelayPingState = { status: 'idle' | 'pinging' | 'ok' | 'failed'; latencyMs?: number };
+
+function RelayList({
+  relays,
+  onChange,
+  onPing,
+  readOnly = false,
+}: {
+  relays: string[];
+  onChange: (relays: string[]) => void;
+  onPing?: RelayPingFn;
+  readOnly?: boolean;
+}) {
+  const [pings, setPings] = React.useState<Record<string, RelayPingState>>({});
+  const [draft, setDraft] = React.useState('');
+
+  const runPing = React.useCallback(
+    async (url: string) => {
+      if (!onPing) return;
+      setPings((current) => ({ ...current, [url]: { status: 'pinging' } }));
+      const result = await onPing(url);
+      setPings((current) => ({
+        ...current,
+        [url]:
+          typeof result.latencyMs === 'number'
+            ? { status: 'ok', latencyMs: result.latencyMs }
+            : { status: 'failed' },
+      }));
+    },
+    [onPing],
+  );
+
+  // Auto-ping relays that don't yet have a recorded result (initial mount + new adds).
+  React.useEffect(() => {
+    for (const url of relays) {
+      if (!pings[url]) void runPing(url);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [relays]);
+
+  function addRelay() {
+    const next = draft.trim();
+    if (!next || relays.includes(next)) {
+      setDraft('');
+      return;
+    }
+    onChange([...relays, next]);
+    setDraft('');
+  }
+
+  return (
+    <div className="igloo-create-relay-list">
+      {relays.map((relay) => {
+        const ping = pings[relay];
+        const status = ping?.status ?? 'idle';
+        const dotState = status === 'ok' ? 'online' : status === 'failed' ? 'offline' : status === 'pinging' ? 'warning' : 'idle';
+        return (
+          <div className="igloo-create-relay-row" key={relay}>
+            <span className="igloo-create-relay-url">{relay}</span>
+            <span className="igloo-create-relay-status" aria-label={`Status: ${status}`}>
+              {status === 'pinging' ? (
+                <Loader2 size={14} aria-hidden="true" className="igloo-spin" />
+              ) : (
+                <StatusDot state={dotState} />
+              )}
+            </span>
+            <span className="igloo-create-relay-ping">{ping?.latencyMs != null ? `${ping.latencyMs}ms` : '---'}</span>
+            <button
+              type="button"
+              className="igloo-create-relay-icon"
+              aria-label={`Ping ${relay}`}
+              onClick={() => void runPing(relay)}
+              disabled={!onPing || status === 'pinging'}
+            >
+              <RefreshCw size={14} aria-hidden="true" />
+            </button>
+            {readOnly ? null : (
+              <button
+                type="button"
+                className="igloo-create-relay-icon igloo-create-relay-remove"
+                aria-label={`Remove ${relay}`}
+                onClick={() => onChange(relays.filter((entry) => entry !== relay))}
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        );
+      })}
+      {readOnly ? null : (
+        <div className="igloo-create-relay-add">
+          <input
+            aria-label="Add relay"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                addRelay();
+              }
+            }}
+            placeholder="wss://relay.example.com"
+          />
+          <Button type="button" size="sm" variant="secondary" onClick={addRelay}>
+            Add Relay
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -515,8 +653,10 @@ export function CreateFlowProfileSetup({
   onLabelChange,
   onPrimarySecretChange,
   onSecondarySecretChange,
-  onRelayUrlsChange,
+  onRelaysChange,
+  onPingRelay,
   onAction,
+  onBack,
   lockIdentity = false,
 }: {
   draft: SharedLocalSaveDraft;
@@ -524,8 +664,10 @@ export function CreateFlowProfileSetup({
   onLabelChange: (value: string) => void;
   onPrimarySecretChange: (value: string) => void;
   onSecondarySecretChange: (value: string) => void;
-  onRelayUrlsChange: (value: string) => void;
+  onRelaysChange: (relays: string[]) => void;
+  onPingRelay?: RelayPingFn;
   onAction: () => void;
+  onBack?: () => void;
   lockIdentity?: boolean;
 }) {
   const relayRows = draft.relayUrls
@@ -554,18 +696,16 @@ export function CreateFlowProfileSetup({
         <div className="igloo-create-profile-passwords">
           <label>
             <span>Password</span>
-            <input
+            <PasswordField
               aria-label="Device Password"
-              type="password"
               value={draft.primarySecret}
               onChange={(event) => onPrimarySecretChange(event.target.value)}
             />
           </label>
           <label>
             <span>Confirm Password</span>
-            <input
+            <PasswordField
               aria-label="Confirm Password"
-              type="password"
               value={draft.secondarySecret ?? ''}
               onChange={(event) => onSecondarySecretChange(event.target.value)}
             />
@@ -577,35 +717,19 @@ export function CreateFlowProfileSetup({
         <header>
           <h3>Relays</h3>
         </header>
-        <div className="igloo-create-relay-box">
-          {relayRows.map((relay) => (
-            <div className="igloo-create-relay-row" key={relay}>
-              <div>
-                <span>{relay}</span>
-                <small>Connected - 24ms latency</small>
-              </div>
-              <button type="button" aria-label={`Remove ${relay}`} disabled>
-                x
-              </button>
-            </div>
-          ))}
-          {lockIdentity ? null : (
-            <label className="igloo-create-relay-add-row">
-              <span className="sr-only">Relays</span>
-              <Textarea
-                aria-label="Relays"
-                value={draft.relayUrls}
-                onChange={(event) => onRelayUrlsChange(event.target.value)}
-                placeholder="wss://"
-              />
-            </label>
-          )}
-        </div>
+        <RelayList
+          relays={relayRows}
+          onChange={onRelaysChange}
+          onPing={onPingRelay}
+          readOnly={lockIdentity}
+        />
       </section>
 
-      <Button type="button" className="igloo-create-primary-action" onClick={onAction}>
-        {actionLabel}
-      </Button>
+      <CreateActionRow onBack={onBack}>
+        <Button type="button" className="igloo-create-primary-action" onClick={onAction}>
+          {actionLabel}
+        </Button>
+      </CreateActionRow>
     </div>
   );
 }
@@ -666,20 +790,24 @@ function shortKey(value: string) {
   return `${value.slice(0, 10)}...${value.slice(-6)}`;
 }
 
-function resultLabel(result?: SharedDistributionResult) {
-  if (!result) return 'Package not created';
-  if (result.kind === 'completed') return `Marked distributed`;
-  if (result.kind === 'handoff_pending') return `Waiting for handoff`;
-  return `Ready to distribute`;
+function statusLabel(status: SharedDistributionStatus) {
+  switch (status) {
+    case 'packaged':
+      return 'Packaged';
+    case 'delivered':
+      return 'Delivered';
+    case 'saved':
+      return 'Saved';
+    case 'onboarded':
+      return 'Onboarded';
+    default:
+      return 'Draft';
+  }
 }
 
 function packagePreview(result?: SharedDistributionResult) {
   if (!result?.packageText) return 'Waiting for package password';
   return `${result.packageText.slice(0, 24)}...`;
-}
-
-function passwordPreview(value: string) {
-  return value ? '••••••••' : 'Enter password';
 }
 
 export type SharedDistributionPermission = 'sign' | 'ecdh' | 'ping' | 'onboard';
@@ -718,6 +846,54 @@ function CreatePermissionToggles({
   );
 }
 
+export function OnboardingClientCard({
+  running,
+  relayCount,
+  peerCount,
+  signerPubkey,
+  onStart,
+  onStop,
+}: {
+  running: boolean;
+  relayCount: number;
+  peerCount?: number;
+  signerPubkey?: string;
+  onStart: () => void;
+  onStop: () => void;
+}) {
+  const metaParts = [`${relayCount} ${relayCount === 1 ? 'relay' : 'relays'}`];
+  if (typeof peerCount === 'number') {
+    metaParts.push(`${peerCount} ${peerCount === 1 ? 'peer' : 'peers'}`);
+  }
+  if (signerPubkey) {
+    metaParts.push(shortKey(signerPubkey));
+  }
+
+  return (
+    <section className={running ? 'igloo-create-client-card is-running' : 'igloo-create-client-card'}>
+      <div className="igloo-create-client-info">
+        <header>
+          <StatusDot state={running ? 'online' : 'offline'} />
+          <strong>Onboarding Client</strong>
+          <span className="igloo-create-client-state">{running ? 'Running' : 'Stopped'}</span>
+        </header>
+        <p>{metaParts.join(' · ')}</p>
+      </div>
+      {running ? (
+        <Button type="button" size="sm" variant="secondary" onClick={onStop}>
+          <Square size={13} aria-hidden="true" />
+          Stop
+        </Button>
+      ) : (
+        <Button type="button" size="sm" onClick={onStart}>
+          <Play size={13} aria-hidden="true" />
+          Start
+        </Button>
+      )}
+    </section>
+  );
+}
+
 function CreateFlowDistributionCard({
   share,
   draft,
@@ -739,20 +915,34 @@ function CreateFlowDistributionCard({
   ) => void;
   onDistribute: (memberIdx: number, kind: SharedDistributionAction) => void;
 }) {
-  const hasPackage = Boolean(result);
-  const isComplete = result?.kind === 'completed';
-  const statusClass = hasPackage ? 'igloo-create-distribution-status is-ready' : 'igloo-create-distribution-status';
+  const status: SharedDistributionStatus = result?.status ?? 'draft';
+  const isDraft = status === 'draft';
+  const isPackaged = status === 'packaged';
+  const isCompleted = status === 'delivered' || status === 'saved' || status === 'onboarded';
   const enabledPermissions = permissions ?? ['sign', 'ecdh', 'ping', 'onboard'];
 
+  const statusClass =
+    status === 'onboarded'
+      ? 'igloo-create-distribution-status is-onboarded'
+      : isCompleted || isPackaged
+        ? 'igloo-create-distribution-status is-ready'
+        : 'igloo-create-distribution-status';
+  const cardClass =
+    status === 'onboarded'
+      ? 'igloo-create-distribution-card is-onboarded'
+      : isCompleted || isPackaged
+        ? 'igloo-create-distribution-card is-ready'
+        : 'igloo-create-distribution-card';
+
   return (
-    <section className={isComplete ? 'igloo-create-distribution-card is-ready' : hasPackage ? 'igloo-create-distribution-card is-ready' : 'igloo-create-distribution-card'}>
+    <section className={cardClass}>
       <header>
         <div>
           <h3>{share.name}</h3>
         </div>
         <span className={statusClass}>
-          {hasPackage ? <Check size={12} aria-hidden="true" /> : null}
-          {isComplete ? 'Done' : resultLabel(result)}
+          {isCompleted || isPackaged ? <Check size={12} aria-hidden="true" /> : null}
+          {statusLabel(status)}
         </span>
       </header>
 
@@ -762,34 +952,31 @@ function CreateFlowDistributionCard({
         onTogglePermission={onTogglePermission}
       />
 
-      {!isComplete ? (
-        <div className="igloo-create-package-password">
-          <label>
-            <span>Package Password</span>
-            <input
-              aria-label="Package password"
-              type="password"
-              value={draft.packagePassword}
-              onChange={(event) => {
-                onChangeDraft(share.member_idx, 'packagePassword', event.target.value);
-                onChangeDraft(share.member_idx, 'confirmPassword', event.target.value);
-              }}
-              placeholder="Enter password"
-            />
-          </label>
-        </div>
+      {isDraft ? (
+        <>
+          <div className="igloo-create-package-password">
+            <label>
+              <span>Package Password</span>
+              <input
+                aria-label="Package password"
+                type="password"
+                value={draft.packagePassword}
+                onChange={(event) => {
+                  onChangeDraft(share.member_idx, 'packagePassword', event.target.value);
+                  onChangeDraft(share.member_idx, 'confirmPassword', event.target.value);
+                }}
+                placeholder="Enter password"
+              />
+            </label>
+          </div>
+          <Button type="button" className="igloo-create-package-action" onClick={() => onDistribute(share.member_idx, 'prepare')}>
+            <KeyRound size={14} aria-hidden="true" />
+            Create Package
+          </Button>
+        </>
       ) : null}
 
-      {!hasPackage ? (
-        <Button type="button" className="igloo-create-package-action" onClick={() => onDistribute(share.member_idx, 'prepare')}>
-          <KeyRound size={14} aria-hidden="true" />
-          Create package
-        </Button>
-      ) : isComplete ? (
-        <div className="igloo-create-package-preview">
-          <code>Package distributed and marked complete.</code>
-        </div>
-      ) : (
+      {isPackaged ? (
         <>
           <div className="igloo-create-package-preview">
             <code>{packagePreview(result)}</code>
@@ -806,13 +993,28 @@ function CreateFlowDistributionCard({
               <QrCode size={13} aria-hidden="true" />
               QR code
             </Button>
-            <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'mark')}>
+          </div>
+          <div className="igloo-create-distribution-actions">
+            <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'cancel')}>
+              <X size={13} aria-hidden="true" />
+              Cancel
+            </Button>
+            <Button type="button" size="sm" onClick={() => onDistribute(share.member_idx, 'mark')}>
               <Check size={13} aria-hidden="true" />
-              Done
+              Mark Delivered
             </Button>
           </div>
         </>
-      )}
+      ) : null}
+
+      {isCompleted ? (
+        <div className="igloo-create-distribution-actions">
+          <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'revert')}>
+            <RotateCcw size={13} aria-hidden="true" />
+            Revert
+          </Button>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -826,8 +1028,8 @@ export function CreateFlowDistributionCards({
   onChangeDraft,
   onDistribute,
   onFinish,
-  localShare,
-  localProfileName = 'Igloo Web',
+  onBack,
+  finishLabel = 'Finish Setup',
 }: {
   shares: SharedGeneratedShare[];
   drafts: Record<number, SharedDistributionDraft>;
@@ -841,55 +1043,38 @@ export function CreateFlowDistributionCards({
   ) => void;
   onDistribute: (memberIdx: number, kind: SharedDistributionAction) => void;
   onFinish: () => void;
-  localShare?: SharedGeneratedShare | null;
-  localProfileName?: string;
+  onBack?: () => void;
+  finishLabel?: string;
 }) {
-  const orderedItems = [
-    ...shares.map((share) => ({ kind: 'remote' as const, share })),
-    ...(localShare ? [{ kind: 'local' as const, share: localShare }] : []),
-  ].sort((a, b) => a.share.member_idx - b.share.member_idx);
+  const orderedShares = [...shares].sort((a, b) => a.member_idx - b.member_idx);
 
   return (
     <div className="igloo-create-distribution-list">
-      {orderedItems.map((item) => {
-        if (item.kind === 'local') {
-          return (
-            <section className="igloo-create-local-share-card" key={`local-${item.share.member_idx}`}>
-              <header>
-                <h3>{item.share.name}</h3>
-                <span>Local</span>
-              </header>
-              <div>
-                <Check size={13} aria-hidden="true" />
-                <strong>Saved to {localProfileName}</strong>
-              </div>
-              <code>Saved securely in this browser</code>
-            </section>
-          );
-        }
-
-        const form = drafts[item.share.member_idx] ?? {
-          label: item.share.name,
+      {orderedShares.map((share) => {
+        const form = drafts[share.member_idx] ?? {
+          label: share.name,
           packagePassword: '',
           confirmPassword: '',
         };
-        const result = results[item.share.member_idx];
+        const result = results[share.member_idx];
         return (
           <CreateFlowDistributionCard
-            key={`distribution-${item.share.member_idx}`}
-            share={item.share}
+            key={`distribution-${share.member_idx}`}
+            share={share}
             draft={form}
             result={result}
-            permissions={permissions[item.share.member_idx]}
+            permissions={permissions[share.member_idx]}
             onTogglePermission={onTogglePermission}
             onChangeDraft={onChangeDraft}
             onDistribute={onDistribute}
           />
         );
       })}
-      <Button type="button" className="igloo-create-primary-action" onClick={onFinish}>
-        Launch Signer
-      </Button>
+      <CreateActionRow onBack={onBack}>
+        <Button type="button" className="igloo-create-primary-action" onClick={onFinish}>
+          {finishLabel}
+        </Button>
+      </CreateActionRow>
     </div>
   );
 }
@@ -905,9 +1090,9 @@ export function CreateFlowDistributionSection({
   onChangeDraft,
   onDistribute,
   onFinish,
+  onBack,
+  finishLabel,
   beforeCards,
-  localShare,
-  localProfileName,
 }: {
   bannerKicker?: string;
   bannerDescription?: React.ReactNode;
@@ -926,9 +1111,9 @@ export function CreateFlowDistributionSection({
   ) => void;
   onDistribute: (memberIdx: number, kind: SharedDistributionAction) => void;
   onFinish: () => void;
+  onBack?: () => void;
+  finishLabel?: string;
   beforeCards?: React.ReactNode;
-  localShare?: SharedGeneratedShare | null;
-  localProfileName?: string;
 }) {
   return (
     <section className="igloo-create-distribution-form">
@@ -946,8 +1131,8 @@ export function CreateFlowDistributionSection({
         onChangeDraft={onChangeDraft}
         onDistribute={onDistribute}
         onFinish={onFinish}
-        localShare={localShare}
-        localProfileName={localProfileName}
+        onBack={onBack}
+        finishLabel={finishLabel}
       />
     </section>
   );
@@ -1000,18 +1185,14 @@ export function OnboardPackageEntry({
       <section className="igloo-onboard-package-section">
         <label className="igloo-onboard-field">
           <span className="igloo-create-label-with-help">
-            Package Password
+            Encryption Password
             <HelpCircle size={14} aria-hidden="true" />
           </span>
-          <div className="igloo-create-input-shell">
-            <input
-              aria-label="Package Password"
-              type="password"
-              value={password}
-              onChange={(event) => onPasswordChange(event.target.value)}
-            />
-            <EyeOff size={16} aria-hidden="true" />
-          </div>
+          <PasswordField
+            aria-label="Encryption Password"
+            value={password}
+            onChange={(event) => onPasswordChange(event.target.value)}
+          />
         </label>
       </section>
       <Button type="button" className="igloo-create-primary-action" onClick={onConnect}>
@@ -1021,52 +1202,225 @@ export function OnboardPackageEntry({
   );
 }
 
+export function ImportProfileEntry({
+  profileString,
+  password,
+  onProfileStringChange,
+  onPasswordChange,
+  onNext,
+  actionLabel = 'Next Step',
+}: {
+  profileString: string;
+  password: string;
+  onProfileStringChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onNext: () => void;
+  actionLabel?: string;
+}) {
+  return (
+    <div className="igloo-onboard-form">
+      <section className="igloo-onboard-package-section">
+        <label className="igloo-onboard-field">
+          <span className="igloo-create-label-with-help">
+            Profile Backup
+            <HelpCircle size={14} aria-hidden="true" />
+          </span>
+          <small>Paste the encrypted profile backup string.</small>
+          <Textarea
+            aria-label="Profile Backup"
+            value={profileString}
+            onChange={(event) => onProfileStringChange(event.target.value)}
+            placeholder="bfprofile1..."
+          />
+        </label>
+      </section>
+      <div className="igloo-onboard-divider" />
+      <section className="igloo-onboard-package-section">
+        <label className="igloo-onboard-field">
+          <span className="igloo-create-label-with-help">
+            Backup Password
+            <HelpCircle size={14} aria-hidden="true" />
+          </span>
+          <PasswordField
+            aria-label="Backup Password"
+            value={password}
+            onChange={(event) => onPasswordChange(event.target.value)}
+          />
+        </label>
+      </section>
+      <Button type="button" className="igloo-create-primary-action" onClick={onNext}>
+        {actionLabel}
+      </Button>
+    </div>
+  );
+}
+
+export type SharedRecoverSource = { packageText: string; packagePassword: string };
+
+export function RecoverCollectSharesPanel({
+  deviceShareLabel = 'Share #1 (this device)',
+  sources,
+  threshold,
+  collectedCount,
+  onChangeSource,
+  onAddSource,
+  onRemoveSource,
+  onNext,
+  actionLabel = 'Next Step',
+}: {
+  deviceShareLabel?: string;
+  sources: SharedRecoverSource[];
+  threshold: number;
+  collectedCount: number;
+  onChangeSource: (index: number, field: 'packageText' | 'packagePassword', value: string) => void;
+  onAddSource: () => void;
+  onRemoveSource: (index: number) => void;
+  onNext: () => void;
+  actionLabel?: string;
+}) {
+  const pct = threshold > 0 ? Math.min(100, Math.round((collectedCount / threshold) * 100)) : 0;
+  return (
+    <div className="igloo-recover-collect">
+      <div className="igloo-recover-device-row">
+        <strong>{deviceShareLabel}</strong>
+        <span className="igloo-recover-validated">
+          <Check size={14} aria-hidden="true" />
+          Validated
+        </span>
+      </div>
+      <div className="igloo-stack">
+        {sources.map((source, index) => (
+          <div key={`recover-source-${index}`} className="igloo-generated-card">
+            <header>
+              <strong>Share #{index + 2}</strong>
+            </header>
+            <label>
+              Source Package
+              <Textarea
+                className="min-h-[96px]"
+                value={source.packageText}
+                onChange={(event) => onChangeSource(index, 'packageText', event.target.value)}
+                placeholder="Paste bfprofile or bfshare from another device or backup..."
+              />
+            </label>
+            <label>
+              Package Password
+              <PasswordField
+                value={source.packagePassword}
+                onChange={(event) => onChangeSource(index, 'packagePassword', event.target.value)}
+              />
+            </label>
+            <div className="igloo-button-row">
+              <Button type="button" size="sm" variant="secondary" onClick={() => onRemoveSource(index)}>
+                Remove
+              </Button>
+            </div>
+          </div>
+        ))}
+        <div className="igloo-button-row">
+          <Button type="button" size="sm" variant="secondary" onClick={onAddSource}>
+            Add Source
+          </Button>
+        </div>
+      </div>
+      <div className="igloo-recover-meter">
+        <div className="igloo-recover-meter-head">
+          <span>Shares Collected</span>
+          <span>{collectedCount} of {threshold} required</span>
+        </div>
+        <div className="igloo-recover-meter-track">
+          <div className="igloo-recover-meter-fill" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+      <p className="igloo-recover-helper">
+        Old devices do not need to be online. Provide enough source packages and passwords to meet the threshold.
+      </p>
+      <Button type="button" className="igloo-create-primary-action" onClick={onNext}>
+        {actionLabel}
+      </Button>
+    </div>
+  );
+}
+
+type OnboardTimelineStep = { key: OnboardTimelineStepKey; label: string; detail?: string };
+export type OnboardTimelineStepKey = 'connect' | 'negotiate' | 'finish';
+
+function buildOnboardSteps(keysetName: string, thresholdLabel: string): OnboardTimelineStep[] {
+  return [
+    { key: 'connect', label: 'Connect to Relays', detail: `${keysetName} (${thresholdLabel})` },
+    { key: 'negotiate', label: 'Negotiate with Peer' },
+    { key: 'finish', label: 'Finish Onboarding' },
+  ];
+}
+
+function OnboardTimeline({
+  steps,
+  activeStep,
+  failed = false,
+}: {
+  steps: OnboardTimelineStep[];
+  activeStep: OnboardTimelineStepKey;
+  failed?: boolean;
+}) {
+  const activeIndex = Math.max(0, steps.findIndex((step) => step.key === activeStep));
+  return (
+    <ol className={failed ? 'igloo-onboard-timeline is-failed' : 'igloo-onboard-timeline'}>
+      {steps.map((step, index) => {
+        const state =
+          index < activeIndex
+            ? 'is-complete'
+            : index === activeIndex
+              ? failed
+                ? 'is-failed'
+                : 'is-active'
+              : 'is-waiting';
+        return (
+          <li className={state} key={step.key}>
+            <span aria-hidden="true">
+              {index < activeIndex ? (
+                <Check size={14} />
+              ) : index === activeIndex ? (
+                failed ? <X size={14} /> : '...'
+              ) : (
+                ''
+              )}
+            </span>
+            <div>
+              <strong>{step.label}</strong>
+              {step.detail ? <small>{step.detail}</small> : null}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 export function OnboardHandshakePanel({
   packageText = '',
   keysetName = 'My Signing Key',
   thresholdLabel = '2/3',
-  activeStep = 'applying',
+  activeStep = 'negotiate',
   onCancel,
-  title = 'Onboarding...',
+  title = 'Onboard Device',
 }: {
   packageText?: string;
   keysetName?: string;
   thresholdLabel?: string;
-  activeStep?: 'validated' | 'matched' | 'applying' | 'saving';
+  activeStep?: OnboardTimelineStepKey;
   onCancel?: () => void;
   title?: string;
 }) {
   const compactPackage = packageText ? packageText.slice(0, 24) : 'bfonboard1...';
-  const steps = [
-    { key: 'validated', label: 'Validated package', detail: 'bfonboard1...' },
-    { key: 'matched', label: 'Matched keyset', detail: `${keysetName} (${thresholdLabel})` },
-    { key: 'applying', label: 'Applying share data', detail: '' },
-    { key: 'saving', label: 'Saving to device', detail: '' },
-  ] as const;
-  const activeIndex = Math.max(0, steps.findIndex((step) => step.key === activeStep));
-
   return (
     <div className="igloo-onboard-handshake-flow">
       <header>
         <h3>{title}</h3>
         <p>Validating the onboarding package and saving this device's share.</p>
       </header>
-      <ol className="igloo-onboard-timeline">
-        {steps.map((step, index) => {
-          const state = index < activeIndex ? 'is-complete' : index === activeIndex ? 'is-active' : 'is-waiting';
-          return (
-            <li className={state} key={step.key}>
-              <span aria-hidden="true">{index < activeIndex ? <Check size={14} /> : index === activeIndex ? '...' : ''}</span>
-              <div>
-                <strong>{step.label}</strong>
-                {step.detail ? <small>{step.detail}</small> : null}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+      <OnboardTimeline steps={buildOnboardSteps(keysetName, thresholdLabel)} activeStep={activeStep} />
       <div className="igloo-onboard-package-summary">
-        Onboarding package: {compactPackage}
+        Onboarding package: {compactPackage} · Share #0
       </div>
       <Button type="button" variant="secondary" onClick={onCancel}>
         Cancel Onboarding
@@ -1075,24 +1429,37 @@ export function OnboardHandshakePanel({
   );
 }
 
+export function WarningCard({ title, message }: { title: string; message: React.ReactNode }) {
+  return (
+    <section className="igloo-onboard-panel igloo-onboard-failed">
+      <div className="igloo-onboard-warning-row">
+        <AlertTriangle size={16} aria-hidden="true" />
+        <div>
+          <h3>{title}</h3>
+          <p>{message}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function OnboardFailedPanel({
+  keysetName = 'My Signing Key',
+  thresholdLabel = '2/3',
+  activeStep = 'negotiate',
   message = 'Check the package, password, and group details, then retry onboarding.',
   onRetry,
 }: {
+  keysetName?: string;
+  thresholdLabel?: string;
+  activeStep?: OnboardTimelineStepKey;
   message?: string;
   onRetry: () => void;
 }) {
   return (
     <div className="igloo-onboard-form">
-      <section className="igloo-onboard-panel igloo-onboard-failed">
-        <div className="igloo-onboard-warning-row">
-          <AlertTriangle size={16} aria-hidden="true" />
-          <div>
-            <h3>Package Did Not Apply</h3>
-            <p>{message}</p>
-          </div>
-        </div>
-      </section>
+      <OnboardTimeline steps={buildOnboardSteps(keysetName, thresholdLabel)} activeStep={activeStep} failed />
+      <WarningCard title="Package Did Not Apply" message={message} />
       <div className="igloo-onboard-action-row">
         <Button type="button" onClick={onRetry}>
           Retry

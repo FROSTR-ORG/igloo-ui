@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { ContentCard } from '../ui/content-card';
 import { Modal } from '../ui/modal';
+import { PasswordField } from '../ui/password-field';
 
 export function WelcomeEntryHero({
   logoSrc,
@@ -257,14 +258,22 @@ export function WelcomeUnlockModal({
     <Modal open={open} onClose={onClose} className="igloo-welcome-unlock-modal">
       <form className="igloo-welcome-unlock-form" onSubmit={onSubmit}>
         <div className="igloo-welcome-unlock-heading">
-          <h2>Unlock Profile</h2>
-          <p>{profileSummary}</p>
+          <div className="igloo-welcome-unlock-icon" aria-hidden="true">
+            <Lock size={20} />
+          </div>
+          <div>
+            <h2>Unlock Profile</h2>
+            <p>{profileSummary}</p>
+          </div>
         </div>
+
+        <p className="igloo-welcome-unlock-description">
+          Enter your profile password to decrypt and load the signing share.
+        </p>
 
         <label className="igloo-welcome-unlock-field">
           <span>Profile Password</span>
-          <input
-            type="password"
+          <PasswordField
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
             autoFocus

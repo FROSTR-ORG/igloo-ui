@@ -12,6 +12,7 @@ import {
   OnboardCompletePanel,
   OnboardFailedPanel,
   OnboardHandshakePanel,
+  OnboardingClientCard,
   OnboardPackageEntry,
   RotateKeysetPanel,
   StoredProfilesLandingCard,
@@ -479,12 +480,13 @@ describe('shared host flow components', () => {
     expect(onChangeDraft).toHaveBeenCalledWith(2, 'confirmPassword', 'remote-pass');
     expect(screen.queryByLabelText('Confirm password')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create package' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create Package' }));
     expect(onDistribute).toHaveBeenCalledWith(2, 'prepare');
   });
 
-  it('keeps completed distribution cards on the launch signer screen', () => {
+  it('shows delivered cards with a revert action and the finish button', () => {
     const onFinish = vi.fn();
+    const onDistribute = vi.fn();
 
     render(
       <CreateFlowDistributionCards
@@ -504,21 +506,74 @@ describe('shared host flow components', () => {
         }}
         results={{
           2: {
-            kind: 'completed',
+            status: 'delivered',
             label: 'Remote Tablet',
             packageText: 'bfonboard1example',
           },
         }}
         onChangeDraft={vi.fn()}
-        onDistribute={vi.fn()}
+        onDistribute={onDistribute}
         onFinish={onFinish}
       />,
     );
 
-    expect(screen.queryByText('Distribution Status')).not.toBeInTheDocument();
-    expect(screen.getByText('Package distributed and marked complete.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Launch Signer' }));
+    // Delivered cards hide the delivery options and expose Revert.
+    expect(screen.getByText('Delivered')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Mark Delivered' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Revert' }));
+    expect(onDistribute).toHaveBeenCalledWith(2, 'revert');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finish Setup' }));
     expect(onFinish).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows packaged cards with delivery options and the onboarding client card', () => {
+    const onDistribute = vi.fn();
+    const onStart = vi.fn();
+
+    render(
+      <CreateFlowDistributionSection
+        sectionTitle="Remote Shares"
+        sectionDescription="Each share can be distributed as a protected onboarding package."
+        shares={[
+          {
+            name: 'Remote Tablet',
+            member_idx: 2,
+            share_public_key: 'share-pub-2',
+          },
+        ]}
+        drafts={{
+          2: { label: 'Remote Tablet', packagePassword: 'remote-pass', confirmPassword: 'remote-pass' },
+        }}
+        results={{
+          2: { status: 'packaged', label: 'Remote Tablet', packageText: 'bfonboard1example' },
+        }}
+        onChangeDraft={vi.fn()}
+        onDistribute={onDistribute}
+        onFinish={vi.fn()}
+        beforeCards={
+          <OnboardingClientCard
+            running={false}
+            relayCount={2}
+            peerCount={1}
+            signerPubkey={'ab'.repeat(16)}
+            onStart={onStart}
+            onStop={vi.fn()}
+          />
+        }
+      />,
+    );
+
+    expect(screen.getByText('Onboarding Client')).toBeInTheDocument();
+    expect(screen.getByText('Stopped')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    expect(onStart).toHaveBeenCalledTimes(1);
+
+    expect(screen.getByText('Packaged')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Mark Delivered' }));
+    expect(onDistribute).toHaveBeenCalledWith(2, 'mark');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onDistribute).toHaveBeenCalledWith(2, 'cancel');
   });
 
   it('dispatches onboarding package entry edits and connect', () => {
@@ -542,7 +597,7 @@ describe('shared host flow components', () => {
     });
     expect(onPackageTextChange).toHaveBeenCalledWith('bfonboard1example');
 
-    fireEvent.change(screen.getByLabelText('Package Password'), {
+    fireEvent.change(screen.getByLabelText('Encryption Password'), {
       target: { value: 'package-pass' },
     });
     expect(onPasswordChange).toHaveBeenCalledWith('package-pass');
@@ -558,16 +613,16 @@ describe('shared host flow components', () => {
         packageText="bfonboard1paperdemo"
         keysetName="My Signing Key"
         thresholdLabel="2/3"
-        activeStep="applying"
+        activeStep="negotiate"
         onCancel={vi.fn()}
       />,
     );
 
-    expect(screen.getByRole('heading', { name: 'Onboarding...' })).toBeInTheDocument();
-    expect(screen.getByText('Validated package')).toBeInTheDocument();
-    expect(screen.getByText('Matched keyset')).toBeInTheDocument();
-    expect(screen.getByText('Applying share data')).toBeInTheDocument();
-    expect(screen.getByText('Onboarding package: bfonboard1paperdemo')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Onboard Device' })).toBeInTheDocument();
+    expect(screen.getByText('Connect to Relays')).toBeInTheDocument();
+    expect(screen.getByText('Negotiate with Peer')).toBeInTheDocument();
+    expect(screen.getByText('Finish Onboarding')).toBeInTheDocument();
+    expect(screen.getByText(/Onboarding package: bfonboard1paperdemo/)).toBeInTheDocument();
 
     rerender(<OnboardFailedPanel onRetry={onRetry} />);
     expect(screen.getByText('Check the package, password, and group details, then retry onboarding.')).toBeInTheDocument();
@@ -698,6 +753,6 @@ describe('shared host flow components', () => {
     expect(section.getByText('runtime panel')).toBeInTheDocument();
     expect(section.getByText('Remaining Shares')).toBeInTheDocument();
     expect(section.getByLabelText('Package password')).toBeInTheDocument();
-    expect(section.getByRole('button', { name: 'Launch Signer' })).toBeEnabled();
+    expect(section.getByRole('button', { name: 'Finish Setup' })).toBeEnabled();
   });
 });
