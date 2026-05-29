@@ -1,13 +1,12 @@
 import * as React from 'react';
-import { HelpCircle } from 'lucide-react';
 
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Collapsible } from '../ui/collapsible';
+import { HelpHint } from '../ui/help-hint';
 import { SensitiveTextarea } from '../ui/sensitive-textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Textarea } from '../ui/textarea';
-import { Tooltip } from '../ui/tooltip';
 
 export type GeneratedShareDraft = {
   label: string;
@@ -91,8 +90,8 @@ export function CreateImportPanel({
             <CardHeader>
               <div className="igloo-inline-title">
                 <CardTitle>Create Keyset</CardTitle>
-                <Tooltip
-                  trigger={<HelpCircle size={15} className="text-blue-400 cursor-help" />}
+                <HelpHint
+                  ariaLabel="About creating a keyset"
                   content="Generate a fresh secret and split it into managed member profiles."
                 />
               </div>
@@ -144,8 +143,8 @@ export function CreateImportPanel({
             <CardHeader>
               <div className="igloo-inline-title">
                 <CardTitle>Load Profile</CardTitle>
-                <Tooltip
-                  trigger={<HelpCircle size={15} className="text-blue-400 cursor-help" />}
+                <HelpHint
+                  ariaLabel="About loading a profile"
                   content="Use this when you already have exported group and share package JSON from another FROSTR environment."
                 />
               </div>
@@ -209,8 +208,8 @@ export function CreateImportPanel({
             <CardHeader>
               <div className="igloo-inline-title">
                 <CardTitle>Onboard Device</CardTitle>
-                <Tooltip
-                  trigger={<HelpCircle size={15} className="text-blue-400 cursor-help" />}
+                <HelpHint
+                  ariaLabel="About device onboarding"
                   content="Paste the compact onboarding package and password to complete invite onboarding into a managed profile."
                 />
               </div>
@@ -269,8 +268,8 @@ export function CreateImportPanel({
           <CardHeader>
             <div className="igloo-inline-title">
               <CardTitle>Generated Keyset Review</CardTitle>
-              <Tooltip
-                trigger={<HelpCircle size={15} className="text-blue-400 cursor-help" />}
+              <HelpHint
+                ariaLabel="About the generated keyset review"
                 content="Review the shared group package once, then save each member card as a separate managed desktop profile."
               />
             </div>

@@ -4,6 +4,7 @@ import { CRITICAL_E2E_TEST_IDS, type CriticalE2ETestId } from '../../lib/e2e-tes
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { ContentCard } from '../ui/content-card';
+import { StepIndicator } from '../ui/step-indicator';
 
 function LandingIcon({ children }: { children: React.ReactNode }) {
   return <div className="igloo-entry-icon" aria-hidden="true">{children}</div>;
@@ -78,18 +79,17 @@ export function StepProgress({
   steps: string[];
   active: number;
 }) {
+  const indicatorSteps = steps.map((step, index) => ({
+    id: `${index}-${step}`,
+    label: step,
+  }));
+  const currentStepId = indicatorSteps[active]?.id ?? '';
   return (
-    <div className="igloo-step-progress" aria-label="Flow progress">
-      {steps.map((step, index) => (
-        <div
-          key={step}
-          className={index === active ? 'igloo-step-chip is-active' : 'igloo-step-chip'}
-        >
-          <span>{index + 1}</span>
-          <strong>{step}</strong>
-        </div>
-      ))}
-    </div>
+    <StepIndicator
+      steps={indicatorSteps}
+      currentStepId={currentStepId}
+      ariaLabel="Flow progress"
+    />
   );
 }
 

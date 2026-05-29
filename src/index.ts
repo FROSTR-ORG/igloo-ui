@@ -31,12 +31,17 @@ export {
   CardContent,
   CardFooter,
 } from './components/ui/card';
+export { Backdrop } from './components/ui/backdrop';
+export type { BackdropProps } from './components/ui/backdrop';
 export { Collapsible } from './components/ui/collapsible';
 export type { CollapsibleProps } from './components/ui/collapsible';
-export { ConfirmModal } from './components/ui/confirm-modal';
 export { ContentCard } from './components/ui/content-card';
+export { Dialog, ConfirmDialog } from './components/ui/dialog';
+export type { DialogProps, ConfirmDialogProps } from './components/ui/dialog';
 export { EventLog } from './components/ui/event-log';
 export type { LogEntry } from './components/ui/event-log';
+export { HelpHint } from './components/ui/help-hint';
+export type { HelpHintProps } from './components/ui/help-hint';
 export { IconButton, iconButtonVariants } from './components/ui/icon-button';
 export type { IconButtonProps } from './components/ui/icon-button';
 export { Input } from './components/ui/input';
@@ -46,9 +51,7 @@ export type { InputWithValidationProps } from './components/ui/input-with-valida
 export { Label } from './components/ui/label';
 export type { LabelProps } from './components/ui/label';
 export { LogEntryComponent } from './components/ui/log-entry';
-export type { LogEntryData } from './components/ui/log-entry';
-export { Modal } from './components/ui/modal';
-export type { ModalProps } from './components/ui/modal';
+export type { LogEntryData, LogEntryComponentProps } from './components/ui/log-entry';
 export { PageLayout } from './components/ui/page-layout';
 export { PeerList } from './components/ui/peer-list';
 export type { PeerPolicy } from './components/ui/peer-list';
@@ -59,6 +62,8 @@ export { SensitiveTextarea } from './components/ui/sensitive-textarea';
 export type { SensitiveTextareaProps } from './components/ui/sensitive-textarea';
 export { StatusDot, StatusBadge } from './components/ui/status-indicator';
 export type { StatusState } from './components/ui/status-indicator';
+export { StepIndicator } from './components/ui/step-indicator';
+export type { StepIndicatorProps, StepIndicatorStep } from './components/ui/step-indicator';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/tabs';
 export type {
   TabsProps,

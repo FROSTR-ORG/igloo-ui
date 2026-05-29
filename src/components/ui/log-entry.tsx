@@ -20,7 +20,56 @@ const levelColors: Record<string, string> = {
   PING: 'text-yellow-400'
 };
 
-export function LogEntryComponent({ log }: { log: LogEntryData }) {
+function defaultFormatter(data: unknown): string {
+  try {
+    return JSON.stringify(data, null, 2);
+  } catch {
+    // SAFE fallback: never walk the value's prototype/keys, since the input
+    // may be hostile or contain non-enumerable getters.
+    if (Array.isArray(data)) return `[array, ${data.length} items]`;
+    if (typeof data === 'object' && data !== null) return '[object]';
+    return String(data);
+  }
+}
+
+function boundString(
+  value: string,
+  maxLines: number,
+  maxChars: number,
+  marker: string,
+): string {
+  let result = value;
+  let truncated = false;
+
+  const lines = result.split('\n');
+  if (lines.length > maxLines) {
+    result = lines.slice(0, maxLines).join('\n');
+    truncated = true;
+  }
+
+  if (result.length > maxChars) {
+    result = result.slice(0, maxChars);
+    truncated = true;
+  }
+
+  return truncated ? `${result}${marker}` : result;
+}
+
+export type LogEntryComponentProps = {
+  log: LogEntryData;
+  formatter?: (data: unknown) => string;
+  maxChars?: number;
+  maxLines?: number;
+  truncationMarker?: string;
+};
+
+export function LogEntryComponent({
+  log,
+  formatter = defaultFormatter,
+  maxChars = 8192,
+  maxLines = 200,
+  truncationMarker = '… (truncated)',
+}: LogEntryComponentProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const hasData = log.data !== undefined && log.data !== null;
 
@@ -30,33 +79,14 @@ export function LogEntryComponent({ log }: { log: LogEntryData }) {
 
   const formattedData = React.useMemo(() => {
     if (!hasData) return null;
+    let raw: string;
     try {
-      return JSON.stringify(log.data, null, 2);
-    } catch (error) {
-      try {
-        const dataType = typeof log.data;
-        const isArray = Array.isArray(log.data);
-        const constructorName = (log.data as object)?.constructor?.name;
-        let preview = '';
-        if (dataType === 'object' && log.data !== null) {
-          try {
-            const keys = Object.keys(log.data as object);
-            preview = `Object with keys: [${keys.slice(0, 5).join(', ')}${keys.length > 5 ? '...' : ''}]`;
-          } catch {
-            preview = `${constructorName || 'Object'} (non-enumerable)`;
-          }
-        } else {
-          preview = `${dataType}: ${String(log.data).slice(0, 100)}${String(log.data).length > 100 ? '...' : ''}`;
-        }
-        return `Unable to serialize data to JSON
-Type: ${isArray ? 'Array' : dataType}${constructorName ? ` (${constructorName})` : ''}
-Preview: ${preview}
-Error: ${error instanceof Error ? error.message : 'Circular reference or non-serializable data'}`;
-      } catch {
-        return 'Error: Unable to format data';
-      }
+      raw = formatter(log.data);
+    } catch {
+      raw = defaultFormatter(log.data);
     }
-  }, [log.data, hasData]);
+    return boundString(raw, maxLines, maxChars, truncationMarker);
+  }, [log.data, hasData, formatter, maxChars, maxLines, truncationMarker]);
 
   return (
     <div className="rounded-lg border border-blue-900/20 bg-gray-800/30 transition-colors hover:bg-gray-800/50">
