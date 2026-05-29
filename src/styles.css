@@ -1,4 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap");
+@font-face {
+  font-family: "Share Tech Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/ShareTechMono-Regular.woff2") format("woff2");
+}
 
 @tailwind base;
 @tailwind components;
@@ -503,38 +509,38 @@
     color: var(--igloo-shell-muted);
   }
 
-  .igloo-pwa-entry-shell {
+  .igloo-entry-shell {
     display: grid;
     place-items: center;
     min-height: 24rem;
     gap: 1.5rem;
   }
 
-  .igloo-pwa-entry-intro {
+  .igloo-entry-intro {
     width: min(100%, 42rem);
     text-align: center;
   }
 
-  .igloo-pwa-entry-lead {
+  .igloo-entry-lead {
     margin: 0;
     color: #dbeafe;
     font-size: 0.98rem;
     line-height: 1.7;
   }
 
-  .igloo-pwa-entry-grid {
+  .igloo-entry-grid {
     display: grid;
     width: min(100%, 58rem);
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1rem;
   }
 
-  .igloo-pwa-entry-grid-two {
+  .igloo-entry-grid-two {
     width: min(100%, 42rem);
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .igloo-pwa-entry-tile {
+  .igloo-entry-tile {
     display: grid;
     gap: 1.1rem;
     align-content: space-between;
@@ -546,7 +552,7 @@
       rgba(15, 23, 42, 0.82);
   }
 
-  .igloo-pwa-entry-tile.is-primary {
+  .igloo-entry-tile.is-primary {
     border-color: rgba(96, 165, 250, 0.42);
     background:
       radial-gradient(circle at top, rgba(59, 130, 246, 0.18), transparent 58%),
@@ -557,13 +563,13 @@
       0 14px 34px rgba(2, 6, 23, 0.24);
   }
 
-  .igloo-pwa-entry-head {
+  .igloo-entry-head {
     display: grid;
     justify-items: center;
     gap: 1rem;
   }
 
-  .igloo-pwa-entry-icon {
+  .igloo-entry-icon {
     display: grid;
     place-items: center;
     width: 4.75rem;
@@ -576,7 +582,7 @@
     box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.08);
   }
 
-  .igloo-pwa-entry-icon svg {
+  .igloo-entry-icon svg {
     width: 2.2rem;
     height: 2.2rem;
     fill: none;
@@ -586,25 +592,25 @@
     stroke-linejoin: round;
   }
 
-  .igloo-pwa-entry-copy {
+  .igloo-entry-copy {
     display: grid;
     gap: 0.55rem;
   }
 
-  .igloo-pwa-entry-kicker {
+  .igloo-entry-kicker {
     color: #60a5fa;
     font-size: 0.72rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
   }
 
-  .igloo-pwa-entry-copy h3 {
+  .igloo-entry-copy h3 {
     margin: 0;
     font-size: 1.12rem;
     color: #eff6ff;
   }
 
-  .igloo-pwa-entry-copy p {
+  .igloo-entry-copy p {
     margin: 0;
     color: var(--igloo-shell-muted);
     line-height: 1.6;
@@ -975,11 +981,11 @@
 }
 
 @media (max-width: 880px) {
-  .igloo-pwa-entry-grid {
+  .igloo-entry-grid {
     grid-template-columns: 1fr;
   }
 
-  .igloo-pwa-entry-tile {
+  .igloo-entry-tile {
     min-height: auto;
   }
 }

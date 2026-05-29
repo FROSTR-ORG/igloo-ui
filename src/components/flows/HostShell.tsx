@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { ContentCard } from '../ui/content-card';
 
 function LandingIcon({ children }: { children: React.ReactNode }) {
-  return <div className="igloo-pwa-entry-icon" aria-hidden="true">{children}</div>;
+  return <div className="igloo-entry-icon" aria-hidden="true">{children}</div>;
 }
 
 export function HostEntryTile({
@@ -29,11 +29,11 @@ export function HostEntryTile({
   onAction: () => void;
 }) {
   return (
-    <section className={`igloo-panel igloo-pwa-entry-tile ${tone === 'primary' ? 'is-primary' : ''}`}>
-      <div className="igloo-pwa-entry-head">
+    <section className={`igloo-panel igloo-entry-tile ${tone === 'primary' ? 'is-primary' : ''}`}>
+      <div className="igloo-entry-head">
         <LandingIcon>{icon}</LandingIcon>
-        <div className="igloo-pwa-entry-copy">
-          <span className="igloo-pwa-entry-kicker">{kicker}</span>
+        <div className="igloo-entry-copy">
+          <span className="igloo-entry-kicker">{kicker}</span>
           <h3>{title}</h3>
           <p>{description}</p>
         </div>
