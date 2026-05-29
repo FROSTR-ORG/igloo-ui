@@ -3,6 +3,7 @@ import { HelpCircle } from 'lucide-react';
 
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { SensitiveTextarea } from '../ui/sensitive-textarea';
 import { Textarea } from '../ui/textarea';
 import { Tooltip } from '../ui/tooltip';
 
@@ -74,14 +75,13 @@ export function RecoveryWorkspace({
         <CardContent>
           {recoveredKey ? (
             <div className="igloo-stack">
-              <label>
-                nsec
-                <Textarea className="min-h-[96px]" readOnly value={recoveredKey.nsec} />
-              </label>
-              <label>
-                Signing key hex
-                <Textarea className="min-h-[96px]" readOnly value={recoveredKey.signing_key_hex} />
-              </label>
+              <SensitiveTextarea label="nsec" value={recoveredKey.nsec} placeholderLines={3} rows={3} />
+              <SensitiveTextarea
+                label="Signing key hex"
+                value={recoveredKey.signing_key_hex}
+                placeholderLines={3}
+                rows={3}
+              />
             </div>
           ) : (
             <div className="igloo-empty">Recovered material will appear here.</div>

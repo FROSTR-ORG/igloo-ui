@@ -20,6 +20,10 @@ describe('RecoveryWorkspace', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /recover nsec/i }));
     expect(onRecover).toHaveBeenCalledTimes(1);
+
+    // Recovered material is masked by default; reveal the nsec field first.
+    expect(screen.queryByDisplayValue('nsec1demo')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^reveal nsec$/i }));
     expect(screen.getByDisplayValue('nsec1demo')).toBeInTheDocument();
   });
 });

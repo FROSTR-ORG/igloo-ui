@@ -4,6 +4,7 @@ import { HelpCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Collapsible } from '../ui/collapsible';
+import { SensitiveTextarea } from '../ui/sensitive-textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Textarea } from '../ui/textarea';
 import { Tooltip } from '../ui/tooltip';
@@ -298,10 +299,7 @@ export function CreateImportPanel({
               <dd>{generatedKeyset.nsec}</dd>
             </dl>
             <Collapsible title="Advanced Package JSON" contentClassName="igloo-stack">
-              <label>
-                Group package JSON
-                <Textarea className="min-h-[132px]" readOnly value={generatedKeyset.group_package_json} />
-              </label>
+              <SensitiveTextarea label="Group package JSON" value={generatedKeyset.group_package_json} />
             </Collapsible>
             <div className="igloo-generated-grid">
               {generatedKeyset.shares.map((share) => {
@@ -317,7 +315,7 @@ export function CreateImportPanel({
                       <span>{share.name}. Import this share as a managed profile.</span>
                     </header>
                     <Collapsible title="Share package JSON" contentClassName="igloo-stack">
-                      <Textarea className="min-h-[128px]" readOnly value={share.share_package_json} />
+                      <SensitiveTextarea value={share.share_package_json} />
                     </Collapsible>
                     <div className="igloo-two-up">
                       <label>

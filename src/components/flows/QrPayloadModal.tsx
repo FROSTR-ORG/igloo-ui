@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Button } from '../ui/button';
 import { Modal } from '../ui/modal';
+import { SensitiveTextarea } from '../ui/sensitive-textarea';
 
 type Props = {
   open: boolean;
@@ -43,7 +44,7 @@ export function QrPayloadModal({ open, onClose, title, payload, label }: Props) 
         <div className="igloo-qr-shell">
           <QrLike value={payload} />
         </div>
-        <pre className="igloo-code-block">{payload}</pre>
+        <SensitiveTextarea value={payload} />
         <div className="igloo-button-row">
           <Button type="button" size="sm" variant="secondary" onClick={onClose}>
             Close
