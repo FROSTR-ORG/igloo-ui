@@ -31,7 +31,9 @@ describe('DesktopAppShell', () => {
       </DesktopAppShell>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /signer runtime/i }));
+    // jsdom 28 joins the label/detail elements without a separator in the
+    // accessible name ("SignerRuntime"), so match whitespace-flexibly.
+    fireEvent.click(screen.getByRole('button', { name: /signer\s*runtime/i }));
     expect(onSelectTab).toHaveBeenCalledWith('signer');
     expect(screen.getByText('Managed profiles')).toBeInTheDocument();
     expect(screen.getByText('/tmp/profiles')).toBeInTheDocument();
