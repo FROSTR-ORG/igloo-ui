@@ -43,16 +43,16 @@ export function WelcomeEntryHero({
           <p>Generate a new threshold keyset and set up its first device profile.</p>
         </div>
         <div className="igloo-welcome-entry-primary">
-          <Button type="button" onClick={onNewKeyset}>
+          <Button type="button" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryGenerate} onClick={onNewKeyset}>
             Generate Keyset
           </Button>
         </div>
         <div className="igloo-welcome-entry-secondary">
           <span>or</span>
-          <Button type="button" size="sm" variant="secondary" onClick={onImportProfile}>
+          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryImport} onClick={onImportProfile}>
             Import Existing Device
           </Button>
-          <Button type="button" size="sm" variant="secondary" onClick={onOnboard}>
+          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryOnboard} onClick={onOnboard}>
             Onboard New Device
           </Button>
         </div>
@@ -140,7 +140,12 @@ export function WelcomeReturningHero({
       <div className={`igloo-welcome-returning-stack is-${layout}`}>
         <div className="igloo-welcome-profile-list">
           {profiles.map((profile) => (
-            <div className="igloo-welcome-profile-row" key={profile.id}>
+            <div
+              className="igloo-welcome-profile-row"
+              key={profile.id}
+              data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileRow}
+              data-profile-id={profile.id}
+            >
               <div className="igloo-welcome-profile-icon" aria-hidden="true">
                 <Lock size={20} />
               </div>
@@ -155,7 +160,7 @@ export function WelcomeReturningHero({
                 </div>
               </div>
               <div className="igloo-welcome-profile-actions">
-                <Button type="button" onClick={() => onUnlock(profile.id)}>
+                <Button type="button" data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileUnlock} onClick={() => onUnlock(profile.id)}>
                   Unlock
                 </Button>
                 <div className="igloo-welcome-profile-menu">
@@ -165,6 +170,7 @@ export function WelcomeReturningHero({
                     aria-label="More actions"
                     aria-haspopup="menu"
                     aria-expanded={openMenuId === profile.id}
+                    data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuTrigger}
                     onClick={() => setOpenMenuId(openMenuId === profile.id ? null : profile.id)}
                   >
                     <MoreVertical size={16} aria-hidden="true" />
@@ -174,6 +180,7 @@ export function WelcomeReturningHero({
                       <button
                         type="button"
                         role="menuitem"
+                        data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuRotate}
                         onClick={() => {
                           setOpenMenuId(null);
                           onRotate(profile.id);
@@ -185,6 +192,7 @@ export function WelcomeReturningHero({
                         type="button"
                         role="menuitem"
                         disabled={!onRecover}
+                        data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuRecover}
                         onClick={() => {
                           setOpenMenuId(null);
                           onRecover?.(profile.id);
@@ -197,6 +205,7 @@ export function WelcomeReturningHero({
                         type="button"
                         role="menuitem"
                         className="is-destructive"
+                        data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuDelete}
                         onClick={() => {
                           setOpenMenuId(null);
                           onDelete(profile.id);
@@ -214,13 +223,13 @@ export function WelcomeReturningHero({
 
         <div className="igloo-welcome-entry-secondary">
           <span>or</span>
-          <Button type="button" size="sm" variant="secondary" onClick={onNewKeyset}>
+          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryGenerate} onClick={onNewKeyset}>
             Generate Keyset
           </Button>
-          <Button type="button" size="sm" variant="secondary" onClick={onImportProfile}>
+          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryImport} onClick={onImportProfile}>
             Import Existing Device
           </Button>
-          <Button type="button" size="sm" variant="secondary" onClick={onOnboard}>
+          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryOnboard} onClick={onOnboard}>
             Onboard New Device
           </Button>
         </div>
@@ -276,6 +285,7 @@ export function WelcomeUnlockModal({
           <PasswordField
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
+            data-testid={CRITICAL_E2E_TEST_IDS.welcomeUnlockPassword}
             autoFocus
           />
         </label>
@@ -283,7 +293,7 @@ export function WelcomeUnlockModal({
         {error ? <p className="igloo-welcome-unlock-error">{error}</p> : null}
 
         <div className="igloo-welcome-unlock-actions">
-          <Button type="submit" disabled={submitting}>
+          <Button type="submit" data-testid={CRITICAL_E2E_TEST_IDS.welcomeUnlockSubmit} disabled={submitting}>
             Unlock
           </Button>
         </div>

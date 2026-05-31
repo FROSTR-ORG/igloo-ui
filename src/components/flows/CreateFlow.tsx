@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { PasswordField } from '../ui/password-field';
 import { StatusDot } from '../ui/status-indicator';
 import { Textarea } from '../ui/textarea';
+import { CRITICAL_E2E_TEST_IDS } from '../../lib/e2e-test-ids';
 
 export type SharedCreateFormState = {
   groupName: string;
@@ -101,7 +102,7 @@ function CreateActionRow({ onBack, children }: { onBack?: () => void; children: 
   if (!onBack) return <>{children}</>;
   return (
     <div className="igloo-create-action-row">
-      <Button type="button" variant="secondary" className="igloo-create-back-action" onClick={onBack}>
+      <Button type="button" variant="secondary" className="igloo-create-back-action" data-testid={CRITICAL_E2E_TEST_IDS.createBack} onClick={onBack}>
         Go Back
       </Button>
       {children}
@@ -195,7 +196,7 @@ export function CreateFlowGenerateCard({
       </label>
 
       <CreateActionRow onBack={onBack}>
-        <Button type="button" className="igloo-create-primary-action" onClick={onGenerate}>
+        <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.createGenerateNext} onClick={onGenerate}>
           Next Step
         </Button>
       </CreateActionRow>
@@ -276,6 +277,7 @@ export function RotateKeysetPanel({
         <label>
           Source Profile
           <select
+            data-testid={CRITICAL_E2E_TEST_IDS.rotateSourceProfile}
             value={sourceProfileId}
             onChange={(event) => onChangeSourceProfile(event.target.value)}
           >
@@ -319,13 +321,13 @@ export function RotateKeysetPanel({
             </div>
           ))}
           <div className="igloo-button-row">
-            <Button type="button" size="sm" variant="secondary" onClick={onAddRotationSource}>
+            <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.rotateAddSource} onClick={onAddRotationSource}>
               Add bfshare Source
             </Button>
           </div>
         </div>
         <div className="igloo-button-row">
-          <Button type="button" size="sm" onClick={onRotate}>
+          <Button type="button" size="sm" data-testid={CRITICAL_E2E_TEST_IDS.rotateSubmit} onClick={onRotate}>
             {actionLabel}
           </Button>
         </div>
@@ -487,7 +489,7 @@ export function CreateFlowShareSelection({
             <span>{keysetName}</span>
             <strong>{groupPublicKey}</strong>
           </div>
-          <Button type="button" size="sm" variant="secondary" onClick={onCopyGroupPublicKey}>
+          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.selectShareCopyGroupKey} onClick={onCopyGroupPublicKey}>
             <Copy size={13} aria-hidden="true" />
             Copy group public key
           </Button>
@@ -507,6 +509,8 @@ export function CreateFlowShareSelection({
                 type="button"
                 key={share.member_idx}
                 className={isSelected ? 'igloo-create-share-option is-selected' : 'igloo-create-share-option'}
+                data-testid={CRITICAL_E2E_TEST_IDS.selectShareOption}
+                data-member-idx={share.member_idx}
                 onClick={() => onSelectShare(share.member_idx)}
                 aria-pressed={isSelected}
               >
@@ -525,7 +529,7 @@ export function CreateFlowShareSelection({
       </section>
 
       <CreateActionRow onBack={onBack}>
-        <Button type="button" className="igloo-create-primary-action" onClick={onAction}>
+        <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.selectShareNext} onClick={onAction}>
           {actionLabel}
         </Button>
       </CreateActionRow>
@@ -586,13 +590,13 @@ function RelayList({
   }
 
   return (
-    <div className="igloo-create-relay-list">
+    <div className="igloo-create-relay-list" data-testid={CRITICAL_E2E_TEST_IDS.relayList}>
       {relays.map((relay) => {
         const ping = pings[relay];
         const status = ping?.status ?? 'idle';
         const dotState = status === 'ok' ? 'online' : status === 'failed' ? 'offline' : status === 'pinging' ? 'warning' : 'idle';
         return (
-          <div className="igloo-create-relay-row" key={relay}>
+          <div className="igloo-create-relay-row" key={relay} data-testid={CRITICAL_E2E_TEST_IDS.relayRow} data-relay-url={relay}>
             <span className="igloo-create-relay-url">{relay}</span>
             <span className="igloo-create-relay-status" aria-label={`Status: ${status}`}>
               {status === 'pinging' ? (
@@ -628,6 +632,7 @@ function RelayList({
         <div className="igloo-create-relay-add">
           <input
             aria-label="Add relay"
+            data-testid={CRITICAL_E2E_TEST_IDS.relayAddInput}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={(event) => {
@@ -638,7 +643,7 @@ function RelayList({
             }}
             placeholder="wss://relay.example.com"
           />
-          <Button type="button" size="sm" variant="secondary" onClick={addRelay}>
+          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.relayAddSubmit} onClick={addRelay}>
             Add Relay
           </Button>
         </div>
@@ -682,6 +687,7 @@ export function CreateFlowProfileSetup({
         <small>A name for this profile to identify it in the peer list.</small>
         <input
           aria-label="Device Profile Name"
+          data-testid={CRITICAL_E2E_TEST_IDS.saveProfileName}
           value={draft.label}
           onChange={(event) => onLabelChange(event.target.value)}
           readOnly={lockIdentity}
@@ -698,6 +704,7 @@ export function CreateFlowProfileSetup({
             <span>Password</span>
             <PasswordField
               aria-label="Device Password"
+              data-testid={CRITICAL_E2E_TEST_IDS.saveProfilePassword}
               value={draft.primarySecret}
               onChange={(event) => onPrimarySecretChange(event.target.value)}
             />
@@ -706,6 +713,7 @@ export function CreateFlowProfileSetup({
             <span>Confirm Password</span>
             <PasswordField
               aria-label="Confirm Password"
+              data-testid={CRITICAL_E2E_TEST_IDS.saveProfileConfirm}
               value={draft.secondarySecret ?? ''}
               onChange={(event) => onSecondarySecretChange(event.target.value)}
             />
@@ -726,7 +734,7 @@ export function CreateFlowProfileSetup({
       </section>
 
       <CreateActionRow onBack={onBack}>
-        <Button type="button" className="igloo-create-primary-action" onClick={onAction}>
+        <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.saveProfileNext} onClick={onAction}>
           {actionLabel}
         </Button>
       </CreateActionRow>
@@ -935,7 +943,12 @@ function CreateFlowDistributionCard({
         : 'igloo-create-distribution-card';
 
   return (
-    <section className={cardClass}>
+    <section
+      className={cardClass}
+      data-testid={CRITICAL_E2E_TEST_IDS.distributionCard}
+      data-member-idx={share.member_idx}
+      data-status={status}
+    >
       <header>
         <div>
           <h3>{share.name}</h3>
@@ -959,6 +972,7 @@ function CreateFlowDistributionCard({
               <span>Package Password</span>
               <input
                 aria-label="Package password"
+                data-testid={CRITICAL_E2E_TEST_IDS.distributionPackagePassword}
                 type="password"
                 value={draft.packagePassword}
                 onChange={(event) => {
@@ -969,7 +983,7 @@ function CreateFlowDistributionCard({
               />
             </label>
           </div>
-          <Button type="button" className="igloo-create-package-action" onClick={() => onDistribute(share.member_idx, 'prepare')}>
+          <Button type="button" className="igloo-create-package-action" data-testid={CRITICAL_E2E_TEST_IDS.distributionPrepare} onClick={() => onDistribute(share.member_idx, 'prepare')}>
             <KeyRound size={14} aria-hidden="true" />
             Create Package
           </Button>
@@ -982,24 +996,24 @@ function CreateFlowDistributionCard({
             <code>{packagePreview(result)}</code>
           </div>
           <div className="igloo-create-distribution-actions">
-            <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'copy')}>
+            <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.distributionCopy} onClick={() => onDistribute(share.member_idx, 'copy')}>
               <Copy size={13} aria-hidden="true" />
               Copy
             </Button>
-            <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'save')}>
+            <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.distributionSave} onClick={() => onDistribute(share.member_idx, 'save')}>
               Save
             </Button>
-            <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'qr')}>
+            <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.distributionQr} onClick={() => onDistribute(share.member_idx, 'qr')}>
               <QrCode size={13} aria-hidden="true" />
               QR code
             </Button>
           </div>
           <div className="igloo-create-distribution-actions">
-            <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'cancel')}>
+            <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.distributionCancel} onClick={() => onDistribute(share.member_idx, 'cancel')}>
               <X size={13} aria-hidden="true" />
               Cancel
             </Button>
-            <Button type="button" size="sm" onClick={() => onDistribute(share.member_idx, 'mark')}>
+            <Button type="button" size="sm" data-testid={CRITICAL_E2E_TEST_IDS.distributionMark} onClick={() => onDistribute(share.member_idx, 'mark')}>
               <Check size={13} aria-hidden="true" />
               Mark Delivered
             </Button>
@@ -1009,7 +1023,7 @@ function CreateFlowDistributionCard({
 
       {isCompleted ? (
         <div className="igloo-create-distribution-actions">
-          <Button type="button" size="sm" variant="secondary" onClick={() => onDistribute(share.member_idx, 'revert')}>
+          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.distributionRevert} onClick={() => onDistribute(share.member_idx, 'revert')}>
             <RotateCcw size={13} aria-hidden="true" />
             Revert
           </Button>
@@ -1071,7 +1085,7 @@ export function CreateFlowDistributionCards({
         );
       })}
       <CreateActionRow onBack={onBack}>
-        <Button type="button" className="igloo-create-primary-action" onClick={onFinish}>
+        <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.distributionFinish} onClick={onFinish}>
           {finishLabel}
         </Button>
       </CreateActionRow>
@@ -1166,6 +1180,7 @@ export function OnboardPackageEntry({
           <small>Paste a bfonboard1... package or scan its QR code.</small>
           <Textarea
             aria-label="bfonboard"
+            data-testid={CRITICAL_E2E_TEST_IDS.onboardPackageInput}
             value={packageText}
             onChange={(event) => onPackageTextChange(event.target.value)}
             placeholder="bfonboard1..."
@@ -1190,12 +1205,13 @@ export function OnboardPackageEntry({
           </span>
           <PasswordField
             aria-label="Encryption Password"
+            data-testid={CRITICAL_E2E_TEST_IDS.onboardPasswordInput}
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
           />
         </label>
       </section>
-      <Button type="button" className="igloo-create-primary-action" onClick={onConnect}>
+      <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.onboardConnectSubmit} onClick={onConnect}>
         {actionLabel}
       </Button>
     </div>
@@ -1228,6 +1244,7 @@ export function ImportProfileEntry({
           <small>Paste the encrypted profile backup string.</small>
           <Textarea
             aria-label="Profile Backup"
+            data-testid={CRITICAL_E2E_TEST_IDS.importProfileInput}
             value={profileString}
             onChange={(event) => onProfileStringChange(event.target.value)}
             placeholder="bfprofile1..."
@@ -1243,12 +1260,13 @@ export function ImportProfileEntry({
           </span>
           <PasswordField
             aria-label="Backup Password"
+            data-testid={CRITICAL_E2E_TEST_IDS.importPasswordInput}
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
           />
         </label>
       </section>
-      <Button type="button" className="igloo-create-primary-action" onClick={onNext}>
+      <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.importNext} onClick={onNext}>
         {actionLabel}
       </Button>
     </div>
@@ -1543,6 +1561,7 @@ export function OnboardCompletePanel({
           <span>Device Name</span>
           <input
             aria-label="Device Name"
+            data-testid={CRITICAL_E2E_TEST_IDS.onboardSaveName}
             value={draft.label}
             onChange={(event) => onLabelChange(event.target.value)}
           />
@@ -1558,6 +1577,7 @@ export function OnboardCompletePanel({
             <span>Password</span>
             <input
               aria-label="Password"
+              data-testid={CRITICAL_E2E_TEST_IDS.onboardSavePassword}
               type="password"
               value={draft.password}
               onChange={(event) => onPasswordChange(event.target.value)}
@@ -1567,6 +1587,7 @@ export function OnboardCompletePanel({
             <span>Confirm Password</span>
             <input
               aria-label="Confirm Password"
+              data-testid={CRITICAL_E2E_TEST_IDS.onboardSaveConfirm}
               type="password"
               value={draft.confirmPassword}
               onChange={(event) => onConfirmPasswordChange(event.target.value)}
@@ -1574,7 +1595,7 @@ export function OnboardCompletePanel({
           </label>
         </div>
       </section>
-      <Button type="button" className="igloo-create-primary-action" onClick={onSave}>
+      <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.onboardSaveSubmit} onClick={onSave}>
         Save & Launch Signer
       </Button>
     </div>

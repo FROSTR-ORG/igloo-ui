@@ -39,6 +39,7 @@ export function OperatorDashboardTabs({ tabs, activeTab, onChangeTab }: Props) {
               aria-selected={active}
               aria-controls={`operator-panel-${tab.key}`}
               id={`operator-tab-${tab.key}`}
+              data-testid={`dashboard-tab-${tab.key}`}
               onClick={() => onChangeTab(tab.key)}
               className={cn(
                 'rounded-xl border px-4 py-3 text-left transition-colors sm:min-w-0 sm:flex-1',
