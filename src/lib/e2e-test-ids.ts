@@ -73,7 +73,11 @@ export const CRITICAL_E2E_TEST_IDS = {
   dashboardTabPermissions: 'dashboard-tab-permissions',
   dashboardTabSettings: 'dashboard-tab-settings',
 
-  // Maintenance / rotation / stored profiles (existing)
+  // Operator settings / maintenance / rotation / stored profiles
+  settingsCopyProfile: 'settings-copy-profile',
+  settingsCopyShare: 'settings-copy-share',
+  settingsLogout: 'settings-logout',
+  settingsAutoOpenToggle: 'settings-auto-open-toggle',
   maintenanceRotateShare: 'maintenance-rotate-share',
   rotationConfirmSubmit: 'rotation-confirm-submit',
   rotationConnectSubmit: 'rotation-connect-submit',
