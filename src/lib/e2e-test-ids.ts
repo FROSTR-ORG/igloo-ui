@@ -79,6 +79,8 @@ export const CRITICAL_E2E_TEST_IDS = {
   settingsLogout: 'settings-logout',
   settingsAutoOpenToggle: 'settings-auto-open-toggle',
   maintenanceRotateShare: 'maintenance-rotate-share',
+  rotationPackageInput: 'rotation-package-input',
+  rotationPasswordInput: 'rotation-password-input',
   rotationConfirmSubmit: 'rotation-confirm-submit',
   rotationConnectSubmit: 'rotation-connect-submit',
   storedProfileEntry: 'stored-profile-entry',
