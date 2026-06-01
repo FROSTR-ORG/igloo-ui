@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { Copy, HelpCircle, User } from 'lucide-react';
+import { ChevronDown, Copy, HelpCircle } from 'lucide-react';
 
-import type { EventLogRowModel, SignerDashboardViewModel } from '../../models/view-models';
+import type { DashboardKeyModel, EventLogRowModel, SignerDashboardViewModel } from '../../models/view-models';
+import { CRITICAL_E2E_TEST_IDS as TID } from '../../lib/e2e-test-ids';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
 import { Input } from '../ui/input';
@@ -15,8 +16,10 @@ type Props = {
   runtimeControlLabel: string;
   statusBanner?: React.ReactNode;
   copiedField?: 'group' | 'share' | null;
-  onCopyGroupKey?: () => void;
-  onCopyShareKey?: () => void;
+  // Receives the chosen format from the split-copy control. The legacy KeyField
+  // fallback ignores the argument, so a plain `() => void` handler is still valid.
+  onCopyGroupKey?: (format?: 'npub' | 'hex') => void;
+  onCopyShareKey?: (format?: 'npub' | 'hex') => void;
   onPrimaryAction: () => void;
   primaryActionVariant?: 'default' | 'destructive' | 'success' | 'secondary';
   primaryActionDisabled?: boolean;
@@ -75,6 +78,11 @@ export function OperatorSignerPanel({
             <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-1 text-blue-200">
               {view.thresholdLabel}
             </span>
+            {view.memberLabel ? (
+              <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-1 text-blue-200">
+                {view.memberLabel}
+              </span>
+            ) : null}
           </div>
         </div>
         <div className="flex items-center gap-2 self-center">
@@ -96,34 +104,36 @@ export function OperatorSignerPanel({
 
       {statusBanner ? statusBanner : null}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)]">
-        <div className="rounded-xl border border-blue-800/30 bg-slate-950/60 p-4 shadow-[0_18px_50px_rgba(2,6,23,0.22)]">
-          <div className="mb-4 flex items-center gap-2">
-            <User className="h-5 w-5 text-blue-400" />
-            <span className="text-sm font-medium text-blue-200">Profile Keys</span>
-          </div>
-          <div className="space-y-4">
-            <KeyField
-              label="Share Public Key"
-              value={view.shareLabel}
-              copied={copiedField === 'share'}
-              onCopy={onCopyShareKey}
-            />
-            <KeyField
+      <div className="rounded-xl border border-blue-800/30 bg-slate-950/60 p-4 shadow-[0_18px_50px_rgba(2,6,23,0.22)]">
+        <div className="flex flex-col gap-1.5">
+          {view.groupKey ? (
+            <KeyRow
               label="Group Public Key"
-              value={view.publicKeyLabel}
+              keyModel={view.groupKey}
               copied={copiedField === 'group'}
               onCopy={onCopyGroupKey}
+              copyTestId={TID.dashboardGroupKeyCopy}
+              formatTestId={TID.dashboardGroupKeyFormat}
             />
-          </div>
+          ) : (
+            <KeyField label="Group Public Key" value={view.publicKeyLabel} copied={copiedField === 'group'} onCopy={onCopyGroupKey} />
+          )}
+          {view.shareKey ? (
+            <KeyRow
+              label="Share Public Key"
+              keyModel={view.shareKey}
+              copied={copiedField === 'share'}
+              onCopy={onCopyShareKey}
+              copyTestId={TID.dashboardShareKeyCopy}
+              formatTestId={TID.dashboardShareKeyFormat}
+            />
+          ) : (
+            <KeyField label="Share Public Key" value={view.shareLabel} copied={copiedField === 'share'} onCopy={onCopyShareKey} />
+          )}
         </div>
-
-        <div className="rounded-xl border border-blue-800/30 bg-slate-950/60 p-4 shadow-[0_18px_50px_rgba(2,6,23,0.22)]">
-          <div className="mb-3 text-xs uppercase tracking-[0.18em] text-slate-500">Runtime Status</div>
-          <div className="flex items-center gap-2 text-sm text-slate-200">
-            <div className="h-3 w-3 rounded-full bg-green-500 pulse-animation" />
-            <span>{view.relaySummary}</span>
-          </div>
+        <div className="mt-3 flex items-center gap-2 text-sm text-slate-400">
+          <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Relays</span>
+          <span>{view.relaySummary}</span>
         </div>
       </div>
 
@@ -154,6 +164,36 @@ export function OperatorSignerPanel({
             No peers are currently tracked.
           </div>
         )}
+      </ContentCard>
+
+      <ContentCard
+        title="Pending Approvals"
+        description="Signing and encryption requests awaiting your approval."
+      >
+        <div data-testid={TID.dashboardPendingApprovals}>
+          {view.pendingApprovalRows && view.pendingApprovalRows.length > 0 ? (
+            <div className="space-y-3">
+              {view.pendingApprovalRows.map((approval) => (
+                <div key={approval.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5">
+                  <div className="flex items-center gap-3">
+                    <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs text-amber-200">
+                      {approval.methodLabel}
+                    </span>
+                    <div>
+                      <div className="text-sm font-medium text-blue-200">{approval.peerLabel}</div>
+                      <div className="text-xs text-gray-400">{approval.detailLabel}</div>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-400">{approval.expiresLabel}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded border border-dashed border-blue-900/30 px-4 py-6 text-sm text-gray-400">
+              No pending approvals.
+            </div>
+          )}
+        </div>
       </ContentCard>
 
       <ContentCard title="Pending Operations" description="In-flight sign, ECDH, ping, and onboard operations still tracked by the device.">
@@ -264,6 +304,84 @@ function KeyField({
         ) : null}
       </div>
       {copied ? <div className="text-xs text-blue-300">{label} copied</div> : null}
+    </div>
+  );
+}
+
+// Identity-card key row: a fixed-width label lane, the truncated key value, and a
+// split copy control. The main button copies npub by default; the caret toggles a
+// small menu to copy the hex encoding instead. onCopy receives the chosen format.
+function KeyRow({
+  label,
+  keyModel,
+  copied,
+  onCopy,
+  copyTestId,
+  formatTestId,
+}: {
+  label: string;
+  keyModel: DashboardKeyModel;
+  copied: boolean;
+  onCopy?: (format: 'npub' | 'hex') => void;
+  copyTestId: string;
+  formatTestId: string;
+}) {
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 py-1">
+      <span className="w-[130px] shrink-0 text-[11px] uppercase tracking-[0.08em] text-slate-500">{label}</span>
+      <span className="font-mono text-sm text-slate-300">{keyModel.display}</span>
+      <div className="relative flex items-center overflow-visible rounded-lg border border-blue-800/30 bg-slate-950/60">
+        <button
+          type="button"
+          data-testid={copyTestId}
+          onClick={() => onCopy?.('npub')}
+          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-300 hover:text-blue-200"
+          title={`Copy ${label} as npub`}
+        >
+          <Copy className="h-3 w-3" />
+          npub
+        </button>
+        <button
+          type="button"
+          data-testid={formatTestId}
+          onClick={() => setMenuOpen((open) => !open)}
+          className="border-l border-blue-800/30 px-2 py-1 text-slate-500 hover:text-slate-300"
+          title={`Copy ${label} in another format`}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+        >
+          <ChevronDown className="h-3 w-3" />
+        </button>
+        {menuOpen ? (
+          <div className="absolute right-0 top-full z-10 mt-1 w-28 rounded-lg border border-blue-800/30 bg-slate-950 py-1 shadow-lg" role="menu">
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                onCopy?.('npub');
+                setMenuOpen(false);
+              }}
+              className="block w-full px-3 py-1.5 text-left text-xs text-blue-200 hover:bg-blue-900/30"
+            >
+              Copy npub
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                onCopy?.('hex');
+                setMenuOpen(false);
+              }}
+              className="block w-full px-3 py-1.5 text-left text-xs text-blue-200 hover:bg-blue-900/30"
+            >
+              Copy hex
+            </button>
+          </div>
+        ) : null}
+      </div>
+      {copied ? <span className="text-xs text-blue-300">copied</span> : null}
     </div>
   );
 }

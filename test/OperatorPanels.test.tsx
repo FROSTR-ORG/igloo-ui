@@ -129,4 +129,51 @@ describe('operator dashboard surface', () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('button', { name: /wipe all data/i })).not.toBeInTheDocument();
   });
+
+  it('merges identity into the signer card with npub/hex split-copy and a pending-approvals empty state', () => {
+    const onCopyGroupKey = vi.fn();
+    const onCopyShareKey = vi.fn();
+
+    render(
+      <OperatorSignerPanel
+        view={{
+          profileName: 'Primary Browser Device',
+          thresholdLabel: '2/3',
+          memberLabel: 'Share #1',
+          publicKeyLabel: 'group-pub-1',
+          shareLabel: 'share-pub-1',
+          groupKey: { display: 'npub1qe3...7k4m', npub: 'npub1qe3group', hex: 'aa'.repeat(32) },
+          shareKey: { display: 'npub1zfd...3k9p', npub: 'npub1zfdshare', hex: 'bb'.repeat(32) },
+          running: true,
+          readinessLabel: 'running',
+          relaySummary: 'Browser runtime connected',
+          peerRows: [],
+          pendingApprovalRows: [],
+          pendingOperationRows: [],
+          eventRows: [],
+        }}
+        introMessage="Runtime is attached."
+        runtimeControlLabel="Stop Signer"
+        copiedField={null}
+        onCopyGroupKey={onCopyGroupKey}
+        onCopyShareKey={onCopyShareKey}
+        onPrimaryAction={vi.fn()}
+      />,
+    );
+
+    // Member label appears on the merged card.
+    expect(screen.getByText('Share #1')).toBeInTheDocument();
+
+    // Default copy buttons copy npub.
+    fireEvent.click(screen.getByTestId('dashboard-group-key-copy'));
+    expect(onCopyGroupKey).toHaveBeenCalledWith('npub');
+
+    // The format caret reveals a hex option.
+    fireEvent.click(screen.getByTestId('dashboard-share-key-format'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Copy hex' }));
+    expect(onCopyShareKey).toHaveBeenCalledWith('hex');
+
+    // Pending Approvals renders as a calm empty state (deferred behavior).
+    expect(screen.getByText('No pending approvals.')).toBeInTheDocument();
+  });
 });

@@ -67,11 +67,17 @@ export const CRITICAL_E2E_TEST_IDS = {
   importPasswordInput: 'import-password-input',
   importNext: 'import-next',
 
-  // Dashboard (OperatorDashboardTabs)
+  // Dashboard (OperatorDashboardTabs / routed nav)
   dashboardRoot: 'dashboard-root',
   dashboardTabSigner: 'dashboard-tab-signer',
   dashboardTabPermissions: 'dashboard-tab-permissions',
   dashboardTabSettings: 'dashboard-tab-settings',
+  // Merged identity/runtime card — split copy controls (npub default + hex caret)
+  dashboardGroupKeyCopy: 'dashboard-group-key-copy',
+  dashboardGroupKeyFormat: 'dashboard-group-key-format',
+  dashboardShareKeyCopy: 'dashboard-share-key-copy',
+  dashboardShareKeyFormat: 'dashboard-share-key-format',
+  dashboardPendingApprovals: 'dashboard-pending-approvals',
 
   // Operator settings / maintenance / rotation / stored profiles
   settingsCopyProfile: 'settings-copy-profile',
