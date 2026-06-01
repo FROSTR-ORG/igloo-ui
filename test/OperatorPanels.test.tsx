@@ -173,6 +173,12 @@ describe('operator dashboard surface', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Copy hex' }));
     expect(onCopyShareKey).toHaveBeenCalledWith('hex');
 
+    // The format menu dismisses on an outside click.
+    fireEvent.click(screen.getByTestId('dashboard-group-key-format'));
+    expect(screen.getByRole('menuitem', { name: 'Copy hex' })).toBeInTheDocument();
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByRole('menuitem', { name: 'Copy hex' })).not.toBeInTheDocument();
+
     // Pending Approvals renders as a calm empty state (deferred behavior).
     expect(screen.getByText('No pending approvals.')).toBeInTheDocument();
   });

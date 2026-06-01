@@ -327,12 +327,25 @@ function KeyRow({
   formatTestId: string;
 }) {
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const menuContainerRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Dismiss the npub/hex format menu when clicking anywhere outside the control.
+  React.useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!menuContainerRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [menuOpen]);
 
   return (
     <div className="flex flex-wrap items-center gap-3 py-1">
       <span className="w-[130px] shrink-0 text-[11px] uppercase tracking-[0.08em] text-slate-500">{label}</span>
       <span className="font-mono text-sm text-slate-300">{keyModel.display}</span>
-      <div className="relative flex items-center overflow-visible rounded-lg border border-blue-800/30 bg-slate-950/60">
+      <div ref={menuContainerRef} className="relative flex items-center overflow-visible rounded-lg border border-blue-800/30 bg-slate-950/60">
         <button
           type="button"
           data-testid={copyTestId}
