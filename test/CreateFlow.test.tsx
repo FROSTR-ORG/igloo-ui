@@ -407,6 +407,34 @@ describe('shared host flow components', () => {
     expect(onAction).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the device name editable on the onboard save surface while relays stay locked', () => {
+    const onLabelChange = vi.fn();
+
+    render(
+      <CreateFlowProfileSetup
+        draft={{
+          label: 'Onboarded Device',
+          relayUrls: 'wss://relay.primal.net',
+          primarySecret: '',
+          secondarySecret: '',
+        }}
+        actionLabel="Launch Signer"
+        lockIdentity
+        lockName={false}
+        onLabelChange={onLabelChange}
+        onPrimarySecretChange={vi.fn()}
+        onSecondarySecretChange={vi.fn()}
+        onRelayUrlsChange={vi.fn()}
+        onAction={vi.fn()}
+      />,
+    );
+
+    const nameInput = screen.getByLabelText('Device Profile Name');
+    expect(nameInput).not.toHaveAttribute('readonly');
+    fireEvent.change(nameInput, { target: { value: 'My Tablet' } });
+    expect(onLabelChange).toHaveBeenCalledWith('My Tablet');
+  });
+
   it('renders rotate-keyset source and recovery share inputs separately', () => {
     const onChangeSourceProfile = vi.fn();
     const onChangeRotationSource = vi.fn();

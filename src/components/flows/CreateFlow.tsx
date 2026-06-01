@@ -663,6 +663,7 @@ export function CreateFlowProfileSetup({
   onAction,
   onBack,
   lockIdentity = false,
+  lockName = lockIdentity,
 }: {
   draft: SharedLocalSaveDraft;
   actionLabel: string;
@@ -674,6 +675,10 @@ export function CreateFlowProfileSetup({
   onAction: () => void;
   onBack?: () => void;
   lockIdentity?: boolean;
+  // Whether the device name is read-only. Defaults to lockIdentity so existing
+  // callers are unchanged; the onboard flow opts out so the recipient can name
+  // their own device while the keyset relays stay locked.
+  lockName?: boolean;
 }) {
   const relayRows = draft.relayUrls
     .split(/\r?\n/)
@@ -690,7 +695,7 @@ export function CreateFlowProfileSetup({
           data-testid={CRITICAL_E2E_TEST_IDS.saveProfileName}
           value={draft.label}
           onChange={(event) => onLabelChange(event.target.value)}
-          readOnly={lockIdentity}
+          readOnly={lockName}
         />
       </label>
 
