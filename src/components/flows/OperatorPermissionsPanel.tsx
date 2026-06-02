@@ -22,6 +22,8 @@ type Props = {
     method: keyof PolicyMethodOverrideState,
     value: PolicyOverrideValue
   ) => void;
+  siteTitle?: string;
+  peerTitle?: string;
   siteDescription?: string;
   peerDescription?: string;
   siteEmptyText?: string;
@@ -37,6 +39,11 @@ export function OperatorPermissionsPanel({
   onRevokeSitePermission,
   onClearAllPeerPermissions,
   onPeerPolicyOverrideChange,
+  // "Permissions" is the canonical user-facing term (the policies declare
+  // permissions); Paper labels these sections "Signer Permissions" / "Peer
+  // Permissions".
+  siteTitle = 'Signer Permissions',
+  peerTitle = 'Peer Permissions',
   siteDescription = 'Permissions granted to websites through the signing bridge.',
   peerDescription = 'Stored inbound and outbound peer rules for the signer runtime.',
   siteEmptyText = 'No website permissions have been granted yet.',
@@ -65,7 +72,7 @@ export function OperatorPermissionsPanel({
 
       {view.siteRows ? (
         <ContentCard
-          title="Site Policies"
+          title={siteTitle}
           description={siteDescription}
           action={
             <div className="flex gap-2">
@@ -132,7 +139,7 @@ export function OperatorPermissionsPanel({
       ) : null}
 
       <ContentCard
-        title="Peer Policies"
+        title={peerTitle}
         description={peerDescription}
         action={
           <div className="flex gap-2">
