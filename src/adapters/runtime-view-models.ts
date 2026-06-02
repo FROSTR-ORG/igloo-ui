@@ -143,8 +143,9 @@ export function runtimePeerPermissionStatesToPolicyDashboardView(
 export function observabilityEventsToEventRows(
   events: ObservabilityEventInput[]
 ): EventLogRowModel[] {
-  return events.map((event) => ({
-    id: `${event.ts}-${event.component}-${event.domain}-${event.event}`,
+  return events.map((event, index) => ({
+    // Index keeps the key unique when several events share a tick/domain/event.
+    id: `${index}-${event.ts}-${event.component}-${event.domain}-${event.event}`,
     badgeLabel: event.domain,
     badgeTone: event.level === 'error' ? 'danger' : event.level === 'warn' ? 'warning' : 'info',
     message: event.message ?? event.event,

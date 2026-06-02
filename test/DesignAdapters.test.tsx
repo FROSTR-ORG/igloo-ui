@@ -185,13 +185,13 @@ describe('design runtime adapters', () => {
 
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({
-      id: '1700000000000-runtime-runtime-restore_skipped',
+      id: '0-1700000000000-runtime-runtime-restore_skipped',
       badgeLabel: 'runtime',
       badgeTone: 'warning',
       message: 'restore_skipped',
     });
     expect(rows[1]).toMatchObject({
-      id: '1700000001000-runtime-runtime-failure',
+      id: '1-1700000001000-runtime-runtime-failure',
       badgeLabel: 'runtime',
       badgeTone: 'danger',
       message: 'sign failed',
