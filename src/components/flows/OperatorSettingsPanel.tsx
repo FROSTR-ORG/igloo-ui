@@ -23,6 +23,19 @@ export type OperatorMaintenanceAction = {
   testId?: CriticalE2ETestId;
 };
 
+// A labeled maintenance section (Paper's Settings layout): a titled card with a
+// description and a single action button. When `sections` is provided it replaces
+// the flat `maintenanceActions` button row.
+export type OperatorSettingsSection = {
+  title: string;
+  description: string;
+  actionLabel: string;
+  onAction: () => void;
+  variant?: 'secondary' | 'destructive' | 'outline';
+  disabled?: boolean;
+  testId?: CriticalE2ETestId;
+};
+
 type Props = {
   hasProfile: boolean;
   signerName: string;
@@ -44,6 +57,9 @@ type Props = {
   message?: string | null;
   maintenanceDescription?: string;
   maintenanceActions?: OperatorMaintenanceAction[];
+  // Structured maintenance sections (Paper layout). When provided, these labeled
+  // sub-cards render instead of the flat maintenanceActions button row.
+  sections?: OperatorSettingsSection[];
   extraSections?: React.ReactNode;
 };
 
@@ -65,11 +81,12 @@ export function OperatorSettingsPanel({
   message = null,
   maintenanceDescription = 'Profile export, share rotation, and session controls.',
   maintenanceActions = [],
+  sections,
   extraSections,
 }: Props) {
   return (
     <div className="space-y-6">
-      <ContentCard title="Settings" description="Signer identity, relay topology, and runtime configuration.">
+      <ContentCard title="Device Profile" description="Signer identity, relay topology, and runtime configuration.">
         {!hasProfile ? (
           <div className="rounded border border-dashed border-blue-900/30 px-4 py-6 text-sm text-gray-400">
             No profile is configured yet.
@@ -118,7 +135,7 @@ export function OperatorSettingsPanel({
             </div>
 
             <div className="space-y-3">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Signer Settings</div>
+              <div className="text-xs uppercase tracking-wide text-gray-500">Advanced</div>
               <div className="text-sm text-slate-400">Request timing, state persistence, and peer selection behavior.</div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <NumberField
@@ -160,28 +177,46 @@ export function OperatorSettingsPanel({
 
       {extraSections}
 
-      <ContentCard title="Maintenance" description={maintenanceDescription}>
-        <div className="flex flex-wrap gap-2">
-          {maintenanceActions.map((action) => (
-            <Button
-              key={action.label}
-              variant={action.variant ?? 'secondary'}
-              size="sm"
-              data-testid={action.testId}
-              onClick={action.onClick}
-              disabled={action.disabled}
-            >
-              {action.label}
-            </Button>
-          ))}
-        </div>
-
-        {message ? (
-          <div className="mt-4 rounded border border-blue-900/20 bg-blue-950/20 px-3 py-2 text-sm text-blue-100">
-            {message}
+      {sections ? (
+        sections.map((section) => (
+          <ContentCard key={section.title} title={section.title} description={section.description}>
+            <div className="flex flex-wrap items-center justify-end">
+              <Button
+                variant={section.variant ?? 'secondary'}
+                size="sm"
+                data-testid={section.testId}
+                onClick={section.onAction}
+                disabled={section.disabled}
+              >
+                {section.actionLabel}
+              </Button>
+            </div>
+          </ContentCard>
+        ))
+      ) : (
+        <ContentCard title="Maintenance" description={maintenanceDescription}>
+          <div className="flex flex-wrap gap-2">
+            {maintenanceActions.map((action) => (
+              <Button
+                key={action.label}
+                variant={action.variant ?? 'secondary'}
+                size="sm"
+                data-testid={action.testId}
+                onClick={action.onClick}
+                disabled={action.disabled}
+              >
+                {action.label}
+              </Button>
+            ))}
           </div>
-        ) : null}
-      </ContentCard>
+        </ContentCard>
+      )}
+
+      {message ? (
+        <div className="rounded border border-blue-900/20 bg-blue-950/20 px-3 py-2 text-sm text-blue-100">
+          {message}
+        </div>
+      ) : null}
     </div>
   );
 }
