@@ -184,6 +184,75 @@ describe('operator dashboard surface', () => {
     expect(screen.getByText('No pending approvals.')).toBeInTheDocument();
   });
 
+  it('summarizes peer readiness counts and filters the diagnostics log by domain', () => {
+    const onClearLogs = vi.fn();
+
+    render(
+      <OperatorSignerPanel
+        view={{
+          profileName: 'Primary Browser Device',
+          thresholdLabel: '2/3',
+          publicKeyLabel: 'group-pub-1',
+          shareLabel: 'Share #1',
+          readinessLabel: 'running',
+          relaySummary: 'Runtime is attached.',
+          peerRows: [
+            {
+              id: 'peer-1',
+              alias: 'Peer #1',
+              pubkey: 'peer-1',
+              state: 'online',
+              statusLabel: 'sign-ready',
+              lastSeenLabel: 'last seen 5/31/2026, 2:14 PM',
+            },
+            { id: 'peer-2', alias: 'Peer #2', pubkey: 'peer-2', state: 'offline', statusLabel: 'offline' },
+          ],
+          pendingOperationRows: [],
+          eventRows: [
+            { id: 'e1', badgeLabel: 'sign', badgeTone: 'info', message: 'sign request received' },
+            { id: 'e2', badgeLabel: 'sync', badgeTone: 'info', message: 'peer roster synced' },
+          ],
+        }}
+        introMessage="Runtime is attached."
+        runtimeControlLabel="Stop Signer"
+        onPrimaryAction={vi.fn()}
+        onClearLogs={onClearLogs}
+      />,
+    );
+
+    // Peer header counts: 1 of 2 reachable, 1 sign-ready; last-seen surfaces per row.
+    expect(screen.getByText('1/2 online')).toBeInTheDocument();
+    expect(screen.getByText('1 ready')).toBeInTheDocument();
+    expect(screen.getByText('last seen 5/31/2026, 2:14 PM')).toBeInTheDocument();
+
+    // Both domains render until a filter narrows the list.
+    expect(screen.getByText('sign request received')).toBeInTheDocument();
+    expect(screen.getByText('peer roster synced')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'sync', pressed: false }));
+    expect(screen.queryByText('sign request received')).not.toBeInTheDocument();
+    expect(screen.getByText('peer roster synced')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear Log' }));
+    expect(onClearLogs).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the peer summary pills when showPeerSummary is false', () => {
+    const { rerender } = render(
+      <OperatorPermissionsPanel
+        view={{ peerRows: [] }}
+        showPeerSummary={false}
+      />,
+    );
+    expect(screen.queryByText('Peers')).not.toBeInTheDocument();
+    expect(screen.queryByText('Effective responders')).not.toBeInTheDocument();
+
+    // Default keeps the peer pills for other consumers (e.g. igloo-chrome).
+    rerender(<OperatorPermissionsPanel view={{ peerRows: [] }} />);
+    expect(screen.getByText('Peers')).toBeInTheDocument();
+    expect(screen.getByText('Effective responders')).toBeInTheDocument();
+  });
+
   it('gates export on a matching password and shows the complete state', () => {
     const onExport = vi.fn();
     const onCopy = vi.fn();

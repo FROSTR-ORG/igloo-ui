@@ -72,6 +72,8 @@ export type PeerReadinessRowModel = {
   pubkey: string;
   state: 'online' | 'warning' | 'offline' | 'idle';
   statusLabel: string;
+  /** e.g. `last seen 5/31/2026, 2:14 PM` — omitted when the peer has never been seen. */
+  lastSeenLabel?: string;
   incomingAvailable?: number;
   outgoingAvailable?: number;
   outgoingSpent?: number;

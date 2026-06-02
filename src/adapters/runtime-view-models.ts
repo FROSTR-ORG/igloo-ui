@@ -96,7 +96,7 @@ type RuntimeStatusSummaryInput = {
   pending_operations: RuntimePendingOperationInput[];
 };
 
-type ObservabilityEventInput = {
+export type ObservabilityEventInput = {
   ts: number;
   level: 'debug' | 'info' | 'warn' | 'error';
   component: string;
@@ -162,6 +162,7 @@ function runtimePeerToReadinessRow(peer: RuntimePeerStatusInput): PeerReadinessR
     incomingAvailable: peer.incoming_available,
     outgoingAvailable: peer.outgoing_available,
     outgoingSpent: peer.outgoing_spent,
+    lastSeenLabel: peer.last_seen ? `last seen ${formatTimestamp(peer.last_seen)}` : undefined,
   };
 }
 

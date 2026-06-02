@@ -29,6 +29,12 @@ type Props = {
   siteEmptyText?: string;
   peerEmptyText?: string;
   peerClearAllLabel?: string;
+  /**
+   * Show the "Peers" / "Effective responders" summary pills. Paper's Permissions
+   * design omits them, so the PWA opts out; other consumers (e.g. igloo-chrome)
+   * keep the default. Site-policy pills are unaffected.
+   */
+  showPeerSummary?: boolean;
 };
 
 export function OperatorPermissionsPanel({
@@ -49,6 +55,7 @@ export function OperatorPermissionsPanel({
   siteEmptyText = 'No website permissions have been granted yet.',
   peerEmptyText = 'No peer policy state has been saved yet.',
   peerClearAllLabel = 'Clear All',
+  showPeerSummary = true,
 }: Props) {
   const siteRows = view.siteRows ?? [];
   const siteCount = siteRows.length;
@@ -56,19 +63,26 @@ export function OperatorPermissionsPanel({
   const effectiveResponderCount = view.peerRows.filter(
     (policy) => policy.respond.sign || policy.respond.ecdh
   ).length;
+  const showSummary = Boolean(view.siteRows) || showPeerSummary;
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-3">
-        {view.siteRows ? (
-          <>
-            <SummaryPill label="Site policies" value={siteCount} tone="blue" />
-            <SummaryPill label="Allowed origins" value={allowedSiteCount} tone="green" />
-          </>
-        ) : null}
-        <SummaryPill label="Peers" value={view.peerRows.length} tone="blue" />
-        <SummaryPill label="Effective responders" value={effectiveResponderCount} tone="blue" />
-      </div>
+      {showSummary ? (
+        <div className="grid gap-3 md:grid-cols-3">
+          {view.siteRows ? (
+            <>
+              <SummaryPill label="Site policies" value={siteCount} tone="blue" />
+              <SummaryPill label="Allowed origins" value={allowedSiteCount} tone="green" />
+            </>
+          ) : null}
+          {showPeerSummary ? (
+            <>
+              <SummaryPill label="Peers" value={view.peerRows.length} tone="blue" />
+              <SummaryPill label="Effective responders" value={effectiveResponderCount} tone="blue" />
+            </>
+          ) : null}
+        </div>
+      ) : null}
 
       {view.siteRows ? (
         <ContentCard

@@ -54,6 +54,18 @@ export function OperatorSignerPanel({
     );
   }
 
+  // Peer header counts derived from data the runtime already exposes: a peer is
+  // "online" when reachable (online/idle state) and "ready" when sign-capable.
+  // Per-peer latency, "Avg" latency, the nonce sparkline, and per-method
+  // SIGN/ECDH/PING capability badges that Paper draws are intentionally omitted —
+  // they require runtime instrumentation (bifrost-rs/igloo-shared) that does not
+  // exist yet (tracked as a future-scope follow-up).
+  const peerTotal = view.peerRows.length;
+  const peersOnline = view.peerRows.filter(
+    (peer) => peer.state === 'online' || peer.state === 'idle'
+  ).length;
+  const peersReady = view.peerRows.filter((peer) => peer.statusLabel === 'sign-ready').length;
+
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/20 px-4 py-3 text-sm text-cyan-100 shadow-[inset_0_1px_0_rgba(103,232,249,0.08)]">
@@ -137,7 +149,22 @@ export function OperatorSignerPanel({
         </div>
       </div>
 
-      <ContentCard title="Peers" description="Signer-owned peer liveness, readiness, and policy state.">
+      <ContentCard
+        title="Peers"
+        description="Signer-owned peer liveness, readiness, and policy state."
+        action={
+          peerTotal > 0 ? (
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.14em]">
+              <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300">
+                {peersOnline}/{peerTotal} online
+              </span>
+              <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-1 text-blue-200">
+                {peersReady} ready
+              </span>
+            </div>
+          ) : null
+        }
+      >
         {view.peerRows.length > 0 ? (
           <div className="space-y-3">
             {view.peerRows.map((peer) => (
@@ -147,9 +174,14 @@ export function OperatorSignerPanel({
                     <div className="text-sm font-medium text-blue-200">{peer.alias}</div>
                     <div className="break-all font-mono text-xs text-gray-400">{peer.pubkey}</div>
                   </div>
-                  <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-1 text-xs text-blue-200">
-                    {peer.statusLabel}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-1 text-xs text-blue-200">
+                      {peer.statusLabel}
+                    </span>
+                    {peer.lastSeenLabel ? (
+                      <span className="text-[11px] text-gray-500">{peer.lastSeenLabel}</span>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   <Metric label="Incoming" value={peer.incomingAvailable ?? 'n/a'} />
@@ -236,6 +268,23 @@ export function OperatorSignerPanel({
   );
 }
 
+function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={
+        active
+          ? 'rounded-full border border-blue-500/50 bg-blue-500/20 px-2.5 py-0.5 text-xs text-blue-100'
+          : 'rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-0.5 text-xs text-blue-300 hover:text-blue-200'
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
 function Metric({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5">
@@ -246,16 +295,50 @@ function Metric({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 function EventRows({ rows, onClear }: { rows: EventLogRowModel[]; onClear?: () => void }) {
+  const [activeFilter, setActiveFilter] = React.useState<string | null>(null);
+
+  // Distinct domain tags present in the current rows drive the filter chips.
+  const domains = React.useMemo(() => {
+    const seen = new Set<string>();
+    const ordered: string[] = [];
+    for (const row of rows) {
+      if (!seen.has(row.badgeLabel)) {
+        seen.add(row.badgeLabel);
+        ordered.push(row.badgeLabel);
+      }
+    }
+    return ordered;
+  }, [rows]);
+
+  // A filter that no longer matches any row (e.g. after Clear) falls back to All.
+  const effectiveFilter = activeFilter && domains.includes(activeFilter) ? activeFilter : null;
+  const visibleRows = effectiveFilter ? rows.filter((row) => row.badgeLabel === effectiveFilter) : rows;
+
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {domains.length > 1 ? (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <FilterChip label="All" active={effectiveFilter === null} onClick={() => setActiveFilter(null)} />
+            {domains.map((domain) => (
+              <FilterChip
+                key={domain}
+                label={domain}
+                active={effectiveFilter === domain}
+                onClick={() => setActiveFilter(domain)}
+              />
+            ))}
+          </div>
+        ) : (
+          <span />
+        )}
         {onClear ? (
           <Button type="button" size="sm" variant="secondary" onClick={onClear}>
             Clear Log
           </Button>
         ) : null}
       </div>
-      {rows.map((row) => (
+      {visibleRows.map((row) => (
         <div key={row.id} className="rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5">
           <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
             <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2 py-0.5 text-blue-200">
