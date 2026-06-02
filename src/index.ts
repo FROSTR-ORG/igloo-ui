@@ -6,6 +6,7 @@ export * from './adapters/runtime-view-models';
 export * from './components/OnboardingInstructions';
 export * from './components/flows/CreateFlow';
 export * from './components/flows/CreateImportPanel';
+export * from './components/flows/ExportPackageModal';
 export * from './components/flows/HostShell';
 export * from './components/flows/DesktopAppShell';
 export * from './components/flows/ManagedProfilesPanel';

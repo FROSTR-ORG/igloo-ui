@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  ExportPackageModal,
   OperatorDashboardTabs,
   OperatorPermissionsPanel,
   OperatorSettingsPanel,
@@ -181,5 +182,56 @@ describe('operator dashboard surface', () => {
 
     // Pending Approvals renders as a calm empty state (deferred behavior).
     expect(screen.getByText('No pending approvals.')).toBeInTheDocument();
+  });
+
+  it('gates export on a matching password and shows the complete state', () => {
+    const onExport = vi.fn();
+    const onCopy = vi.fn();
+    const onDownload = vi.fn();
+
+    const { rerender } = render(
+      <ExportPackageModal
+        open
+        onClose={vi.fn()}
+        title="Export Profile"
+        description="Create an encrypted backup."
+        summary="Share #1 (Index 1) · Keyset: My Signing Key · 2 relays · 3 peers"
+        result={null}
+        onExport={onExport}
+        onCopy={onCopy}
+        onDownload={onDownload}
+      />,
+    );
+
+    // Export is disabled until the passwords match.
+    expect(screen.getByTestId('export-submit')).toBeDisabled();
+    fireEvent.change(screen.getByTestId('export-password'), { target: { value: 'export-pass' } });
+    fireEvent.change(screen.getByTestId('export-confirm'), { target: { value: 'mismatch' } });
+    expect(screen.getByText('Passwords do not match.')).toBeInTheDocument();
+    expect(screen.getByTestId('export-submit')).toBeDisabled();
+
+    fireEvent.change(screen.getByTestId('export-confirm'), { target: { value: 'export-pass' } });
+    fireEvent.click(screen.getByTestId('export-submit'));
+    expect(onExport).toHaveBeenCalledWith('export-pass');
+
+    // Once the parent supplies a result, the complete state offers copy + download.
+    rerender(
+      <ExportPackageModal
+        open
+        onClose={vi.fn()}
+        title="Export Profile"
+        description="Create an encrypted backup."
+        summary="Share #1 (Index 1) · Keyset: My Signing Key · 2 relays · 3 peers"
+        result="bfprofile1exportedpackage"
+        onExport={onExport}
+        onCopy={onCopy}
+        onDownload={onDownload}
+      />,
+    );
+    expect(screen.getByTestId('export-result')).toHaveTextContent('bfprofile1exportedpackage');
+    fireEvent.click(screen.getByTestId('export-copy'));
+    expect(onCopy).toHaveBeenCalledWith('bfprofile1exportedpackage');
+    fireEvent.click(screen.getByTestId('export-download'));
+    expect(onDownload).toHaveBeenCalledWith('bfprofile1exportedpackage');
   });
 });
