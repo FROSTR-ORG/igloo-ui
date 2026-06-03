@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { Button } from '../ui/button';
+import { passwordManagerOptOutProps } from '../../lib/password-manager';
 
 export type ManagedProfileSummary = {
   id: string;
@@ -140,6 +141,7 @@ export function ManagedProfilesPanel({
             {secretLabel}
             <input
               type="password"
+              {...passwordManagerOptOutProps}
               value={vaultPassphrase}
               onChange={(event) => onChangeVaultPassphrase(event.target.value)}
               placeholder={secretPlaceholder}

@@ -7,6 +7,7 @@ import { PasswordField } from '../ui/password-field';
 import { StatusDot } from '../ui/status-indicator';
 import { Textarea } from '../ui/textarea';
 import { CRITICAL_E2E_TEST_IDS } from '../../lib/e2e-test-ids';
+import { passwordManagerOptOutProps } from '../../lib/password-manager';
 
 export type SharedCreateFormState = {
   groupName: string;
@@ -309,6 +310,7 @@ export function RotateKeysetPanel({
                 Package Password
                 <input
                   type="password"
+                  {...passwordManagerOptOutProps}
                   value={source.packagePassword}
                   onChange={(event) => onChangeRotationSource(index, 'packagePassword', event.target.value)}
                 />
@@ -416,6 +418,7 @@ export function CreateFlowLocalSaveCard({
           {primarySecretLabel}
           <input
             type="password"
+            {...passwordManagerOptOutProps}
             value={draft.primarySecret}
             onChange={(event) => onPrimarySecretChange(event.target.value)}
           />
@@ -426,6 +429,7 @@ export function CreateFlowLocalSaveCard({
           {secondarySecretLabel}
           <input
             type="password"
+            {...passwordManagerOptOutProps}
             value={draft.secondarySecret ?? ''}
             onChange={(event) => onSecondarySecretChange?.(event.target.value)}
           />
@@ -979,6 +983,7 @@ function CreateFlowDistributionCard({
                 aria-label="Package password"
                 data-testid={CRITICAL_E2E_TEST_IDS.distributionPackagePassword}
                 type="password"
+                {...passwordManagerOptOutProps}
                 value={draft.packagePassword}
                 onChange={(event) => {
                   onChangeDraft(share.member_idx, 'packagePassword', event.target.value);
@@ -1584,6 +1589,7 @@ export function OnboardCompletePanel({
               aria-label="Password"
               data-testid={CRITICAL_E2E_TEST_IDS.onboardSavePassword}
               type="password"
+              {...passwordManagerOptOutProps}
               value={draft.password}
               onChange={(event) => onPasswordChange(event.target.value)}
             />
@@ -1594,6 +1600,7 @@ export function OnboardCompletePanel({
               aria-label="Confirm Password"
               data-testid={CRITICAL_E2E_TEST_IDS.onboardSaveConfirm}
               type="password"
+              {...passwordManagerOptOutProps}
               value={draft.confirmPassword}
               onChange={(event) => onConfirmPasswordChange(event.target.value)}
             />

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { cn } from '../../lib/utils';
+import { passwordManagerOptOutProps } from '../../lib/password-manager';
 
 export interface PasswordFieldProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -22,6 +23,7 @@ export const PasswordField = React.forwardRef<HTMLInputElement, PasswordFieldPro
           ref={ref}
           type={visible ? 'text' : 'password'}
           className={className}
+          {...passwordManagerOptOutProps}
           {...props}
         />
         <button

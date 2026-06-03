@@ -1,5 +1,6 @@
 export * from './lib/utils';
 export * from './lib/e2e-test-ids';
+export * from './lib/password-manager';
 export * from './tokens/design-tokens';
 export * from './models/view-models';
 export * from './adapters/runtime-view-models';

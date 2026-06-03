@@ -7,6 +7,7 @@ import { Collapsible } from '../ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Textarea } from '../ui/textarea';
 import { Tooltip } from '../ui/tooltip';
+import { passwordManagerOptOutProps } from '../../lib/password-manager';
 
 export type GeneratedShareDraft = {
   label: string;
@@ -174,6 +175,7 @@ export function CreateImportPanel({
                   Vault passphrase
                   <input
                     type="password"
+                    {...passwordManagerOptOutProps}
                     value={importForm.vaultPassphrase}
                     onChange={(event) => onChangeImportForm('vaultPassphrase', event.target.value)}
                   />
@@ -239,6 +241,7 @@ export function CreateImportPanel({
                   Vault passphrase
                   <input
                     type="password"
+                    {...passwordManagerOptOutProps}
                     value={onboardingForm.vaultPassphrase}
                     onChange={(event) => onChangeOnboardingForm('vaultPassphrase', event.target.value)}
                   />
@@ -246,7 +249,7 @@ export function CreateImportPanel({
               </div>
               <label>
                 Package password
-                <input type="password" value={onboardingForm.password} onChange={(event) => onChangeOnboardingForm('password', event.target.value)} />
+                <input type="password" {...passwordManagerOptOutProps} value={onboardingForm.password} onChange={(event) => onChangeOnboardingForm('password', event.target.value)} />
               </label>
               <label>
                 Onboarding package
@@ -331,6 +334,7 @@ export function CreateImportPanel({
                         Vault passphrase
                         <input
                           type="password"
+                          {...passwordManagerOptOutProps}
                           value={form.vaultPassphrase}
                           onChange={(event) => onChangeSaveForm(share.member_idx, 'vaultPassphrase', event.target.value)}
                         />
