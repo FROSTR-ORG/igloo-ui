@@ -43,13 +43,15 @@ function formatLastSeen(value: number | null | undefined): string {
 function NonceBar({
   label,
   value,
-  tone = 'blue'
+  tone = 'blue',
+  capacity = 20
 }: {
   label: string;
   value: number;
   tone?: 'blue' | 'green' | 'amber';
+  capacity?: number;
 }) {
-  const width = Math.min(100, Math.max(0, (value / 20) * 100));
+  const width = Math.min(100, Math.max(0, (value / Math.max(capacity, 1)) * 100));
   const barClass =
     tone === 'green' ? 'bg-green-400/80' : tone === 'amber' ? 'bg-amber-400/80' : 'bg-blue-400/80';
 

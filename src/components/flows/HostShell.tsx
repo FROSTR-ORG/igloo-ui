@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BookOpen, Check, Feather, Github, Globe, Info, Lock, MoreVertical } from 'lucide-react';
+import { BookOpen, Feather, Github, Globe, Info, Lock, MoreVertical } from 'lucide-react';
 
 import { CRITICAL_E2E_TEST_IDS, type CriticalE2ETestId } from '../../lib/e2e-test-ids';
 import type { StoredProfileCardModel } from '../../models/view-models';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { ContentCard } from '../ui/content-card';
 import { Modal } from '../ui/modal';
 import { PasswordField } from '../ui/password-field';
+import { StepIndicator } from '../ui/step-indicator';
 
 export function WelcomeEntryHero({
   logoSrc,
@@ -344,7 +345,7 @@ export function WelcomeDeleteModal({
 }
 
 function LandingIcon({ children }: { children: React.ReactNode }) {
-  return <div className="igloo-pwa-entry-icon" aria-hidden="true">{children}</div>;
+  return <div className="igloo-entry-icon" aria-hidden="true">{children}</div>;
 }
 
 export function HostEntryTile({
@@ -367,11 +368,11 @@ export function HostEntryTile({
   onAction: () => void;
 }) {
   return (
-    <section className={`igloo-panel igloo-pwa-entry-tile ${tone === 'primary' ? 'is-primary' : ''}`}>
-      <div className="igloo-pwa-entry-head">
+    <section className={`igloo-panel igloo-entry-tile ${tone === 'primary' ? 'is-primary' : ''}`}>
+      <div className="igloo-entry-head">
         <LandingIcon>{icon}</LandingIcon>
-        <div className="igloo-pwa-entry-copy">
-          <span className="igloo-pwa-entry-kicker">{kicker}</span>
+        <div className="igloo-entry-copy">
+          <span className="igloo-entry-kicker">{kicker}</span>
           <h3>{title}</h3>
           <p>{description}</p>
         </div>
@@ -416,29 +417,17 @@ export function StepProgress({
   steps: string[];
   active: number;
 }) {
+  const indicatorSteps = steps.map((step, index) => ({
+    id: `${index}-${step}`,
+    label: step,
+  }));
+  const currentStepId = indicatorSteps[active]?.id ?? '';
   return (
-    <div className="igloo-step-progress" aria-label="Flow progress">
-      {steps.map((step, index) => (
-        <React.Fragment key={step}>
-          {index > 0 ? (
-            <div
-              className={index <= active ? 'igloo-step-connector is-complete' : 'igloo-step-connector'}
-              aria-hidden="true"
-            />
-          ) : null}
-          <div
-            className={[
-              'igloo-step-chip',
-              index < active ? 'is-complete' : '',
-              index === active ? 'is-active' : '',
-            ].filter(Boolean).join(' ')}
-          >
-            <span>{index < active ? <Check size={14} aria-hidden="true" /> : index + 1}</span>
-            <strong>{step}</strong>
-          </div>
-        </React.Fragment>
-      ))}
-    </div>
+    <StepIndicator
+      steps={indicatorSteps}
+      currentStepId={currentStepId}
+      ariaLabel="Flow progress"
+    />
   );
 }
 

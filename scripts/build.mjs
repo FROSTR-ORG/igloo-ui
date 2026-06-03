@@ -1,14 +1,22 @@
 #!/usr/bin/env node
 
+import { cp, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { cp, mkdir } from 'node:fs/promises';
 
 import esbuild from 'esbuild';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
+
+// Ship vendored fonts alongside the emitted styles.css so the @font-face
+// url("./fonts/...") in dist/styles.css resolves for consumers.
+await cp(
+  path.resolve(rootDir, 'src/fonts'),
+  path.resolve(rootDir, 'dist/fonts'),
+  { recursive: true }
+);
 
 await esbuild.build({
   absWorkingDir: rootDir,

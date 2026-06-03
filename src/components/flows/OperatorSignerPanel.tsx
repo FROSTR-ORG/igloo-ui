@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { ChevronDown, Copy, HelpCircle } from 'lucide-react';
+import { ChevronDown, Copy } from 'lucide-react';
 
 import type { DashboardKeyModel, EventLogRowModel, SignerDashboardViewModel } from '../../models/view-models';
 import { CRITICAL_E2E_TEST_IDS as TID } from '../../lib/e2e-test-ids';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
+import { HelpHint } from '../ui/help-hint';
 import { Input } from '../ui/input';
 
 type Props = {
@@ -76,9 +77,12 @@ export function OperatorSignerPanel({
         <div className="min-w-0">
           <div className="flex items-center">
             <h2 className="text-lg text-blue-300">Manage your signer runtime</h2>
-            <span title="Inspect runtime health, peer state, pending operations, and recent diagnostics from one operator surface.">
-              <HelpCircle size={18} className="ml-2 text-blue-400 cursor-help" />
-            </span>
+            <HelpHint
+              className="ml-2"
+              ariaLabel="About the signer runtime"
+              iconSize={18}
+              content="Inspect runtime health, peer state, pending operations, and recent diagnostics from one operator surface."
+            />
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-500">
             <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-1 text-blue-200">

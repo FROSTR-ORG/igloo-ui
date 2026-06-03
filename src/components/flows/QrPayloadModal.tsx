@@ -1,7 +1,8 @@
 import * as React from 'react';
 
 import { Button } from '../ui/button';
-import { Modal } from '../ui/modal';
+import { Dialog } from '../ui/dialog';
+import { SensitiveTextarea } from '../ui/sensitive-textarea';
 
 type Props = {
   open: boolean;
@@ -37,19 +38,19 @@ function QrLike({ value }: { value: string }) {
 
 export function QrPayloadModal({ open, onClose, title, payload, label }: Props) {
   return (
-    <Modal open={open} onClose={onClose} title={title} className="max-w-xl">
+    <Dialog open={open} onClose={onClose} title={title} className="max-w-xl">
       <div className="igloo-stack">
         {label ? <p className="igloo-message-muted">{label}</p> : null}
         <div className="igloo-qr-shell">
           <QrLike value={payload} />
         </div>
-        <pre className="igloo-code-block">{payload}</pre>
+        <SensitiveTextarea value={payload} />
         <div className="igloo-button-row">
           <Button type="button" size="sm" variant="secondary" onClick={onClose}>
             Close
           </Button>
         </div>
       </div>
-    </Modal>
+    </Dialog>
   );
 }

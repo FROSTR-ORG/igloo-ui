@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '../../lib/utils';
+import { Dialog } from './dialog';
 
 export type ModalProps = {
   open: boolean;
@@ -10,30 +10,24 @@ export type ModalProps = {
   children: React.ReactNode;
 };
 
+/**
+ * Modal is a thin compatibility shim over the hardened {@link Dialog} engine.
+ *
+ * The Paper design system shipped a lightweight `Modal` (backdrop + centered
+ * panel + a window-level Escape listener that closed *every* open modal at
+ * once). The security-hardening track replaced it with `Dialog`, which adds a
+ * focus trap, initial-focus + restore, ref-counted body scroll-lock, a LIFO
+ * Escape stack (only the topmost dialog closes), and full ARIA wiring.
+ *
+ * We keep `Dialog` as the single engine and back the original `Modal` API with
+ * it so existing call sites (ExportPackageModal, HostShell, …) are untouched
+ * while inheriting the hardened behavior. `ModalProps` is a strict subset of
+ * `DialogProps`, so this is a direct forward.
+ */
 export function Modal({ open, onClose, title, className, children }: ModalProps) {
-  React.useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose, open]);
-
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={onClose} />
-      <div
-        className={cn(
-          'relative z-10 w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl border border-igloo-border bg-igloo-panel-strong p-6 shadow-2xl',
-          className,
-        )}
-      >
-        {title ? <div className="mb-4 text-lg font-semibold text-igloo-text">{title}</div> : null}
-        {children}
-      </div>
-    </div>
+    <Dialog open={open} onClose={onClose} title={title} className={className}>
+      {children}
+    </Dialog>
   );
 }
