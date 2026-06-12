@@ -16,12 +16,16 @@ export function WelcomeEntryHero({
   onNewKeyset,
   onImportProfile,
   onOnboard,
+  resumeDevices,
+  onResumeDevice,
 }: {
   logoSrc?: string;
   logoAlt?: string;
   onNewKeyset: () => void;
   onImportProfile: () => void;
   onOnboard: () => void;
+  resumeDevices?: WelcomeResumableDeviceModel[];
+  onResumeDevice?: (deviceId: string) => void;
 }) {
   return (
     <section className="igloo-welcome-entry" aria-labelledby="igloo-welcome-entry-title">
@@ -59,6 +63,10 @@ export function WelcomeEntryHero({
         </div>
       </div>
 
+      {resumeDevices?.length && onResumeDevice ? (
+        <WelcomeResumeDeviceList devices={resumeDevices} onResume={onResumeDevice} />
+      ) : null}
+
       <PublicFocusFooter />
     </section>
   );
@@ -71,6 +79,59 @@ export type WelcomeReturningProfileModel = {
   memberLabel: string;
   publicKeyLabel: string;
 };
+
+// A signing device stored in another browser partition (e.g. an earlier session
+// whose per-tab instance id was cleared by a restart). It can be resumed with
+// one click, but its share stays encrypted until then — so, unlike a returning
+// profile, only the label and a partition summary are known here.
+export type WelcomeResumableDeviceModel = {
+  id: string;
+  label: string;
+  metaLabel: string;
+};
+
+// Renders resumable devices using the same Paper device-card treatment as the
+// returning-profile rows, with a single "Resume" action in place of
+// Unlock + overflow menu.
+function WelcomeResumeDeviceList({
+  devices,
+  onResume,
+}: {
+  devices: WelcomeResumableDeviceModel[];
+  onResume: (deviceId: string) => void;
+}) {
+  return (
+    <div className="igloo-welcome-profile-list" data-testid={CRITICAL_E2E_TEST_IDS.welcomeResumeDevices}>
+      {devices.map((device) => (
+        <div
+          className="igloo-welcome-profile-row"
+          key={device.id}
+          data-testid={CRITICAL_E2E_TEST_IDS.welcomeResumeDevice}
+          data-device-id={device.id}
+        >
+          <div className="igloo-welcome-profile-icon" aria-hidden="true">
+            <Lock size={20} />
+          </div>
+          <div className="igloo-welcome-profile-copy">
+            <h3>{device.label}</h3>
+            <div className="igloo-welcome-profile-meta">
+              <span>{device.metaLabel}</span>
+            </div>
+          </div>
+          <div className="igloo-welcome-profile-actions">
+            <Button
+              type="button"
+              data-testid={CRITICAL_E2E_TEST_IDS.welcomeResumeDeviceButton}
+              onClick={() => onResume(device.id)}
+            >
+              Resume
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function PublicFocusFooter() {
   return (
@@ -114,6 +175,8 @@ export function WelcomeReturningHero({
   onNewKeyset,
   onImportProfile,
   onOnboard,
+  resumeDevices,
+  onResumeDevice,
 }: {
   logoSrc?: string;
   logoAlt?: string;
@@ -126,6 +189,8 @@ export function WelcomeReturningHero({
   onNewKeyset: () => void;
   onImportProfile: () => void;
   onOnboard: () => void;
+  resumeDevices?: WelcomeResumableDeviceModel[];
+  onResumeDevice?: (deviceId: string) => void;
 }) {
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
   return (
@@ -221,6 +286,10 @@ export function WelcomeReturningHero({
             </div>
           ))}
         </div>
+
+        {resumeDevices?.length && onResumeDevice ? (
+          <WelcomeResumeDeviceList devices={resumeDevices} onResume={onResumeDevice} />
+        ) : null}
 
         <div className="igloo-welcome-entry-secondary">
           <span>or</span>

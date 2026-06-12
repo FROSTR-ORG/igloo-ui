@@ -16,6 +16,11 @@ export const CRITICAL_E2E_TEST_IDS = {
   welcomeEntryOnboard: 'welcome-entry-onboard',
   welcomeProfileRow: 'welcome-profile-row',
   welcomeProfileUnlock: 'welcome-profile-unlock',
+  // Resumable devices: other browser partitions surfaced for one-click resume
+  // after a restart clears this tab's instance id (igloo-pwa instance registry).
+  welcomeResumeDevices: 'welcome-resume-devices',
+  welcomeResumeDevice: 'welcome-resume-device',
+  welcomeResumeDeviceButton: 'welcome-resume-device-button',
   welcomeProfileMenuTrigger: 'welcome-profile-menu-trigger',
   welcomeProfileMenuRotate: 'welcome-profile-menu-rotate',
   welcomeProfileMenuRecover: 'welcome-profile-menu-recover',
