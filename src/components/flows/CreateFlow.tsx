@@ -1287,6 +1287,8 @@ export type SharedRecoverSource = { packageText: string; packagePassword: string
 
 export function RecoverCollectSharesPanel({
   deviceShareLabel = 'Share #1 (this device)',
+  devicePassphrase,
+  onChangeDevicePassphrase,
   sources,
   threshold,
   collectedCount,
@@ -1297,6 +1299,8 @@ export function RecoverCollectSharesPanel({
   actionLabel = 'Next Step',
 }: {
   deviceShareLabel?: string;
+  devicePassphrase: string;
+  onChangeDevicePassphrase: (value: string) => void;
   sources: SharedRecoverSource[];
   threshold: number;
   collectedCount: number;
@@ -1309,12 +1313,19 @@ export function RecoverCollectSharesPanel({
   const pct = threshold > 0 ? Math.min(100, Math.round((collectedCount / threshold) * 100)) : 0;
   return (
     <div className="igloo-recover-collect">
-      <div className="igloo-recover-device-row">
-        <strong>{deviceShareLabel}</strong>
-        <span className="igloo-recover-validated">
-          <Check size={14} aria-hidden="true" />
-          Validated
-        </span>
+      <div className="igloo-generated-card">
+        <header>
+          <strong>{deviceShareLabel}</strong>
+        </header>
+        <label>
+          Device Passphrase
+          <PasswordField
+            data-testid={CRITICAL_E2E_TEST_IDS.recoverDevicePassphrase}
+            value={devicePassphrase}
+            onChange={(event) => onChangeDevicePassphrase(event.target.value)}
+            placeholder="Unlock this device's share to count it toward the threshold"
+          />
+        </label>
       </div>
       <div className="igloo-stack">
         {sources.map((source, index) => (
@@ -1328,7 +1339,7 @@ export function RecoverCollectSharesPanel({
                 className="min-h-[96px]"
                 value={source.packageText}
                 onChange={(event) => onChangeSource(index, 'packageText', event.target.value)}
-                placeholder="Paste bfprofile or bfshare from another device or backup..."
+                placeholder="Paste a bfshare from another device..."
               />
             </label>
             <label>
@@ -1363,7 +1374,12 @@ export function RecoverCollectSharesPanel({
       <p className="igloo-recover-helper">
         Old devices do not need to be online. Provide enough source packages and passwords to meet the threshold.
       </p>
-      <Button type="button" className="igloo-create-primary-action" onClick={onNext}>
+      <Button
+        type="button"
+        className="igloo-create-primary-action"
+        data-testid={CRITICAL_E2E_TEST_IDS.recoverNext}
+        onClick={onNext}
+      >
         {actionLabel}
       </Button>
     </div>

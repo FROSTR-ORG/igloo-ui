@@ -60,6 +60,14 @@ export const CRITICAL_E2E_TEST_IDS = {
   distributionRevert: 'distribution-revert',
   distributionFinish: 'distribution-finish',
 
+  // Recover private key (CreateFlow collect + recover-key success view). The
+  // reconstructed nsec is masked until revealed; recoverKeyValue carries the
+  // revealed value so specs can verify the real recovered key (not a stub).
+  recoverDevicePassphrase: 'recover-device-passphrase',
+  recoverNext: 'recover-next',
+  recoverRevealKey: 'recover-reveal-key',
+  recoverKeyValue: 'recover-key-value',
+
   // Onboard / Import (CreateFlow)
   onboardPackageInput: 'onboard-package-input',
   onboardPasswordInput: 'onboard-password-input',
