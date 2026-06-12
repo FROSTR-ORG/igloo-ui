@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { CriticalE2ETestId } from '../../lib/e2e-test-ids';
+import { CRITICAL_E2E_TEST_IDS, type CriticalE2ETestId } from '../../lib/e2e-test-ids';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
 import { Input } from '../ui/input';
@@ -99,6 +99,7 @@ export function OperatorSettingsPanel({
                 <div className="mt-1 text-sm text-slate-400">The operator-facing label shown across the dashboard.</div>
                 <Input
                   className="mt-3"
+                  data-testid={CRITICAL_E2E_TEST_IDS.settingsSignerName}
                   value={signerName}
                   onChange={(event) => onSignerNameChange(event.target.value)}
                   placeholder="Unnamed signer"
@@ -110,11 +111,16 @@ export function OperatorSettingsPanel({
                 <div className="mt-1 text-sm text-slate-400">Endpoints used to publish events and fetch remote signer state.</div>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                   <Input
+                    data-testid={CRITICAL_E2E_TEST_IDS.settingsRelayAddInput}
                     value={newRelayUrl}
                     onChange={(event) => onNewRelayUrlChange(event.target.value)}
                     placeholder="wss://relay.example.com"
                   />
-                  <Button variant="secondary" onClick={onAddRelay}>
+                  <Button
+                    variant="secondary"
+                    data-testid={CRITICAL_E2E_TEST_IDS.settingsRelayAddSubmit}
+                    onClick={onAddRelay}
+                  >
                     Add Relay
                   </Button>
                 </div>
@@ -122,6 +128,8 @@ export function OperatorSettingsPanel({
                   {relays.map((relay) => (
                     <div
                       key={relay}
+                      data-testid={CRITICAL_E2E_TEST_IDS.settingsRelayRow}
+                      data-relay-url={relay}
                       className="flex items-center justify-between rounded border border-blue-900/20 bg-slate-950/70 px-3 py-2"
                     >
                       <div className="font-mono text-xs text-blue-100">{relay}</div>
@@ -140,21 +148,25 @@ export function OperatorSettingsPanel({
               <div className="grid gap-4 sm:grid-cols-2">
                 <NumberField
                   label="Sign Timeout (secs)"
+                  field="sign_timeout_secs"
                   value={signerSettings.sign_timeout_secs}
                   onChange={(value) => onSignerSettingNumberChange('sign_timeout_secs', value)}
                 />
                 <NumberField
                   label="Ping Timeout (secs)"
+                  field="ping_timeout_secs"
                   value={signerSettings.ping_timeout_secs}
                   onChange={(value) => onSignerSettingNumberChange('ping_timeout_secs', value)}
                 />
                 <NumberField
                   label="Request TTL (secs)"
+                  field="request_ttl_secs"
                   value={signerSettings.request_ttl_secs}
                   onChange={(value) => onSignerSettingNumberChange('request_ttl_secs', value)}
                 />
                 <NumberField
                   label="State Save Interval (secs)"
+                  field="state_save_interval_secs"
                   value={signerSettings.state_save_interval_secs}
                   onChange={(value) => onSignerSettingNumberChange('state_save_interval_secs', value)}
                 />
@@ -167,7 +179,11 @@ export function OperatorSettingsPanel({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button onClick={onSave} disabled={saving || saveDisabled}>
+              <Button
+                data-testid={CRITICAL_E2E_TEST_IDS.settingsSave}
+                onClick={onSave}
+                disabled={saving || saveDisabled}
+              >
                 {saving ? 'Saving...' : 'Save Settings'}
               </Button>
             </div>
@@ -223,17 +239,29 @@ export function OperatorSettingsPanel({
 
 function NumberField({
   label,
+  field,
   value,
   onChange,
 }: {
   label: string;
+  // Optional e2e discriminator; the shared settingsNumberField id is repeated per
+  // field, so specs target a specific setting via data-field.
+  field?: keyof Omit<OperatorSignerSettings, 'peer_selection_strategy'>;
   value: number;
   onChange: (value: string) => void;
 }) {
   return (
     <label className="rounded-lg border border-blue-900/20 bg-gray-950/30 p-4">
       <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
-      <Input className="mt-2" type="number" min={1} value={String(value)} onChange={(event) => onChange(event.target.value)} />
+      <Input
+        className="mt-2"
+        type="number"
+        min={1}
+        data-testid={field ? CRITICAL_E2E_TEST_IDS.settingsNumberField : undefined}
+        data-field={field}
+        value={String(value)}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </label>
   );
 }

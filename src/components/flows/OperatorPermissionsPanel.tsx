@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { CRITICAL_E2E_TEST_IDS } from '../../lib/e2e-test-ids';
 import type {
   PolicyDashboardViewModel,
   PolicyMethodOverrideState,
@@ -191,6 +192,7 @@ export function OperatorPermissionsPanel({
                   <PermissionSection
                     title="Request"
                     direction="request"
+                    peerPubkey={policy.pubkey}
                     policy={policy.request}
                     overrides={policy.manualOverride?.request}
                     onChange={
@@ -202,6 +204,7 @@ export function OperatorPermissionsPanel({
                   <PermissionSection
                     title="Respond"
                     direction="respond"
+                    peerPubkey={policy.pubkey}
                     policy={policy.respond}
                     overrides={policy.manualOverride?.respond}
                     onChange={
@@ -223,12 +226,13 @@ export function OperatorPermissionsPanel({
 type PermissionSectionProps = {
   title: string;
   direction: 'request' | 'respond';
+  peerPubkey: string;
   policy: PolicyMethodState;
   overrides?: PolicyMethodOverrideState;
   onChange?: (method: keyof PolicyMethodOverrideState, value: PolicyOverrideValue) => void;
 };
 
-function PermissionSection({ title, direction, policy, overrides, onChange }: PermissionSectionProps) {
+function PermissionSection({ title, direction, peerPubkey, policy, overrides, onChange }: PermissionSectionProps) {
   return (
     <div className="space-y-2">
       <div className="text-[0.68rem] uppercase tracking-[0.18em] text-slate-400">{title}</div>
@@ -242,9 +246,11 @@ function PermissionSection({ title, direction, policy, overrides, onChange }: Pe
               <MethodToken
                 key={method}
                 direction={direction}
+                peerPubkey={peerPubkey}
                 method={method}
                 label={label}
                 value={effectiveValue}
+                override={overrideValue}
                 editable={Boolean(onChange)}
                 onClick={
                   onChange
@@ -268,16 +274,20 @@ function nextOverrideValue(effectiveValue: boolean, overrideValue: PolicyOverrid
 
 function MethodToken({
   direction,
+  peerPubkey,
   method,
   label,
   value,
+  override,
   editable,
   onClick
 }: {
   direction: 'request' | 'respond';
+  peerPubkey: string;
   method: string;
   label: string;
   value: boolean;
+  override: PolicyOverrideValue;
   editable?: boolean;
   onClick?: () => void;
 }) {
@@ -285,16 +295,29 @@ function MethodToken({
     ? 'border-green-500/40 bg-green-500/10 text-green-300'
     : 'border-red-500/40 bg-red-500/10 text-red-300';
   const content = `${direction} ${method}: ${label}`;
+  // Stable e2e hook: one id, disambiguated by peer/direction/method. data-allowed
+  // mirrors the live EFFECTIVE policy; data-override mirrors the operator's manual
+  // override (the directly-edited, persisted tri-state). Specs assert either
+  // without parsing copy.
+  const e2eProps = {
+    'data-testid': CRITICAL_E2E_TEST_IDS.permissionToggle,
+    'data-peer-pubkey': peerPubkey,
+    'data-direction': direction,
+    'data-method': method,
+    'data-allowed': value ? 'true' : 'false',
+    'data-override': override,
+  };
   return editable ? (
     <button
       type="button"
       onClick={onClick}
       className={`rounded border px-2.5 py-1 text-xs font-medium ${tone}`}
+      {...e2eProps}
     >
       {content}
     </button>
   ) : (
-    <span className={`rounded border px-2.5 py-1 text-xs font-medium ${tone}`}>
+    <span className={`rounded border px-2.5 py-1 text-xs font-medium ${tone}`} {...e2eProps}>
       {content}
     </span>
   );

@@ -84,6 +84,21 @@ export const CRITICAL_E2E_TEST_IDS = {
   dashboardShareKeyFormat: 'dashboard-share-key-format',
   dashboardPendingApprovals: 'dashboard-pending-approvals',
 
+  // Operator permissions (peer policy editor). The single toggle id is repeated
+  // per peer × direction × method and disambiguated by data-peer-pubkey /
+  // data-direction / data-method; data-allowed exposes the current effective
+  // value so page objects can assert state without reading copy.
+  permissionToggle: 'permission-toggle',
+
+  // Operator settings — Device Profile form. Number fields share one id plus a
+  // data-field discriminator; relay rows share one id plus data-relay-url.
+  settingsSignerName: 'settings-signer-name',
+  settingsRelayAddInput: 'settings-relay-add-input',
+  settingsRelayAddSubmit: 'settings-relay-add-submit',
+  settingsRelayRow: 'settings-relay-row',
+  settingsNumberField: 'settings-number-field',
+  settingsSave: 'settings-save',
+
   // Operator settings / maintenance / rotation / stored profiles
   settingsCopyProfile: 'settings-copy-profile',
   settingsCopyShare: 'settings-copy-share',
