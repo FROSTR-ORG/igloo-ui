@@ -818,6 +818,33 @@
     line-height: 1.25rem;
   }
 
+  .igloo-recover-device-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .igloo-recover-share-status {
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+  }
+
+  .igloo-recover-share-status-valid {
+    color: #4ade80;
+  }
+
+  .igloo-recover-lost-device {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: #cbd5e1;
+  }
+
   .igloo-welcome-unlock-form {
     display: grid;
     gap: 1rem;
