@@ -7,6 +7,11 @@ import type {
   SignerDashboardViewModel,
 } from '../models/view-models';
 
+type RuntimeNonceHistoryPointInput = {
+  ts: number;
+  held: number;
+};
+
 type RuntimePeerStatusInput = {
   idx: number;
   pubkey: string;
@@ -17,7 +22,12 @@ type RuntimePeerStatusInput = {
   outgoing_available: number;
   outgoing_spent: number;
   can_sign: boolean;
+  can_ecdh: boolean;
+  can_ping: boolean;
   should_send_nonces: boolean;
+  last_response_latency_ms: number | null;
+  avg_latency_ms: number | null;
+  nonce_history: RuntimeNonceHistoryPointInput[];
 };
 
 type RuntimePendingOperationInput = {
@@ -160,9 +170,15 @@ function runtimePeerToReadinessRow(peer: RuntimePeerStatusInput): PeerReadinessR
     pubkey: peer.pubkey,
     state: peer.online ? (peer.can_sign ? 'online' : 'idle') : peer.known ? 'warning' : 'offline',
     statusLabel: peer.can_sign ? 'sign-ready' : peer.online ? 'online' : peer.known ? 'known' : 'offline',
+    canSign: peer.can_sign,
+    canEcdh: peer.can_ecdh,
+    canPing: peer.can_ping,
     incomingAvailable: peer.incoming_available,
     outgoingAvailable: peer.outgoing_available,
     outgoingSpent: peer.outgoing_spent,
+    lastResponseLatencyMs: peer.last_response_latency_ms,
+    avgLatencyMs: peer.avg_latency_ms,
+    nonceSeries: peer.nonce_history.map((point) => ({ ts: point.ts, held: point.held })),
     lastSeenLabel: peer.last_seen ? `last seen ${formatTimestamp(peer.last_seen)}` : undefined,
   };
 }

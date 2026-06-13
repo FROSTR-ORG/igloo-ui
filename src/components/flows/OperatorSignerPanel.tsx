@@ -1,12 +1,19 @@
 import * as React from 'react';
 import { ChevronDown, Copy } from 'lucide-react';
 
-import type { DashboardKeyModel, EventLogRowModel, SignerDashboardViewModel } from '../../models/view-models';
+import type {
+  DashboardKeyModel,
+  EventLogRowModel,
+  PeerReadinessRowModel,
+  SignerDashboardViewModel,
+} from '../../models/view-models';
 import { CRITICAL_E2E_TEST_IDS as TID } from '../../lib/e2e-test-ids';
+import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
 import { HelpHint } from '../ui/help-hint';
 import { Input } from '../ui/input';
+import { Sparkline } from '../ui/sparkline';
 
 type Props = {
   view: SignerDashboardViewModel | null;
@@ -57,10 +64,6 @@ export function OperatorSignerPanel({
 
   // Peer header counts derived from data the runtime already exposes: a peer is
   // "online" when reachable (online/idle state) and "ready" when sign-capable.
-  // Per-peer latency, "Avg" latency, the nonce sparkline, and per-method
-  // SIGN/ECDH/PING capability badges that Paper draws are intentionally omitted —
-  // they require runtime instrumentation (bifrost-rs/igloo-shared) that does not
-  // exist yet (tracked as a future-scope follow-up).
   const peerTotal = view.peerRows.length;
   const peersOnline = view.peerRows.filter(
     (peer) => peer.state === 'online' || peer.state === 'idle'
@@ -187,11 +190,27 @@ export function OperatorSignerPanel({
                     ) : null}
                   </div>
                 </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  <CapabilityBadge label="SIGN" capable={peer.canSign} />
+                  <CapabilityBadge label="ECDH" capable={peer.canEcdh} />
+                  <CapabilityBadge label="PING" capable={peer.canPing} />
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <Metric label="Incoming" value={peer.incomingAvailable ?? 'n/a'} />
                   <Metric label="Outgoing" value={peer.outgoingAvailable ?? 'n/a'} />
                   <Metric label="Spent" value={peer.outgoingSpent ?? 'n/a'} />
+                  <Metric label="Latency" value={formatLatency(peer)} />
                 </div>
+                {peer.nonceSeries.length > 0 ? (
+                  <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5">
+                    <div className="text-xs uppercase tracking-wide text-gray-500">Nonce history</div>
+                    <Sparkline
+                      className="text-blue-300"
+                      values={peer.nonceSeries.map((point) => point.held)}
+                      label={`${peer.alias} nonce history`}
+                    />
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
@@ -296,6 +315,25 @@ function Metric({ label, value }: { label: string; value: React.ReactNode }) {
       <div className="mt-1.5 text-sm text-blue-100">{value}</div>
     </div>
   );
+}
+
+// Per-method capability pill: success tone when the peer can perform the method
+// right now (online + the effective outbound policy permits it), muted otherwise.
+function CapabilityBadge({ label, capable }: { label: string; capable: boolean }) {
+  return (
+    <Badge tone={capable ? 'success' : 'default'} aria-label={`${label} ${capable ? 'capable' : 'unavailable'}`}>
+      {label}
+    </Badge>
+  );
+}
+
+// `last (avg N ms)` PING latency, or an em-dash until a ping has completed.
+function formatLatency(peer: PeerReadinessRowModel): React.ReactNode {
+  if (peer.lastResponseLatencyMs == null) {
+    return '—';
+  }
+  const avg = peer.avgLatencyMs != null ? ` (avg ${peer.avgLatencyMs} ms)` : '';
+  return `${peer.lastResponseLatencyMs} ms${avg}`;
 }
 
 function EventRows({ rows, onClear }: { rows: EventLogRowModel[]; onClear?: () => void }) {

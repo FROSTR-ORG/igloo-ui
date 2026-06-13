@@ -203,9 +203,30 @@ describe('operator dashboard surface', () => {
               pubkey: 'peer-1',
               state: 'online',
               statusLabel: 'sign-ready',
+              canSign: true,
+              canEcdh: true,
+              canPing: true,
+              lastResponseLatencyMs: 120,
+              avgLatencyMs: 95,
+              nonceSeries: [
+                { ts: 1700000000, held: 4 },
+                { ts: 1700000005, held: 6 },
+              ],
               lastSeenLabel: 'last seen 5/31/2026, 2:14 PM',
             },
-            { id: 'peer-2', alias: 'Peer #2', pubkey: 'peer-2', state: 'offline', statusLabel: 'offline' },
+            {
+              id: 'peer-2',
+              alias: 'Peer #2',
+              pubkey: 'peer-2',
+              state: 'offline',
+              statusLabel: 'offline',
+              canSign: false,
+              canEcdh: false,
+              canPing: false,
+              lastResponseLatencyMs: null,
+              avgLatencyMs: null,
+              nonceSeries: [],
+            },
           ],
           pendingOperationRows: [],
           eventRows: [
@@ -224,6 +245,15 @@ describe('operator dashboard surface', () => {
     expect(screen.getByText('1/2 online')).toBeInTheDocument();
     expect(screen.getByText('1 ready')).toBeInTheDocument();
     expect(screen.getByText('last seen 5/31/2026, 2:14 PM')).toBeInTheDocument();
+
+    // Telemetry: per-method capability badges (both peers), latency, and the
+    // nonce-history sparkline (only the peer with a series).
+    expect(screen.getAllByText('SIGN')).toHaveLength(2);
+    expect(screen.getAllByText('ECDH')).toHaveLength(2);
+    expect(screen.getAllByText('PING')).toHaveLength(2);
+    expect(screen.getByText('120 ms (avg 95 ms)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Peer #1 nonce history')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Peer #2 nonce history')).not.toBeInTheDocument();
 
     // Both domains render until a filter narrows the list.
     expect(screen.getByText('sign request received')).toBeInTheDocument();

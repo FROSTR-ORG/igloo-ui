@@ -66,12 +66,27 @@ export type PendingApprovalRowModel = {
   expiresLabel: string;
 };
 
+export type NonceHistoryPointModel = {
+  ts: number;
+  held: number;
+};
+
 export type PeerReadinessRowModel = {
   id: string;
   alias: string;
   pubkey: string;
   state: 'online' | 'warning' | 'offline' | 'idle';
   statusLabel: string;
+  /** Per-method capability badges (the runtime always supplies these). */
+  canSign: boolean;
+  canEcdh: boolean;
+  canPing: boolean;
+  /** Most recent PING round-trip latency (ms); null until a ping completes. */
+  lastResponseLatencyMs: number | null;
+  /** Rolling-window mean PING latency (ms); null until a ping completes. */
+  avgLatencyMs: number | null;
+  /** Bounded nonce-held history (oldest first) for the sparkline; possibly empty. */
+  nonceSeries: NonceHistoryPointModel[];
   /** e.g. `last seen 5/31/2026, 2:14 PM` — omitted when the peer has never been seen. */
   lastSeenLabel?: string;
   incomingAvailable?: number;

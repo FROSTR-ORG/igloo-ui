@@ -45,7 +45,15 @@ describe('design runtime adapters', () => {
           outgoing_available: 7,
           outgoing_spent: 1,
           can_sign: true,
+          can_ecdh: true,
+          can_ping: true,
           should_send_nonces: false,
+          last_response_latency_ms: 120,
+          avg_latency_ms: 95,
+          nonce_history: [
+            { ts: 1700000000, held: 4 },
+            { ts: 1700000005, held: 6 },
+          ],
         },
       ],
       peer_permission_states: [],
@@ -77,7 +85,17 @@ describe('design runtime adapters', () => {
       incomingAvailable: 9,
       outgoingAvailable: 7,
       outgoingSpent: 1,
+      // Telemetry: capability badges, latency, and the nonce-history series.
+      canSign: true,
+      canEcdh: true,
+      canPing: true,
+      lastResponseLatencyMs: 120,
+      avgLatencyMs: 95,
     });
+    expect(view.peerRows[0].nonceSeries).toEqual([
+      { ts: 1700000000, held: 4 },
+      { ts: 1700000005, held: 6 },
+    ]);
     expect(view.pendingOperationRows[0]).toMatchObject({
       id: 'req-1',
       operationLabel: 'sign',
@@ -124,7 +142,12 @@ describe('design runtime adapters', () => {
           outgoing_available: 0,
           outgoing_spent: 0,
           can_sign: false,
+          can_ecdh: false,
+          can_ping: false,
           should_send_nonces: true,
+          last_response_latency_ms: null,
+          avg_latency_ms: null,
+          nonce_history: [],
         },
       ],
       peer_permission_states: [],
