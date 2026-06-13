@@ -81,7 +81,7 @@ export function OperatorSignerPanel({
               className="ml-2"
               ariaLabel="About the signer runtime"
               iconSize={18}
-              content="Inspect runtime health, peer state, pending operations, and recent diagnostics from one operator surface."
+              content="Inspect runtime health, peer state, pending operations, and the recent event log from one operator surface."
             />
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-500">
@@ -259,10 +259,10 @@ export function OperatorSignerPanel({
         )}
       </ContentCard>
 
-      <ContentCard title="Diagnostics" description="Recent structured runtime and control-plane events.">
+      <ContentCard title="Event Log" description="Recent structured runtime and control-plane events.">
         {view.eventRows.length === 0 ? (
           <div className="rounded border border-dashed border-blue-900/30 px-4 py-6 text-sm text-gray-400">
-            No diagnostics captured yet.
+            No events captured yet.
           </div>
         ) : (
           <EventRows rows={view.eventRows} onClear={onClearLogs} />
