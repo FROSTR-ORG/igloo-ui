@@ -183,6 +183,72 @@ function runtimePeerToReadinessRow(peer: RuntimePeerStatusInput): PeerReadinessR
   };
 }
 
+// A peer known from the roster or a saved policy but not currently reporting live
+// status: a roster peer renders "known/idle", a policy-only peer "offline". This is
+// the single home for the empty-telemetry defaults.
+function offlinePeerRow(
+  pubkey: string,
+  alias: string,
+  opts: { known: boolean },
+): PeerReadinessRowModel {
+  return {
+    id: pubkey,
+    alias,
+    pubkey,
+    state: opts.known ? 'idle' : 'offline',
+    statusLabel: opts.known ? 'known' : 'offline',
+    canSign: false,
+    canEcdh: false,
+    canPing: false,
+    lastResponseLatencyMs: null,
+    avgLatencyMs: null,
+    nonceSeries: [],
+  };
+}
+
+/**
+ * Canonical peer→row projection for the signer dashboard. Merges the runtime's
+ * live peer status with the known group roster and any policy-known peers so peers
+ * that are not currently reporting still appear: live peers carry full telemetry
+ * (capability badges, latency, nonce history); roster-only peers render "known/idle"
+ * and policy-only peers "offline". Deduped by lowercased pubkey, sorted by pubkey.
+ *
+ * All clients (pwa / chrome / home) call this rather than re-implementing the merge —
+ * they only need to hand over their pubkey lists, not their policy shapes.
+ */
+export function buildPeerReadinessRows(input: {
+  peers: RuntimePeerStatusInput[];
+  rosterPubkeys?: string[];
+  policyPubkeys?: string[];
+}): PeerReadinessRowModel[] {
+  const rows = new Map<string, PeerReadinessRowModel>();
+  let aliasSeq = 0;
+
+  // (1) Policy-known peers → offline placeholders.
+  for (const pubkey of input.policyPubkeys ?? []) {
+    const normalized = pubkey.toLowerCase();
+    if (rows.has(normalized)) continue;
+    rows.set(normalized, offlinePeerRow(normalized, `Peer #${++aliasSeq}`, { known: false }));
+  }
+
+  // (2) Roster peers → upgrade to known/idle, preserving any alias already assigned.
+  for (const pubkey of input.rosterPubkeys ?? []) {
+    const normalized = pubkey.toLowerCase();
+    const alias = rows.get(normalized)?.alias ?? `Peer #${++aliasSeq}`;
+    rows.set(normalized, offlinePeerRow(normalized, alias, { known: true }));
+  }
+
+  // (3) Live peers → full telemetry rows, keeping any prior (roster/policy) alias.
+  for (const peer of input.peers) {
+    const normalized = peer.pubkey.toLowerCase();
+    const existingAlias = rows.get(normalized)?.alias;
+    const row = runtimePeerToReadinessRow({ ...peer, pubkey: normalized });
+    rows.set(normalized, existingAlias ? { ...row, alias: existingAlias } : row);
+  }
+
+  return [...rows.values()].sort((a, b) => a.pubkey.localeCompare(b.pubkey));
+}
+
 function pendingOperationToRow(operation: RuntimePendingOperationInput): PendingOperationRowModel {
   const responseCount = operation.collected_responses.length;
   return {

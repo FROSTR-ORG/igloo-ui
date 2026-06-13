@@ -44,6 +44,7 @@ export type {
   EventLogRowModel,
 } from './models/view-models';
 export {
+  buildPeerReadinessRows,
   runtimeStatusToSignerDashboardView,
   runtimePeerPermissionStatesToPolicyDashboardView,
   observabilityEventsToEventRows,

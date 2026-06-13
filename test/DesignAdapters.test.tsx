@@ -1,10 +1,32 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildPeerReadinessRows,
   observabilityEventsToEventRows,
   runtimePeerPermissionStatesToPolicyDashboardView,
   runtimeStatusToSignerDashboardView,
 } from '../src';
+
+function livePeer(overrides: Record<string, unknown> = {}) {
+  return {
+    idx: 2,
+    pubkey: 'cc',
+    known: true,
+    last_seen: 1700000000,
+    online: true,
+    incoming_available: 4,
+    outgoing_available: 4,
+    outgoing_spent: 1,
+    can_sign: true,
+    can_ecdh: true,
+    can_ping: true,
+    should_send_nonces: false,
+    last_response_latency_ms: 120,
+    avg_latency_ms: 95,
+    nonce_history: [{ ts: 1700000000, held: 4 }],
+    ...overrides,
+  };
+}
 
 describe('design runtime adapters', () => {
   it('maps runtime status into the signer dashboard view model', () => {
@@ -219,5 +241,50 @@ describe('design runtime adapters', () => {
       badgeTone: 'danger',
       message: 'sign failed',
     });
+  });
+});
+
+describe('buildPeerReadinessRows', () => {
+  it('merges live peers with roster + policy peers, deduped and sorted by pubkey', () => {
+    const rows = buildPeerReadinessRows({
+      peers: [livePeer({ idx: 2, pubkey: 'CC' })],
+      rosterPubkeys: ['cc', 'dd'], // cc is also live; dd is roster-only
+      policyPubkeys: ['ee'], // policy-only
+    });
+
+    expect(rows.map((r) => r.pubkey)).toEqual(['cc', 'dd', 'ee']);
+
+    // Live peer: full telemetry + canonical (fixed) state mapping — sign-ready is
+    // 'online', not 'warning'.
+    const cc = rows.find((r) => r.pubkey === 'cc')!;
+    expect(cc.state).toBe('online');
+    expect(cc.statusLabel).toBe('sign-ready');
+    expect(cc).toMatchObject({ canSign: true, canEcdh: true, canPing: true, lastResponseLatencyMs: 120, avgLatencyMs: 95 });
+    expect(cc.nonceSeries).toEqual([{ ts: 1700000000, held: 4 }]);
+
+    // Roster-only peer: known/idle, empty telemetry.
+    const dd = rows.find((r) => r.pubkey === 'dd')!;
+    expect(dd).toMatchObject({ state: 'idle', statusLabel: 'known', canSign: false, canEcdh: false, canPing: false });
+    expect(dd.lastResponseLatencyMs).toBeNull();
+    expect(dd.nonceSeries).toEqual([]);
+
+    // Policy-only peer: offline.
+    const ee = rows.find((r) => r.pubkey === 'ee')!;
+    expect(ee).toMatchObject({ state: 'offline', statusLabel: 'offline' });
+  });
+
+  it('lower-cases pubkeys and keeps a single row per peer', () => {
+    const rows = buildPeerReadinessRows({
+      peers: [livePeer({ pubkey: 'AB' })],
+      rosterPubkeys: ['ab'],
+      policyPubkeys: ['ab'],
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].pubkey).toBe('ab');
+    expect(rows[0].state).toBe('online'); // live status wins over roster/policy
+  });
+
+  it('returns an empty array when there are no peers from any source', () => {
+    expect(buildPeerReadinessRows({ peers: [] })).toEqual([]);
   });
 });
