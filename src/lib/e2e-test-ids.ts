@@ -111,6 +111,7 @@ export const CRITICAL_E2E_TEST_IDS = {
   settingsCopyProfile: 'settings-copy-profile',
   settingsCopyShare: 'settings-copy-share',
   settingsLogout: 'settings-logout',
+  settingsClearCredentials: 'settings-clear-credentials',
   // Export package modal (password re-encrypt → complete state)
   exportPassword: 'export-password',
   exportConfirm: 'export-confirm',
