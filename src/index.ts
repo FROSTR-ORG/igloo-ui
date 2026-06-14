@@ -45,6 +45,7 @@ export type {
 } from './models/view-models';
 export {
   buildPeerReadinessRows,
+  buildPendingApprovalRows,
   runtimeStatusToSignerDashboardView,
   runtimePeerPermissionStatesToPolicyDashboardView,
   observabilityEventsToEventRows,

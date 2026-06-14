@@ -34,6 +34,10 @@ type Props = {
   onRefreshPeers?: () => void;
   refreshPeersDisabled?: boolean;
   onClearLogs?: () => void;
+  // Pending-approval decisions. When omitted, the card stays read-only.
+  onApproveOnce?: (id: string) => void;
+  onAlwaysAllow?: (id: string) => void;
+  onDenyApproval?: (id: string) => void;
 };
 
 export function OperatorSignerPanel({
@@ -53,6 +57,9 @@ export function OperatorSignerPanel({
   onRefreshPeers,
   refreshPeersDisabled,
   onClearLogs,
+  onApproveOnce,
+  onAlwaysAllow,
+  onDenyApproval,
 }: Props) {
   if (!view) {
     return (
@@ -228,20 +235,60 @@ export function OperatorSignerPanel({
         <div data-testid={TID.dashboardPendingApprovals}>
           {view.pendingApprovalRows && view.pendingApprovalRows.length > 0 ? (
             <div className="space-y-3">
-              {view.pendingApprovalRows.map((approval) => (
-                <div key={approval.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5">
-                  <div className="flex items-center gap-3">
-                    <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs text-amber-200">
-                      {approval.methodLabel}
-                    </span>
-                    <div>
-                      <div className="text-sm font-medium text-blue-200">{approval.peerLabel}</div>
-                      <div className="text-xs text-gray-400">{approval.detailLabel}</div>
+              {view.pendingApprovalRows.map((approval) => {
+                const interactive = Boolean(onApproveOnce || onAlwaysAllow || onDenyApproval);
+                return (
+                  <div
+                    key={approval.id}
+                    data-approval-id={approval.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs text-amber-200">
+                        {approval.methodLabel}
+                      </span>
+                      <div>
+                        <div className="text-sm font-medium text-blue-200">{approval.peerLabel}</div>
+                        <div className="text-xs text-gray-400">{approval.detailLabel}</div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className="text-xs text-gray-400">{approval.expiresLabel}</span>
+                      {interactive ? (
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            className="h-7 px-2.5 text-xs"
+                            data-testid={`${TID.dashboardPendingApprovals}-deny`}
+                            onClick={() => onDenyApproval?.(approval.id)}
+                          >
+                            Deny
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="success"
+                            className="h-7 px-2.5 text-xs"
+                            data-testid={`${TID.dashboardPendingApprovals}-allow-once`}
+                            onClick={() => onApproveOnce?.(approval.id)}
+                          >
+                            Allow once
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="h-7 px-2.5 text-xs"
+                            data-testid={`${TID.dashboardPendingApprovals}-always-allow`}
+                            onClick={() => onAlwaysAllow?.(approval.id)}
+                          >
+                            Always allow
+                          </Button>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400">{approval.expiresLabel}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="rounded border border-dashed border-blue-900/30 px-4 py-6 text-sm text-gray-400">

@@ -111,9 +111,16 @@ describe('operator dashboard surface', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear All' }));
     expect(onClearAllPeerPermissions).toHaveBeenCalledTimes(1);
 
+    // Tri-state forward cycle: unset → allow → ask → deny → unset.
+    // request.sign override is 'unset' (effective allow) → first click sets 'allow'.
     fireEvent.click(screen.getByRole('button', { name: 'request sign: allow' }));
-    expect(onPeerPermissionChange).toHaveBeenCalledWith('peer-1', 'request', 'sign', 'deny');
+    expect(onPeerPermissionChange).toHaveBeenCalledWith('peer-1', 'request', 'sign', 'allow');
 
+    // request.ping override is 'allow' → next step is 'ask'.
+    fireEvent.click(screen.getByRole('button', { name: 'request ping: allow' }));
+    expect(onPeerPermissionChange).toHaveBeenCalledWith('peer-1', 'request', 'ping', 'ask');
+
+    // respond.sign override is 'deny' → wraps back to 'unset'.
     fireEvent.click(screen.getByRole('button', { name: 'respond sign: deny' }));
     expect(onPeerPermissionChange).toHaveBeenCalledWith('peer-1', 'respond', 'sign', 'unset');
 
@@ -182,6 +189,54 @@ describe('operator dashboard surface', () => {
 
     // Pending Approvals renders as a calm empty state (deferred behavior).
     expect(screen.getByText('No pending approvals.')).toBeInTheDocument();
+  });
+
+  it('fires the right callback for each pending-approval decision button', () => {
+    const onApproveOnce = vi.fn();
+    const onAlwaysAllow = vi.fn();
+    const onDenyApproval = vi.fn();
+
+    render(
+      <OperatorSignerPanel
+        view={{
+          profileName: 'Primary Browser Device',
+          thresholdLabel: '2/3',
+          publicKeyLabel: 'group-pub-1',
+          shareLabel: 'Share #1',
+          readinessLabel: 'running',
+          relaySummary: 'Runtime is attached.',
+          peerRows: [],
+          pendingApprovalRows: [
+            {
+              id: 'req-1',
+              methodLabel: 'SIGN',
+              peerLabel: 'Peer #2',
+              detailLabel: 'requested now',
+              expiresLabel: 'expires soon',
+              pubkey: 'peer-2',
+              method: 'sign',
+            },
+          ],
+          pendingOperationRows: [],
+          eventRows: [],
+        }}
+        introMessage="Runtime is attached."
+        runtimeControlLabel="Stop Signer"
+        onPrimaryAction={vi.fn()}
+        onApproveOnce={onApproveOnce}
+        onAlwaysAllow={onAlwaysAllow}
+        onDenyApproval={onDenyApproval}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Deny' }));
+    expect(onDenyApproval).toHaveBeenCalledWith('req-1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Allow once' }));
+    expect(onApproveOnce).toHaveBeenCalledWith('req-1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Always allow' }));
+    expect(onAlwaysAllow).toHaveBeenCalledWith('req-1');
   });
 
   it('summarizes peer readiness counts and filters the diagnostics log by domain', () => {

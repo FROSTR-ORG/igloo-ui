@@ -2,6 +2,7 @@ import type {
   EventLogRowModel,
   PeerPolicyRowModel,
   PeerReadinessRowModel,
+  PendingApprovalRowModel,
   PendingOperationRowModel,
   PolicyDashboardViewModel,
   SignerDashboardViewModel,
@@ -41,6 +42,14 @@ type RuntimePendingOperationInput = {
   context: unknown;
 };
 
+type RuntimePendingApprovalInput = {
+  request_id: string;
+  peer: string;
+  method: string;
+  queued_at: number;
+  expires_at: number;
+};
+
 type RuntimeMethodPolicy = {
   ping: boolean;
   onboard: boolean;
@@ -48,7 +57,7 @@ type RuntimeMethodPolicy = {
   ecdh: boolean;
 };
 
-type RuntimePolicyOverrideValue = 'unset' | 'allow' | 'deny';
+type RuntimePolicyOverrideValue = 'unset' | 'allow' | 'deny' | 'ask';
 
 type RuntimeMethodPolicyOverride = {
   ping: RuntimePolicyOverrideValue;
@@ -104,6 +113,7 @@ type RuntimeStatusSummaryInput = {
   peers: RuntimePeerStatusInput[];
   peer_permission_states: RuntimePeerPermissionStateInput[];
   pending_operations: RuntimePendingOperationInput[];
+  pending_approvals?: RuntimePendingApprovalInput[];
 };
 
 export type ObservabilityEventInput = {
@@ -129,6 +139,7 @@ export function runtimeStatusToSignerDashboardView(
       ? status.readiness.degraded_reasons.join(', ')
       : 'Runtime ready',
     peerRows: status.peers.map(runtimePeerToReadinessRow),
+    pendingApprovalRows: buildPendingApprovalRows({ approvals: status.pending_approvals ?? [] }),
     pendingOperationRows: status.pending_operations.map(pendingOperationToRow),
     eventRows: [],
   };
@@ -247,6 +258,45 @@ export function buildPeerReadinessRows(input: {
   }
 
   return [...rows.values()].sort((a, b) => a.pubkey.localeCompare(b.pubkey));
+}
+
+const APPROVAL_METHODS = ['ping', 'onboard', 'sign', 'ecdh'] as const;
+type ApprovalMethod = (typeof APPROVAL_METHODS)[number];
+
+function approvalMethod(method: string): ApprovalMethod {
+  return (APPROVAL_METHODS as readonly string[]).includes(method)
+    ? (method as ApprovalMethod)
+    : 'sign';
+}
+
+function shortPubkey(pubkey: string): string {
+  return pubkey.length > 12 ? `${pubkey.slice(0, 6)}…${pubkey.slice(-4)}` : pubkey;
+}
+
+/**
+ * Canonical projection of the runtime's parked-approval queue into dashboard
+ * rows. All clients (pwa / chrome / home) call this rather than re-deriving the
+ * shape, mirroring {@link buildPeerReadinessRows}. `peerAliases` maps a
+ * lowercased pubkey to the alias already shown on the peer rows so an approval
+ * names the same peer consistently; absent entries fall back to a short pubkey.
+ */
+export function buildPendingApprovalRows(input: {
+  approvals: RuntimePendingApprovalInput[];
+  peerAliases?: Record<string, string>;
+}): PendingApprovalRowModel[] {
+  return input.approvals.map((approval): PendingApprovalRowModel => {
+    const normalized = approval.peer.toLowerCase();
+    const alias = input.peerAliases?.[normalized];
+    return {
+      id: approval.request_id,
+      methodLabel: approval.method.toUpperCase(),
+      peerLabel: alias ?? shortPubkey(normalized),
+      detailLabel: `requested ${formatTimestamp(approval.queued_at)}`,
+      expiresLabel: `expires ${formatTimestamp(approval.expires_at)}`,
+      pubkey: normalized,
+      method: approvalMethod(approval.method),
+    };
+  });
 }
 
 function pendingOperationToRow(operation: RuntimePendingOperationInput): PendingOperationRowModel {

@@ -241,22 +241,22 @@ function PermissionSection({ title, direction, peerPubkey, policy, overrides, on
           {(['ping', 'onboard', 'sign', 'ecdh'] as const).map((method) => {
             const effectiveValue = policy[method];
             const overrideValue = overrides?.[method] ?? 'unset';
-            const label = effectiveValue ? 'allow' : 'deny';
+            // Show the operator's explicit override when set (incl. `ask`);
+            // otherwise fall back to the live effective allow/deny.
+            const displayValue: DisplayDisposition =
+              overrideValue === 'unset' ? (effectiveValue ? 'allow' : 'deny') : overrideValue;
             return (
               <MethodToken
                 key={method}
                 direction={direction}
                 peerPubkey={peerPubkey}
                 method={method}
-                label={label}
+                label={displayValue}
+                displayValue={displayValue}
                 value={effectiveValue}
                 override={overrideValue}
                 editable={Boolean(onChange)}
-                onClick={
-                  onChange
-                    ? () => onChange(method, nextOverrideValue(effectiveValue, overrideValue))
-                    : undefined
-                }
+                onClick={onChange ? () => onChange(method, nextOverrideValue(overrideValue)) : undefined}
               />
             );
           })}
@@ -266,17 +266,36 @@ function PermissionSection({ title, direction, peerPubkey, policy, overrides, on
   );
 }
 
-function nextOverrideValue(effectiveValue: boolean, overrideValue: PolicyOverrideValue): PolicyOverrideValue {
-  if (overrideValue === 'allow') return 'deny';
-  if (overrideValue === 'deny') return 'unset';
-  return effectiveValue ? 'deny' : 'allow';
+type DisplayDisposition = 'allow' | 'deny' | 'ask';
+
+// Forward cycle through the four explicit override states. `ask` parks inbound
+// requests for an in-the-moment operator decision (see the approval queue).
+function nextOverrideValue(overrideValue: PolicyOverrideValue): PolicyOverrideValue {
+  switch (overrideValue) {
+    case 'unset':
+      return 'allow';
+    case 'allow':
+      return 'ask';
+    case 'ask':
+      return 'deny';
+    case 'deny':
+    default:
+      return 'unset';
+  }
 }
+
+const DISPOSITION_TONE: Record<DisplayDisposition, string> = {
+  allow: 'border-green-500/40 bg-green-500/10 text-green-300',
+  ask: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
+  deny: 'border-red-500/40 bg-red-500/10 text-red-300',
+};
 
 function MethodToken({
   direction,
   peerPubkey,
   method,
   label,
+  displayValue,
   value,
   override,
   editable,
@@ -286,14 +305,13 @@ function MethodToken({
   peerPubkey: string;
   method: string;
   label: string;
+  displayValue: DisplayDisposition;
   value: boolean;
   override: PolicyOverrideValue;
   editable?: boolean;
   onClick?: () => void;
 }) {
-  const tone = value
-    ? 'border-green-500/40 bg-green-500/10 text-green-300'
-    : 'border-red-500/40 bg-red-500/10 text-red-300';
+  const tone = DISPOSITION_TONE[displayValue];
   const content = `${direction} ${method}: ${label}`;
   // Stable e2e hook: one id, disambiguated by peer/direction/method. data-allowed
   // mirrors the live EFFECTIVE policy; data-override mirrors the operator's manual

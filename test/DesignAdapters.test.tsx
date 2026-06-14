@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildPeerReadinessRows,
+  buildPendingApprovalRows,
   observabilityEventsToEventRows,
   runtimePeerPermissionStatesToPolicyDashboardView,
   runtimeStatusToSignerDashboardView,
@@ -286,5 +287,36 @@ describe('buildPeerReadinessRows', () => {
 
   it('returns an empty array when there are no peers from any source', () => {
     expect(buildPeerReadinessRows({ peers: [] })).toEqual([]);
+  });
+});
+
+describe('buildPendingApprovalRows', () => {
+  const approval = {
+    request_id: 'req-1',
+    peer: 'AABBCCDDEEFF00112233',
+    method: 'sign',
+    queued_at: 1_700_000_000,
+    expires_at: 1_700_000_300,
+  };
+
+  it('projects a parked approval into a row, carrying pubkey + method for the host', () => {
+    const [row] = buildPendingApprovalRows({ approvals: [approval] });
+    expect(row.id).toBe('req-1');
+    expect(row.methodLabel).toBe('SIGN');
+    expect(row.pubkey).toBe('aabbccddeeff00112233'); // lowercased
+    expect(row.method).toBe('sign');
+    expect(row.peerLabel).toContain('aabbcc'); // short pubkey fallback
+  });
+
+  it('prefers a supplied peer alias over the short pubkey', () => {
+    const [row] = buildPendingApprovalRows({
+      approvals: [approval],
+      peerAliases: { aabbccddeeff00112233: 'Peer #2' },
+    });
+    expect(row.peerLabel).toBe('Peer #2');
+  });
+
+  it('returns an empty array when nothing is parked', () => {
+    expect(buildPendingApprovalRows({ approvals: [] })).toEqual([]);
   });
 });

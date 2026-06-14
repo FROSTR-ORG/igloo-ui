@@ -52,7 +52,7 @@ export type SignerDashboardViewModel = {
   readinessLabel: string;
   relaySummary: string;
   peerRows: PeerReadinessRowModel[];
-  /** Deferred interactive-approval feature: rendered as an empty-state card today. */
+  /** Inbound requests parked by the `ask` policy disposition, awaiting Deny / Allow once / Always allow. */
   pendingApprovalRows?: PendingApprovalRowModel[];
   pendingOperationRows: PendingOperationRowModel[];
   eventRows: EventLogRowModel[];
@@ -64,6 +64,9 @@ export type PendingApprovalRowModel = {
   peerLabel: string;
   detailLabel: string;
   expiresLabel: string;
+  /** Requester pubkey + method, so the host can target an "Always allow" policy write. */
+  pubkey: string;
+  method: 'ping' | 'onboard' | 'sign' | 'ecdh';
 };
 
 export type NonceHistoryPointModel = {
@@ -125,7 +128,7 @@ export type PolicyMethodState = {
   ecdh: boolean;
 };
 
-export type PolicyOverrideValue = 'unset' | 'allow' | 'deny';
+export type PolicyOverrideValue = 'unset' | 'allow' | 'deny' | 'ask';
 
 export type PolicyMethodOverrideState = {
   ping: PolicyOverrideValue;
