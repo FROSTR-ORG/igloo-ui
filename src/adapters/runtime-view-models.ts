@@ -7,6 +7,11 @@ import type {
   PolicyDashboardViewModel,
   SignerDashboardViewModel,
 } from '../models/view-models';
+import type {
+  DashboardBanner,
+  DashboardState,
+  SigningBlockedReason,
+} from '../models/dashboard-state';
 
 type RuntimeNonceHistoryPointInput = {
   ts: number;
@@ -114,6 +119,19 @@ type RuntimeStatusSummaryInput = {
   peer_permission_states: RuntimePeerPermissionStateInput[];
   pending_operations: RuntimePendingOperationInput[];
   pending_approvals?: RuntimePendingApprovalInput[];
+  last_sign_failure?: RuntimeOperationFailureInput | null;
+  connected_relays?: string[] | null;
+  configured_relays?: string[] | null;
+  last_load_error?: { message: string; at: number } | null;
+};
+
+type RuntimeOperationFailureInput = {
+  request_id: string;
+  op_type: 'Sign' | 'Ecdh' | 'Ping' | 'Onboard';
+  code: string;
+  message: string;
+  failed_peer?: string | null;
+  failed_at: number;
 };
 
 export type ObservabilityEventInput = {
@@ -143,6 +161,123 @@ export function runtimeStatusToSignerDashboardView(
     pendingOperationRows: status.pending_operations.map(pendingOperationToRow),
     eventRows: [],
   };
+}
+
+/**
+ * The subset of runtime status `deriveDashboardState` actually reads. Kept
+ * narrow (structural) so any client's status shape is accepted regardless of how
+ * it types the fields the selector ignores (e.g. `peer_permission_states`).
+ */
+export type DashboardStatusInput = {
+  readiness?: { restore_complete: boolean; sign_ready: boolean } | null;
+  peers?: Array<{ online: boolean; can_sign: boolean }> | null;
+  pending_approvals?: unknown[];
+  connected_relays?: string[] | null;
+  configured_relays?: string[] | null;
+  last_sign_failure?: RuntimeOperationFailureInput | null;
+  last_load_error?: { message: string; at: number } | null;
+};
+
+export type DashboardStateInput = {
+  /** Whether the runtime/signer is active (running). */
+  active: boolean;
+  /** Runtime status summary, when available. */
+  status?: DashboardStatusInput | null;
+  /**
+   * The client's own load/activation error. Authoritative for the *hard*
+   * load-failed case where there is no running runtime to query (e.g. a failed
+   * desktop daemon start or a browser connect() that threw); takes precedence
+   * over the bridge-enriched `status.last_load_error` soft signal.
+   */
+  loadError?: { message: string; at?: number } | null;
+  /** request_id of a signing-failed banner the operator dismissed. */
+  dismissedSignFailureId?: string | null;
+};
+
+/**
+ * Canonical signer-dashboard state selector. Derived once and consumed by every
+ * client (pwa / chrome / home) so the loading / load-failed / all-relays-offline
+ * / signing-blocked / signing-failed presentation never drifts per client.
+ *
+ * Precedence: load-failed > loading > ready. Within `ready`, banners follow
+ * `all-relays-offline` (mutually exclusive with) `signing-blocked`, then an
+ * independent, dismissible `signing-failed`.
+ */
+export function deriveDashboardState(input: DashboardStateInput): DashboardState {
+  const { active, status } = input;
+
+  // (1) load-failed — client error (no running runtime) wins, else the
+  // bridge-enriched soft restore-fallback signal.
+  const loadError = input.loadError ?? status?.last_load_error ?? null;
+  if (loadError) {
+    return { kind: 'load-failed', message: loadError.message, at: loadError.at };
+  }
+
+  // (2) loading — active but the runtime has not reported a status yet (still
+  // starting). NB: readiness.restore_complete is NOT a loading signal — it just
+  // means "no pending operations" and goes false during normal operation, so a
+  // present status (the runtime responded) is treated as ready, not loading.
+  if (active && !status) {
+    return { kind: 'loading' };
+  }
+
+  // Stopped or no status → no banners; clients render their own stopped/empty
+  // state through OperatorSignerPanel.
+  if (!active || !status) {
+    return { kind: 'ready', banners: [] };
+  }
+
+  // (3) ready + condition banners.
+  const banners: DashboardBanner[] = [];
+
+  const relaysReported = status.connected_relays != null;
+  const allRelaysOffline = relaysReported && status.connected_relays!.length === 0;
+  if (allRelaysOffline) {
+    banners.push({
+      kind: 'all-relays-offline',
+      connectedCount: 0,
+      configuredCount: status.configured_relays?.length ?? 0,
+    });
+  } else {
+    const reason = deriveSigningBlockedReason(status);
+    if (reason) {
+      banners.push({ kind: 'signing-blocked', reason });
+    }
+  }
+
+  const failure = status.last_sign_failure;
+  if (
+    failure &&
+    failure.op_type === 'Sign' &&
+    failure.request_id !== input.dismissedSignFailureId
+  ) {
+    banners.push({
+      kind: 'signing-failed',
+      requestId: failure.request_id,
+      opType: failure.op_type,
+      message: failure.message,
+      at: failure.failed_at,
+    });
+  }
+
+  return { kind: 'ready', banners };
+}
+
+// Sign is blocked only when the runtime is up (restore complete, handled above)
+// but cannot sign. Peers reachable yet none permitted → policy; otherwise not
+// enough peers online → capacity.
+function deriveSigningBlockedReason(
+  status: DashboardStatusInput
+): SigningBlockedReason | null {
+  // Can't determine a block without readiness; sign-ready → not blocked.
+  if (!status.readiness || status.readiness.sign_ready) {
+    return null;
+  }
+  const onlinePeers = (status.peers ?? []).filter((peer) => peer.online);
+  if (onlinePeers.length > 0 && !onlinePeers.some((peer) => peer.can_sign)) {
+    return 'policy';
+  }
+  return 'insufficient-peers';
 }
 
 export function runtimePeerPermissionStatesToPolicyDashboardView(

@@ -46,10 +46,17 @@ export type {
 export {
   buildPeerReadinessRows,
   buildPendingApprovalRows,
+  deriveDashboardState,
   runtimeStatusToSignerDashboardView,
   runtimePeerPermissionStatesToPolicyDashboardView,
   observabilityEventsToEventRows,
 } from './adapters/runtime-view-models';
+export type { DashboardStateInput } from './adapters/runtime-view-models';
+export type {
+  DashboardState,
+  DashboardBanner,
+  SigningBlockedReason,
+} from './models/dashboard-state';
 export type { ObservabilityEventInput } from './adapters/runtime-view-models';
 
 /* ------------------------------------------------------------------ */
@@ -206,6 +213,11 @@ export type {
   OperatorSettingsSection,
 } from './components/flows/OperatorSettingsPanel';
 export { OperatorSignerPanel } from './components/flows/OperatorSignerPanel';
+export {
+  DashboardLoadingScreen,
+  DashboardLoadFailedScreen,
+  DashboardConditionBanner,
+} from './components/flows/DashboardStateScreens';
 export { ProfileConfirmationCard } from './components/flows/ProfileConfirmationCard';
 export { QrPayloadModal } from './components/flows/QrPayloadModal';
 export { RecoveryWorkspace } from './components/flows/RecoveryWorkspace';
