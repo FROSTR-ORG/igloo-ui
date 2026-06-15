@@ -3,9 +3,7 @@ import type {
   PeerPolicyRowModel,
   PeerReadinessRowModel,
   PendingApprovalRowModel,
-  PendingOperationRowModel,
   PolicyDashboardViewModel,
-  SignerDashboardViewModel,
 } from '../models/view-models';
 import type {
   DashboardBanner,
@@ -18,7 +16,7 @@ type RuntimeNonceHistoryPointInput = {
   held: number;
 };
 
-type RuntimePeerStatusInput = {
+export type RuntimePeerStatusInput = {
   idx: number;
   pubkey: string;
   known: boolean;
@@ -47,7 +45,7 @@ type RuntimePendingOperationInput = {
   context: unknown;
 };
 
-type RuntimePendingApprovalInput = {
+export type RuntimePendingApprovalInput = {
   request_id: string;
   peer: string;
   method: string;
@@ -71,7 +69,7 @@ type RuntimeMethodPolicyOverride = {
   ecdh: RuntimePolicyOverrideValue;
 };
 
-type RuntimePeerPermissionStateInput = {
+export type RuntimePeerPermissionStateInput = {
   pubkey: string;
   manual_override: {
     request: RuntimeMethodPolicyOverride;
@@ -89,7 +87,7 @@ type RuntimePeerPermissionStateInput = {
   };
 };
 
-type RuntimeStatusSummaryInput = {
+export type RuntimeStatusSummaryInput = {
   status: {
     device_id: string;
     pending_ops: number;
@@ -125,7 +123,7 @@ type RuntimeStatusSummaryInput = {
   last_load_error?: { message: string; at: number } | null;
 };
 
-type RuntimeOperationFailureInput = {
+export type RuntimeOperationFailureInput = {
   request_id: string;
   op_type: 'Sign' | 'Ecdh' | 'Ping' | 'Onboard';
   code: string;
@@ -143,25 +141,6 @@ export type ObservabilityEventInput = {
   message?: string;
   [key: string]: unknown;
 };
-
-export function runtimeStatusToSignerDashboardView(
-  status: RuntimeStatusSummaryInput
-): SignerDashboardViewModel {
-  return {
-    profileName: status.metadata.device_id,
-    thresholdLabel: `${status.readiness.threshold}/${status.metadata.peers.length}`,
-    publicKeyLabel: status.metadata.group_public_key,
-    shareLabel: `Share #${status.metadata.member_idx}`,
-    readinessLabel: status.readiness.sign_ready ? 'Signer online' : 'Signer degraded',
-    relaySummary: status.readiness.degraded_reasons.length
-      ? status.readiness.degraded_reasons.join(', ')
-      : 'Runtime ready',
-    peerRows: status.peers.map(runtimePeerToReadinessRow),
-    pendingApprovalRows: buildPendingApprovalRows({ approvals: status.pending_approvals ?? [] }),
-    pendingOperationRows: status.pending_operations.map(pendingOperationToRow),
-    eventRows: [],
-  };
-}
 
 /**
  * The subset of runtime status `deriveDashboardState` actually reads. Kept
@@ -432,18 +411,6 @@ export function buildPendingApprovalRows(input: {
       method: approvalMethod(approval.method),
     };
   });
-}
-
-function pendingOperationToRow(operation: RuntimePendingOperationInput): PendingOperationRowModel {
-  const responseCount = operation.collected_responses.length;
-  return {
-    id: operation.request_id,
-    operationLabel: operation.op_type,
-    thresholdLabel: `threshold ${operation.threshold}`,
-    startedLabel: formatTimestamp(operation.started_at),
-    timeoutLabel: formatTimestamp(operation.timeout_at),
-    responseLabel: `${responseCount} ${responseCount === 1 ? 'response' : 'responses'}`,
-  };
 }
 
 function formatTimestamp(value: number) {

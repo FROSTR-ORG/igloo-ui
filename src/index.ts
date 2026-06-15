@@ -47,11 +47,21 @@ export {
   buildPeerReadinessRows,
   buildPendingApprovalRows,
   deriveDashboardState,
-  runtimeStatusToSignerDashboardView,
   runtimePeerPermissionStatesToPolicyDashboardView,
   observabilityEventsToEventRows,
 } from './adapters/runtime-view-models';
 export type { DashboardStateInput } from './adapters/runtime-view-models';
+// Adapter input shapes — exported so a consumer that depends on both igloo-ui
+// and igloo-shared (igloo-chrome) can host the wire-type drift contract test
+// without igloo-ui taking an igloo-shared dependency. See
+// igloo-chrome/src/extension/runtime-types.contract.ts.
+export type {
+  RuntimeStatusSummaryInput,
+  RuntimePeerStatusInput,
+  RuntimePendingApprovalInput,
+  RuntimePeerPermissionStateInput,
+  RuntimeOperationFailureInput,
+} from './adapters/runtime-view-models';
 export type {
   DashboardState,
   DashboardBanner,
