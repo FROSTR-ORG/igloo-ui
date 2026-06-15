@@ -10,7 +10,6 @@ import {
   InputWithValidation,
   Label,
   PageLayout,
-  RelayInput,
 } from '../../src';
 
 const AXE_OPTIONS = {
@@ -122,33 +121,5 @@ describe('PageLayout', () => {
     );
     expect(screen.getByText('Top')).toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();
-  });
-});
-
-describe('RelayInput', () => {
-  it('adds a normalized relay on Enter and clears the field', () => {
-    const onChange = vi.fn();
-    const normalizeRelays = vi.fn((relays: string[]) => ({ relays, errors: [] as string[] }));
-    render(<RelayInput relays={[]} onChange={onChange} normalizeRelays={normalizeRelays} />);
-
-    const input = screen.getByPlaceholderText('wss://relay.example');
-    fireEvent.change(input, { target: { value: 'wss://relay.test' } });
-    fireEvent.keyDown(input, { key: 'Enter' });
-
-    expect(onChange).toHaveBeenCalledWith(['wss://relay.test']);
-    expect((input as HTMLInputElement).value).toBe('');
-  });
-
-  it('surfaces a normalization error and does not call onChange', () => {
-    const onChange = vi.fn();
-    const normalizeRelays = vi.fn(() => ({ relays: [], errors: ['Invalid relay URL'] }));
-    render(<RelayInput relays={[]} onChange={onChange} normalizeRelays={normalizeRelays} />);
-
-    const input = screen.getByPlaceholderText('wss://relay.example');
-    fireEvent.change(input, { target: { value: 'not-a-relay' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
-
-    expect(onChange).not.toHaveBeenCalled();
-    expect(screen.getByText('Invalid relay URL')).toBeInTheDocument();
   });
 });

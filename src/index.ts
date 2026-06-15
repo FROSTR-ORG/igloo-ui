@@ -117,7 +117,6 @@ export { PasswordField } from './components/ui/password-field';
 export type { PasswordFieldProps } from './components/ui/password-field';
 export { PeerList } from './components/ui/peer-list';
 export type { PeerPolicy } from './components/ui/peer-list';
-export { RelayInput } from './components/ui/relay-input';
 export { SensitiveField } from './components/ui/sensitive-field';
 export type { SensitiveFieldProps } from './components/ui/sensitive-field';
 export { SensitiveTextarea } from './components/ui/sensitive-textarea';

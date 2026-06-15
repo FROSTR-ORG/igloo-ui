@@ -597,7 +597,9 @@ function RelayList({
   readOnly = false,
 }: {
   relays: string[];
-  onChange: (relays: string[]) => void;
+  // Optional: only invoked from the editable (non-readOnly) controls below, so a
+  // read-only/locked relay list needs no handler.
+  onChange?: (relays: string[]) => void;
   onPing?: RelayPingFn;
   readOnly?: boolean;
 }) {
@@ -634,7 +636,7 @@ function RelayList({
       setDraft('');
       return;
     }
-    onChange([...relays, next]);
+    onChange?.([...relays, next]);
     setDraft('');
   }
 
@@ -669,7 +671,7 @@ function RelayList({
                 type="button"
                 className="igloo-create-relay-icon igloo-create-relay-remove"
                 aria-label={`Remove ${relay}`}
-                onClick={() => onChange(relays.filter((entry) => entry !== relay))}
+                onClick={() => onChange?.(relays.filter((entry) => entry !== relay))}
               >
                 <X size={14} aria-hidden="true" />
               </button>
@@ -719,7 +721,9 @@ export function CreateFlowProfileSetup({
   onLabelChange: (value: string) => void;
   onPrimarySecretChange: (value: string) => void;
   onSecondarySecretChange: (value: string) => void;
-  onRelaysChange: (relays: string[]) => void;
+  // Optional: omit when the relay list is locked (`lockIdentity`) — it renders
+  // read-only and never emits a change.
+  onRelaysChange?: (relays: string[]) => void;
   onPingRelay?: RelayPingFn;
   onAction: () => void;
   onBack?: () => void;
