@@ -198,7 +198,6 @@ export {
 } from './components/flows/HostShell';
 export type {
   WelcomeReturningProfileModel,
-  WelcomeResumableDeviceModel,
 } from './components/flows/HostShell';
 export { DesktopAppShell } from './components/flows/DesktopAppShell';
 export type {
