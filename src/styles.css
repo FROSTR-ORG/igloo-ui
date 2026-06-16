@@ -939,6 +939,800 @@
     width: 100%;
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Signer dashboard (Paper: screens/dashboard/1-signer-dashboard,     */
+  /* 2-stopped). Semantic classes mirroring the .igloo-welcome-* block. */
+  /* ------------------------------------------------------------------ */
+
+  .igloo-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 1.125rem;
+  }
+
+  /* Status card — shared by running + stopped states. */
+  .igloo-dashboard-status {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    border-radius: 0.875rem;
+    border: 1px solid rgba(59, 130, 246, 0.16);
+    background: rgba(15, 23, 42, 0.55);
+    padding: 1.125rem 1.25rem;
+  }
+
+  .igloo-dashboard-status-main {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .igloo-dashboard-status-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .igloo-dashboard-status-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+  }
+
+  .igloo-dashboard-status-dot.is-running {
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+  }
+
+  .igloo-dashboard-status-dot.is-stopped {
+    background: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
+  }
+
+  .igloo-dashboard-status-title {
+    font-family: var(--igloo-font-inter);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+  }
+
+  .igloo-dashboard-status-title.is-running {
+    color: #dcfce7;
+  }
+
+  .igloo-dashboard-status-title.is-stopped {
+    color: #fca5a5;
+  }
+
+  .igloo-dashboard-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.75rem;
+    padding: 0.125rem 0.625rem;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.8125rem;
+    line-height: 1rem;
+  }
+
+  .igloo-dashboard-chip.is-threshold {
+    background: rgba(34, 197, 94, 0.1);
+    color: #86efac;
+  }
+
+  .igloo-dashboard-chip.is-member {
+    background: rgba(96, 165, 250, 0.1);
+    color: #93c5fd;
+  }
+
+  .igloo-dashboard-status-keys {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
+  }
+
+  .igloo-dashboard-status-connection {
+    font-family: var(--igloo-font-inter);
+    font-size: 0.9375rem;
+    line-height: 1.375rem;
+    color: #94a3b8;
+  }
+
+  .igloo-dashboard-status-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 2.625rem;
+    flex-shrink: 0;
+    border-radius: 0.75rem;
+    padding: 0 1.125rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease;
+  }
+
+  .igloo-dashboard-status-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .igloo-dashboard-status-action.is-start {
+    border: 1px solid #2563eb;
+    background: #2563eb;
+    color: #f8fafc;
+  }
+
+  .igloo-dashboard-status-action.is-start:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
+
+  .igloo-dashboard-status-action.is-stop {
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    background: transparent;
+    color: #fca5a5;
+  }
+
+  .igloo-dashboard-status-action.is-stop:hover:not(:disabled) {
+    border-color: rgba(248, 113, 113, 0.6);
+    background: rgba(248, 113, 113, 0.08);
+  }
+
+  /* Section card (Peers / Pending Approvals / Pending Operations / Event Log). */
+  .igloo-dashboard-section {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 0.625rem;
+    border: 1px solid rgba(30, 58, 138, 0.2);
+    background: rgba(17, 24, 39, 0.4);
+  }
+
+  .igloo-dashboard-section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid rgba(30, 58, 138, 0.125);
+  }
+
+  .igloo-dashboard-section-title {
+    font-family: var(--igloo-font-inter);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: #e2e8f0;
+  }
+
+  .igloo-dashboard-section-spacer {
+    flex: 1 1 0;
+  }
+
+  .igloo-dashboard-count {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.75rem;
+    padding: 0.25rem 0.625rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+  }
+
+  .igloo-dashboard-count.is-online {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+  }
+
+  .igloo-dashboard-count.is-total {
+    background: rgba(148, 163, 184, 0.08);
+    color: #94a3b8;
+  }
+
+  .igloo-dashboard-count.is-ready {
+    background: rgba(96, 165, 250, 0.1);
+    color: #60a5fa;
+  }
+
+  .igloo-dashboard-count.is-avg {
+    border: 1px solid rgba(30, 58, 138, 0.25);
+    font-family: var(--igloo-font-share-tech-mono);
+    color: rgba(147, 197, 253, 0.6);
+  }
+
+  .igloo-dashboard-count.is-pending {
+    border-radius: 0.25rem;
+    background: rgba(245, 158, 11, 0.1);
+    color: rgba(245, 158, 11, 0.8);
+  }
+
+  .igloo-dashboard-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: #94a3b8;
+  }
+
+  .igloo-dashboard-timer.is-soon {
+    color: #f59e0b;
+  }
+
+  .igloo-dashboard-empty {
+    padding: 1.25rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .igloo-dashboard-clear {
+    border: 0;
+    background: transparent;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.8125rem;
+    color: #64748b;
+    cursor: pointer;
+  }
+
+  .igloo-dashboard-clear:hover {
+    color: #94a3b8;
+  }
+
+  /* Peer row. */
+  .igloo-dashboard-peer-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(30, 58, 138, 0.08);
+  }
+
+  .igloo-dashboard-peer-row:last-child {
+    border-bottom: 0;
+  }
+
+  .igloo-dashboard-peer-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #5e8bf0 0%, #5e8bf0 33%, rgba(51, 65, 85, 0.5) 66%, rgba(51, 65, 85, 0.5) 100%);
+  }
+
+  .igloo-dashboard-peer-avatar.is-offline {
+    background: #374151;
+  }
+
+  .igloo-dashboard-peer-avatar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: 50%;
+    background: rgba(17, 24, 39, 0.9);
+  }
+
+  .igloo-dashboard-peer-avatar-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+    background: #22c55e;
+  }
+
+  .igloo-dashboard-peer-avatar.is-offline .igloo-dashboard-peer-avatar-dot {
+    background: #6b7280;
+  }
+
+  .igloo-dashboard-peer-main {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .igloo-dashboard-peer-id {
+    flex-shrink: 0;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.875rem;
+    color: #e2e8f0;
+  }
+
+  .igloo-dashboard-peer-sep {
+    color: rgba(147, 197, 253, 0.3);
+  }
+
+  .igloo-dashboard-peer-key {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.8125rem;
+    color: rgba(147, 197, 253, 0.6);
+  }
+
+  .igloo-dashboard-caps {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .igloo-dashboard-cap {
+    display: inline-flex;
+    justify-content: center;
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.6875rem;
+    line-height: 0.875rem;
+  }
+
+  .igloo-dashboard-cap.is-sign {
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+  }
+
+  .igloo-dashboard-cap.is-ecdh {
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    background: rgba(34, 211, 238, 0.15);
+    color: #22d3ee;
+  }
+
+  .igloo-dashboard-cap.is-ping {
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+  }
+
+  .igloo-dashboard-cap.is-off {
+    border: 1px solid rgba(75, 85, 99, 0.4);
+    background: rgba(55, 65, 81, 0.3);
+    color: #6b7280;
+  }
+
+  .igloo-dashboard-peer-meter {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .igloo-dashboard-bars {
+    display: flex;
+    width: 5rem;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .igloo-dashboard-bar {
+    position: relative;
+    height: 0.1875rem;
+    overflow: hidden;
+    border-radius: 0.125rem;
+    background: #374151;
+  }
+
+  .igloo-dashboard-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 0.1875rem;
+    border-radius: 0.125rem;
+    background: #60a5fa;
+  }
+
+  .igloo-dashboard-bar-fill.is-dim {
+    background: rgba(96, 165, 250, 0.5);
+  }
+
+  .igloo-dashboard-peer-latency {
+    width: 3.5rem;
+    flex-shrink: 0;
+    text-align: right;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.8125rem;
+    color: #22c55e;
+  }
+
+  .igloo-dashboard-peer-latency.is-idle {
+    color: #6b7280;
+  }
+
+  /* Pending approval row. */
+  .igloo-dashboard-approval-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(30, 58, 138, 0.08);
+  }
+
+  .igloo-dashboard-approval-row:last-child {
+    border-bottom: 0;
+  }
+
+  .igloo-dashboard-approval-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #f59e0b;
+  }
+
+  .igloo-dashboard-method {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    border-radius: 0.25rem;
+    padding: 0.1875rem 0.5rem;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+  }
+
+  .igloo-dashboard-method.is-sign {
+    background: rgba(74, 222, 128, 0.1);
+    color: #4ade80;
+  }
+
+  .igloo-dashboard-method.is-ecdh {
+    border-color: rgba(34, 211, 238, 0.3);
+    background: rgba(34, 211, 238, 0.15);
+    color: #22d3ee;
+  }
+
+  .igloo-dashboard-method.is-ping {
+    border-color: rgba(168, 85, 247, 0.3);
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+  }
+
+  .igloo-dashboard-method.is-default {
+    border-color: rgba(96, 165, 250, 0.3);
+    background: rgba(96, 165, 250, 0.12);
+    color: #93c5fd;
+  }
+
+  .igloo-dashboard-approval-peer {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .igloo-dashboard-approval-peer-name {
+    font-family: var(--igloo-font-inter);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #e2e8f0;
+  }
+
+  .igloo-dashboard-approval-peer-key {
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+
+  .igloo-dashboard-approval-desc {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.8125rem;
+    color: #94a3b8;
+  }
+
+  .igloo-dashboard-approval-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  /* Pending operation row. */
+  .igloo-dashboard-op-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(30, 58, 138, 0.08);
+  }
+
+  .igloo-dashboard-op-row:last-child {
+    border-bottom: 0;
+  }
+
+  .igloo-dashboard-op-label {
+    flex-shrink: 0;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .igloo-dashboard-op-id {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.75rem;
+    color: #93c5fd;
+  }
+
+  .igloo-dashboard-op-meta {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.875rem;
+    margin-left: auto;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
+
+  /* Event log. */
+  .igloo-dashboard-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.625rem 1.25rem;
+    border-bottom: 1px solid rgba(30, 58, 138, 0.08);
+  }
+
+  .igloo-dashboard-filter-chip {
+    border-radius: 999px;
+    border: 1px solid rgba(30, 58, 138, 0.3);
+    background: rgba(30, 58, 138, 0.2);
+    padding: 0.125rem 0.625rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.75rem;
+    color: #93c5fd;
+    cursor: pointer;
+  }
+
+  .igloo-dashboard-filter-chip.is-active {
+    border-color: rgba(96, 165, 250, 0.5);
+    background: rgba(96, 165, 250, 0.2);
+    color: #bfdbfe;
+  }
+
+  .igloo-dashboard-event-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 1.25rem;
+    border-bottom: 1px solid rgba(30, 58, 138, 0.06);
+  }
+
+  .igloo-dashboard-event-row:last-child {
+    border-bottom: 0;
+  }
+
+  .igloo-dashboard-event-time {
+    width: 4.375rem;
+    flex-shrink: 0;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.8125rem;
+    color: #4b5563;
+  }
+
+  .igloo-dashboard-event-badge {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    padding: 0.125rem 0.625rem;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .igloo-dashboard-event-badge.is-sync {
+    border-color: rgba(45, 212, 191, 0.3);
+    background: rgba(45, 212, 191, 0.15);
+    color: #2dd4bf;
+  }
+
+  .igloo-dashboard-event-badge.is-sign {
+    border-color: rgba(34, 197, 94, 0.3);
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+  }
+
+  .igloo-dashboard-event-badge.is-ecdh {
+    border-color: rgba(34, 211, 238, 0.3);
+    background: rgba(34, 211, 238, 0.15);
+    color: #22d3ee;
+  }
+
+  .igloo-dashboard-event-badge.is-policy {
+    border-color: rgba(129, 140, 248, 0.3);
+    background: rgba(129, 140, 248, 0.15);
+    color: #818cf8;
+  }
+
+  .igloo-dashboard-event-badge.is-ping {
+    border-color: rgba(168, 85, 247, 0.3);
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+  }
+
+  .igloo-dashboard-event-badge.is-echo {
+    border-color: rgba(244, 114, 182, 0.3);
+    background: rgba(244, 114, 182, 0.15);
+    color: #f472b6;
+  }
+
+  .igloo-dashboard-event-badge.is-default {
+    border-color: rgba(96, 165, 250, 0.3);
+    background: rgba(96, 165, 250, 0.12);
+    color: #93c5fd;
+  }
+
+  .igloo-dashboard-event-msg {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.875rem;
+    color: #94a3b8;
+  }
+
+  /* Stopped state: Readiness + Next Step cards. */
+  .igloo-dashboard-stopped-grid {
+    display: grid;
+    gap: 1.125rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 64rem) {
+    .igloo-dashboard-stopped-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .igloo-dashboard-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    border-radius: 0.875rem;
+    border: 1px solid rgba(59, 130, 246, 0.16);
+    background: rgba(15, 23, 42, 0.5);
+    padding: 1.125rem 1.25rem;
+  }
+
+  .igloo-dashboard-card-label {
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #94a3b8;
+  }
+
+  .igloo-dashboard-readiness-body {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .igloo-dashboard-readiness-disc {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #374151;
+  }
+
+  .igloo-dashboard-readiness-disc-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: 50%;
+    background: rgba(17, 24, 39, 0.9);
+  }
+
+  .igloo-dashboard-readiness-disc-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+    background: #6b7280;
+  }
+
+  .igloo-dashboard-readiness-title {
+    font-family: var(--igloo-font-inter);
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+  }
+
+  .igloo-dashboard-readiness-detail {
+    margin-top: 0.25rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.875rem;
+    color: #94a3b8;
+  }
+
+  .igloo-dashboard-readiness-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+  }
+
+  .igloo-dashboard-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.375rem 0.625rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.8125rem;
+    line-height: 1rem;
+  }
+
+  .igloo-dashboard-pill.is-danger {
+    background: rgba(239, 68, 68, 0.14);
+    color: #fca5a5;
+  }
+
+  .igloo-dashboard-pill.is-muted {
+    background: rgba(148, 163, 184, 0.12);
+    color: #cbd5e1;
+  }
+
+  .igloo-dashboard-nextstep-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .igloo-dashboard-nextstep-lines > span {
+    font-family: var(--igloo-font-inter);
+    font-size: 0.9375rem;
+    line-height: 1.375rem;
+    color: #e2e8f0;
+  }
+
+  .igloo-dashboard-nextstep-note {
+    border-radius: 0.75rem;
+    border: 1px solid rgba(59, 130, 246, 0.12);
+    background: rgba(30, 41, 59, 0.65);
+    padding: 0.75rem 0.875rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.875rem;
+    color: #94a3b8;
+  }
+
   .igloo-public-task-screen {
     display: flex;
     width: min(40rem, calc(100vw - 2rem));

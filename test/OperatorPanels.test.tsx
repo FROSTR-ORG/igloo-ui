@@ -204,6 +204,7 @@ describe('operator dashboard surface', () => {
           publicKeyLabel: 'group-pub-1',
           shareLabel: 'Share #1',
           readinessLabel: 'running',
+          running: true,
           relaySummary: 'Runtime is attached.',
           peerRows: [],
           pendingApprovalRows: [
@@ -250,6 +251,7 @@ describe('operator dashboard surface', () => {
           publicKeyLabel: 'group-pub-1',
           shareLabel: 'Share #1',
           readinessLabel: 'running',
+          running: true,
           relaySummary: 'Runtime is attached.',
           peerRows: [
             {
@@ -296,19 +298,18 @@ describe('operator dashboard surface', () => {
       />,
     );
 
-    // Peer header counts: 1 of 2 reachable, 1 sign-ready; last-seen surfaces per row.
-    expect(screen.getByText('1/2 online')).toBeInTheDocument();
+    // Peer header counts (Paper): online + total as separate badges, 1 sign-ready.
+    expect(screen.getByText('1 online')).toBeInTheDocument();
+    expect(screen.getByText('2 total')).toBeInTheDocument();
     expect(screen.getByText('1 ready')).toBeInTheDocument();
-    expect(screen.getByText('last seen 5/31/2026, 2:14 PM')).toBeInTheDocument();
 
-    // Telemetry: per-method capability badges (both peers), latency, and the
-    // nonce-history sparkline (only the peer with a series).
+    // Per-method capability badges render for both peers; online peer shows its
+    // latency, the offline peer shows "Offline".
     expect(screen.getAllByText('SIGN')).toHaveLength(2);
     expect(screen.getAllByText('ECDH')).toHaveLength(2);
     expect(screen.getAllByText('PING')).toHaveLength(2);
-    expect(screen.getByText('120 ms (avg 95 ms)')).toBeInTheDocument();
-    expect(screen.getByLabelText('Peer #1 nonce history')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Peer #2 nonce history')).not.toBeInTheDocument();
+    expect(screen.getByText('120ms')).toBeInTheDocument();
+    expect(screen.getByText('Offline')).toBeInTheDocument();
 
     // Both domains render until a filter narrows the list.
     expect(screen.getByText('sign request received')).toBeInTheDocument();
@@ -318,7 +319,7 @@ describe('operator dashboard surface', () => {
     expect(screen.queryByText('sign request received')).not.toBeInTheDocument();
     expect(screen.getByText('peer roster synced')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Clear Log' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
     expect(onClearLogs).toHaveBeenCalledTimes(1);
   });
 

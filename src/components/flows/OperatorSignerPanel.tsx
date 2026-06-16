@@ -1,23 +1,24 @@
 import * as React from 'react';
-import { ChevronDown, Copy } from 'lucide-react';
+import { ChevronDown, Clock, Copy, RefreshCw } from 'lucide-react';
 
 import type {
   DashboardKeyModel,
   EventLogRowModel,
   PeerReadinessRowModel,
+  PendingApprovalRowModel,
+  PendingOperationRowModel,
   SignerDashboardViewModel,
 } from '../../models/view-models';
 import { CRITICAL_E2E_TEST_IDS as TID } from '../../lib/e2e-test-ids';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
-import { HelpHint } from '../ui/help-hint';
 import { Input } from '../ui/input';
-import { Sparkline } from '../ui/sparkline';
 
 type Props = {
   view: SignerDashboardViewModel | null;
-  introMessage: string;
+  // Retained for API compatibility with igloo-chrome / igloo-home call sites.
+  // The Paper dashboard drops the intro banner, so this is no longer rendered.
+  introMessage?: string;
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: React.ReactNode;
@@ -42,7 +43,6 @@ type Props = {
 
 export function OperatorSignerPanel({
   view,
-  introMessage,
   emptyTitle = 'No onboarding profile',
   emptyDescription = 'Complete onboarding to configure this signer.',
   emptyAction,
@@ -52,7 +52,6 @@ export function OperatorSignerPanel({
   onCopyGroupKey,
   onCopyShareKey,
   onPrimaryAction,
-  primaryActionVariant = 'success',
   primaryActionDisabled,
   onRefreshPeers,
   refreshPeersDisabled,
@@ -69,69 +68,77 @@ export function OperatorSignerPanel({
     );
   }
 
-  // Peer header counts derived from data the runtime already exposes: a peer is
-  // "online" when reachable (online/idle state) and "ready" when sign-capable.
-  const peerTotal = view.peerRows.length;
-  const peersOnline = view.peerRows.filter(
-    (peer) => peer.state === 'online' || peer.state === 'idle'
-  ).length;
-  const peersReady = view.peerRows.filter((peer) => peer.statusLabel === 'sign-ready').length;
+  const running = Boolean(view.running);
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/20 px-4 py-3 text-sm text-cyan-100 shadow-[inset_0_1px_0_rgba(103,232,249,0.08)]">
-        {introMessage}
-      </div>
-
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center">
-            <h2 className="text-lg text-blue-300">Manage your signer runtime</h2>
-            <HelpHint
-              className="ml-2"
-              ariaLabel="About the signer runtime"
-              iconSize={18}
-              content="Inspect runtime health, peer state, pending operations, and the recent event log from one operator surface."
-            />
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-500">
-            <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-1 text-blue-200">
-              {view.profileName || 'Unnamed signer'}
-            </span>
-            <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300">
-              {view.readinessLabel}
-            </span>
-            <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-1 text-blue-200">
-              {view.thresholdLabel}
-            </span>
-            {view.memberLabel ? (
-              <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-1 text-blue-200">
-                {view.memberLabel}
-              </span>
-            ) : null}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 self-center">
-          {onRefreshPeers ? (
-            <Button variant="secondary" size="sm" onClick={onRefreshPeers} disabled={refreshPeersDisabled}>
-              Refresh Peers
-            </Button>
-          ) : null}
-          <Button
-            onClick={onPrimaryAction}
-            variant={primaryActionVariant}
-            className="px-5 py-2 text-sm font-medium"
-            disabled={primaryActionDisabled}
-          >
-            {runtimeControlLabel}
-          </Button>
-        </div>
-      </div>
+    <div className="igloo-dashboard">
+      <StatusCard
+        view={view}
+        running={running}
+        runtimeControlLabel={runtimeControlLabel}
+        onPrimaryAction={onPrimaryAction}
+        primaryActionDisabled={primaryActionDisabled}
+        copiedField={copiedField}
+        onCopyGroupKey={onCopyGroupKey}
+        onCopyShareKey={onCopyShareKey}
+      />
 
       {statusBanner ? statusBanner : null}
 
-      <div className="rounded-xl border border-blue-800/30 bg-slate-950/60 p-4 shadow-[0_18px_50px_rgba(2,6,23,0.22)]">
-        <div className="flex flex-col gap-1.5">
+      {running ? (
+        <>
+          <PeersSection rows={view.peerRows} onRefresh={onRefreshPeers} refreshDisabled={refreshPeersDisabled} />
+          <PendingApprovalsSection
+            rows={view.pendingApprovalRows ?? []}
+            onApproveOnce={onApproveOnce}
+            onAlwaysAllow={onAlwaysAllow}
+            onDenyApproval={onDenyApproval}
+          />
+          <PendingOperationsSection rows={view.pendingOperationRows} />
+          <EventLogSection rows={view.eventRows} onClear={onClearLogs} />
+        </>
+      ) : (
+        <div className="igloo-dashboard-stopped-grid">
+          <ReadinessCard />
+          <NextStepCard />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatusCard({
+  view,
+  running,
+  runtimeControlLabel,
+  onPrimaryAction,
+  primaryActionDisabled,
+  copiedField,
+  onCopyGroupKey,
+  onCopyShareKey,
+}: {
+  view: SignerDashboardViewModel;
+  running: boolean;
+  runtimeControlLabel: string;
+  onPrimaryAction: () => void;
+  primaryActionDisabled?: boolean;
+  copiedField?: 'group' | 'share' | null;
+  onCopyGroupKey?: (format?: 'npub' | 'hex') => void;
+  onCopyShareKey?: (format?: 'npub' | 'hex') => void;
+}) {
+  return (
+    <div className="igloo-dashboard-status">
+      <div className="igloo-dashboard-status-main">
+        <div className="igloo-dashboard-status-head">
+          <span className={`igloo-dashboard-status-dot ${running ? 'is-running' : 'is-stopped'}`} />
+          <span className={`igloo-dashboard-status-title ${running ? 'is-running' : 'is-stopped'}`}>
+            {view.readinessLabel}
+          </span>
+          <span className="igloo-dashboard-chip is-threshold">{view.thresholdLabel}</span>
+          {view.memberLabel ? <span className="igloo-dashboard-chip is-member">{view.memberLabel}</span> : null}
+        </div>
+
+        <div className="igloo-dashboard-status-keys">
           {view.groupKey ? (
             <KeyRow
               label="Group Public Key"
@@ -157,233 +164,282 @@ export function OperatorSignerPanel({
             <KeyField label="Share Public Key" value={view.shareLabel} copied={copiedField === 'share'} onCopy={onCopyShareKey} />
           )}
         </div>
-        <div className="mt-3 flex items-center gap-2 text-sm text-slate-400">
-          <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Relays</span>
-          <span>{view.relaySummary}</span>
-        </div>
+
+        <div className="igloo-dashboard-status-connection">{view.relaySummary}</div>
       </div>
 
-      <ContentCard
-        title="Peers"
-        description="Signer-owned peer liveness, readiness, and policy state."
-        action={
-          peerTotal > 0 ? (
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.14em]">
-              <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300">
-                {peersOnline}/{peerTotal} online
-              </span>
-              <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-1 text-blue-200">
-                {peersReady} ready
-              </span>
-            </div>
-          ) : null
-        }
+      <button
+        type="button"
+        className={`igloo-dashboard-status-action ${running ? 'is-stop' : 'is-start'} self-start`}
+        onClick={onPrimaryAction}
+        disabled={primaryActionDisabled}
       >
-        {view.peerRows.length > 0 ? (
-          <div className="space-y-3">
-            {view.peerRows.map((peer) => (
-              <div key={peer.id} className="rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-medium text-blue-200">{peer.alias}</div>
-                    <div className="break-all font-mono text-xs text-gray-400">{peer.pubkey}</div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-1 text-xs text-blue-200">
-                      {peer.statusLabel}
-                    </span>
-                    {peer.lastSeenLabel ? (
-                      <span className="text-[11px] text-gray-500">{peer.lastSeenLabel}</span>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="mt-2.5 flex flex-wrap gap-1.5">
-                  <CapabilityBadge label="SIGN" capable={peer.canSign} />
-                  <CapabilityBadge label="ECDH" capable={peer.canEcdh} />
-                  <CapabilityBadge label="PING" capable={peer.canPing} />
-                </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <Metric label="Incoming" value={peer.incomingAvailable ?? 'n/a'} />
-                  <Metric label="Outgoing" value={peer.outgoingAvailable ?? 'n/a'} />
-                  <Metric label="Spent" value={peer.outgoingSpent ?? 'n/a'} />
-                  <Metric label="Latency" value={formatLatency(peer)} />
-                </div>
-                {peer.nonceSeries.length > 0 ? (
-                  <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5">
-                    <div className="text-xs uppercase tracking-wide text-gray-500">Nonce history</div>
-                    <Sparkline
-                      className="text-blue-300"
-                      values={peer.nonceSeries.map((point) => point.held)}
-                      label={`${peer.alias} nonce history`}
-                    />
-                  </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded border border-dashed border-blue-900/30 px-4 py-6 text-sm text-gray-400">
-            No peers are currently tracked.
-          </div>
-        )}
-      </ContentCard>
-
-      <ContentCard
-        title="Pending Approvals"
-        description="Signing and encryption requests awaiting your approval."
-      >
-        <div data-testid={TID.dashboardPendingApprovals}>
-          {view.pendingApprovalRows && view.pendingApprovalRows.length > 0 ? (
-            <div className="space-y-3">
-              {view.pendingApprovalRows.map((approval) => {
-                const interactive = Boolean(onApproveOnce || onAlwaysAllow || onDenyApproval);
-                return (
-                  <div
-                    key={approval.id}
-                    data-approval-id={approval.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs text-amber-200">
-                        {approval.methodLabel}
-                      </span>
-                      <div>
-                        <div className="text-sm font-medium text-blue-200">{approval.peerLabel}</div>
-                        <div className="text-xs text-gray-400">{approval.detailLabel}</div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <span className="text-xs text-gray-400">{approval.expiresLabel}</span>
-                      {interactive ? (
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            className="h-7 px-2.5 text-xs"
-                            data-testid={`${TID.dashboardPendingApprovals}-deny`}
-                            onClick={() => onDenyApproval?.(approval.id)}
-                          >
-                            Deny
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="success"
-                            className="h-7 px-2.5 text-xs"
-                            data-testid={`${TID.dashboardPendingApprovals}-allow-once`}
-                            onClick={() => onApproveOnce?.(approval.id)}
-                          >
-                            Allow once
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            className="h-7 px-2.5 text-xs"
-                            data-testid={`${TID.dashboardPendingApprovals}-always-allow`}
-                            onClick={() => onAlwaysAllow?.(approval.id)}
-                          >
-                            Always allow
-                          </Button>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded border border-dashed border-blue-900/30 px-4 py-6 text-sm text-gray-400">
-              No pending approvals.
-            </div>
-          )}
-        </div>
-      </ContentCard>
-
-      <ContentCard title="Pending Operations" description="In-flight sign, ECDH, ping, and onboard operations still tracked by the device.">
-        {view.pendingOperationRows.length > 0 ? (
-          <div className="space-y-3">
-            {view.pendingOperationRows.map((operation) => (
-              <div key={operation.id} className="rounded-lg border border-blue-900/20 bg-gray-950/30 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="text-xs uppercase tracking-wide text-gray-500">{operation.operationLabel}</div>
-                    <div className="break-all font-mono text-xs text-blue-100">{operation.id}</div>
-                  </div>
-                  <div className="text-xs text-gray-400">{operation.thresholdLabel}</div>
-                </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  <Metric label="Started" value={operation.startedLabel} />
-                  <Metric label="Timeout" value={operation.timeoutLabel} />
-                  <Metric label="Responses" value={operation.responseLabel} />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded border border-dashed border-blue-900/30 px-4 py-6 text-sm text-gray-400">
-            No operations are currently pending.
-          </div>
-        )}
-      </ContentCard>
-
-      <ContentCard title="Event Log" description="Recent structured runtime and control-plane events.">
-        {view.eventRows.length === 0 ? (
-          <div className="rounded border border-dashed border-blue-900/30 px-4 py-6 text-sm text-gray-400">
-            No events captured yet.
-          </div>
-        ) : (
-          <EventRows rows={view.eventRows} onClear={onClearLogs} />
-        )}
-      </ContentCard>
+        {runtimeControlLabel}
+      </button>
     </div>
   );
 }
 
-function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function toNum(value: number | undefined): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function PeersSection({
+  rows,
+  onRefresh,
+  refreshDisabled,
+}: {
+  rows: PeerReadinessRowModel[];
+  onRefresh?: () => void;
+  refreshDisabled?: boolean;
+}) {
+  const total = rows.length;
+  const online = rows.filter((peer) => peer.state === 'online' || peer.state === 'idle').length;
+  const readyPeers = rows.filter((peer) => peer.statusLabel === 'sign-ready').length;
+  const readyCapacity = rows.reduce((sum, peer) => sum + (toNum(peer.incomingAvailable) ?? 0), 0);
+  const latencies = rows.map((peer) => peer.avgLatencyMs).filter((ms): ms is number => ms != null);
+  const avgLatency = latencies.length
+    ? Math.round(latencies.reduce((sum, ms) => sum + ms, 0) / latencies.length)
+    : null;
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={
-        active
-          ? 'rounded-full border border-blue-500/50 bg-blue-500/20 px-2.5 py-0.5 text-xs text-blue-100'
-          : 'rounded-full border border-blue-900/30 bg-blue-950/30 px-2.5 py-0.5 text-xs text-blue-300 hover:text-blue-200'
-      }
+    <section className="igloo-dashboard-section">
+      <header className="igloo-dashboard-section-head">
+        <span className="igloo-dashboard-section-title">Peers</span>
+        {total > 0 ? (
+          <>
+            <span className="igloo-dashboard-count is-online">{online} online</span>
+            <span className="igloo-dashboard-count is-total">{total} total</span>
+            <span className="igloo-dashboard-section-spacer" />
+            <span className="igloo-dashboard-count is-ready">
+              {readyCapacity > 0 ? `~${readyCapacity} ready` : `${readyPeers} ready`}
+            </span>
+            {avgLatency != null ? <span className="igloo-dashboard-count is-avg">Avg: {avgLatency}ms</span> : null}
+          </>
+        ) : (
+          <span className="igloo-dashboard-section-spacer" />
+        )}
+        {onRefresh ? (
+          <button
+            type="button"
+            className="igloo-dashboard-clear"
+            onClick={onRefresh}
+            disabled={refreshDisabled}
+            aria-label="Refresh Peers"
+            title="Refresh Peers"
+          >
+            <RefreshCw size={14} aria-hidden="true" />
+          </button>
+        ) : null}
+      </header>
+      {total > 0 ? (
+        rows.map((peer) => <PeerRow key={peer.id} peer={peer} />)
+      ) : (
+        <div className="igloo-dashboard-empty">No peers are currently tracked.</div>
+      )}
+    </section>
+  );
+}
+
+function PeerRow({ peer }: { peer: PeerReadinessRowModel }) {
+  const online = peer.state === 'online' || peer.state === 'idle';
+  const incoming = toNum(peer.incomingAvailable);
+  const outgoing = toNum(peer.outgoingAvailable);
+  const denom = Math.max(incoming ?? 0, outgoing ?? 0, 1);
+  const showMeter = incoming != null || outgoing != null;
+
+  return (
+    <div className="igloo-dashboard-peer-row">
+      <span className={`igloo-dashboard-peer-avatar ${online ? 'is-online' : 'is-offline'}`} aria-hidden="true">
+        <span className="igloo-dashboard-peer-avatar-inner">
+          <span className="igloo-dashboard-peer-avatar-dot" />
+        </span>
+      </span>
+      <div className="igloo-dashboard-peer-main">
+        <span className="igloo-dashboard-peer-id">{peer.alias}</span>
+        <span className="igloo-dashboard-peer-sep">·</span>
+        <span className="igloo-dashboard-peer-key">{peer.pubkey}</span>
+        <span className="igloo-dashboard-caps">
+          <Cap label="SIGN" tone="sign" capable={peer.canSign} />
+          <Cap label="ECDH" tone="ecdh" capable={peer.canEcdh} />
+          <Cap label="PING" tone="ping" capable={peer.canPing} />
+        </span>
+      </div>
+      <div className="igloo-dashboard-peer-meter">
+        {showMeter ? (
+          <span
+            className="igloo-dashboard-bars"
+            title={`Incoming ${incoming ?? 'n/a'} · Outgoing ${outgoing ?? 'n/a'}`}
+          >
+            <span className="igloo-dashboard-bar">
+              <span className="igloo-dashboard-bar-fill" style={{ width: `${((incoming ?? 0) / denom) * 100}%` }} />
+            </span>
+            <span className="igloo-dashboard-bar">
+              <span
+                className="igloo-dashboard-bar-fill is-dim"
+                style={{ width: `${((outgoing ?? 0) / denom) * 100}%` }}
+              />
+            </span>
+          </span>
+        ) : null}
+        <span className={`igloo-dashboard-peer-latency ${online ? '' : 'is-idle'}`}>
+          {online ? formatLatency(peer) : 'Offline'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function Cap({ label, tone, capable }: { label: string; tone: 'sign' | 'ecdh' | 'ping'; capable: boolean }) {
+  return (
+    <span
+      className={`igloo-dashboard-cap ${capable ? `is-${tone}` : 'is-off'}`}
+      aria-label={`${label} ${capable ? 'capable' : 'unavailable'}`}
     >
       {label}
-    </button>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5">
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
-      <div className="mt-1.5 text-sm text-blue-100">{value}</div>
-    </div>
-  );
-}
-
-// Per-method capability pill: success tone when the peer can perform the method
-// right now (online + the effective outbound policy permits it), muted otherwise.
-function CapabilityBadge({ label, capable }: { label: string; capable: boolean }) {
-  return (
-    <Badge tone={capable ? 'success' : 'default'} aria-label={`${label} ${capable ? 'capable' : 'unavailable'}`}>
-      {label}
-    </Badge>
+    </span>
   );
 }
 
 // `last (avg N ms)` PING latency, or an em-dash until a ping has completed.
 function formatLatency(peer: PeerReadinessRowModel): React.ReactNode {
-  if (peer.lastResponseLatencyMs == null) {
-    return '—';
-  }
-  const avg = peer.avgLatencyMs != null ? ` (avg ${peer.avgLatencyMs} ms)` : '';
-  return `${peer.lastResponseLatencyMs} ms${avg}`;
+  if (peer.lastResponseLatencyMs == null) return '—';
+  return `${peer.lastResponseLatencyMs}ms`;
 }
 
-function EventRows({ rows, onClear }: { rows: EventLogRowModel[]; onClear?: () => void }) {
+function methodTone(method: PendingApprovalRowModel['method']): string {
+  switch (method) {
+    case 'sign':
+      return 'is-sign';
+    case 'ecdh':
+      return 'is-ecdh';
+    case 'ping':
+      return 'is-ping';
+    default:
+      return 'is-default';
+  }
+}
+
+function shortKey(pubkey: string): string {
+  if (pubkey.length <= 14) return pubkey;
+  return `${pubkey.slice(0, 6)}…${pubkey.slice(-4)}`;
+}
+
+function PendingApprovalsSection({
+  rows,
+  onApproveOnce,
+  onAlwaysAllow,
+  onDenyApproval,
+}: {
+  rows: PendingApprovalRowModel[];
+  onApproveOnce?: (id: string) => void;
+  onAlwaysAllow?: (id: string) => void;
+  onDenyApproval?: (id: string) => void;
+}) {
+  const interactive = Boolean(onApproveOnce || onAlwaysAllow || onDenyApproval);
+  return (
+    <section className="igloo-dashboard-section">
+      <header className="igloo-dashboard-section-head">
+        <span className="igloo-dashboard-section-title">Pending Approvals</span>
+        {rows.length > 0 ? <span className="igloo-dashboard-count is-pending">{rows.length} pending</span> : null}
+      </header>
+      <div data-testid={TID.dashboardPendingApprovals}>
+        {rows.length > 0 ? (
+          rows.map((approval) => (
+            <div key={approval.id} data-approval-id={approval.id} className="igloo-dashboard-approval-row">
+              <span className="igloo-dashboard-approval-dot" />
+              <span className={`igloo-dashboard-method ${methodTone(approval.method)}`}>{approval.methodLabel}</span>
+              <span className="igloo-dashboard-approval-peer">
+                <span className="igloo-dashboard-approval-peer-name">{approval.peerLabel}</span>
+                <span className="igloo-dashboard-approval-peer-key">{shortKey(approval.pubkey)}</span>
+              </span>
+              <span className="igloo-dashboard-approval-desc">{approval.detailLabel}</span>
+              <span className="igloo-dashboard-section-spacer" />
+              <span className="igloo-dashboard-timer">
+                <Clock size={12} aria-hidden="true" />
+                {approval.expiresLabel}
+              </span>
+              {interactive ? (
+                <span className="igloo-dashboard-approval-actions">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="h-7 px-2.5 text-xs"
+                    data-testid={`${TID.dashboardPendingApprovals}-deny`}
+                    onClick={() => onDenyApproval?.(approval.id)}
+                  >
+                    Deny
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="success"
+                    className="h-7 px-2.5 text-xs"
+                    data-testid={`${TID.dashboardPendingApprovals}-allow-once`}
+                    onClick={() => onApproveOnce?.(approval.id)}
+                  >
+                    Allow once
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-7 px-2.5 text-xs"
+                    data-testid={`${TID.dashboardPendingApprovals}-always-allow`}
+                    onClick={() => onAlwaysAllow?.(approval.id)}
+                  >
+                    Always allow
+                  </Button>
+                </span>
+              ) : null}
+            </div>
+          ))
+        ) : (
+          <div className="igloo-dashboard-empty">No pending approvals.</div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function PendingOperationsSection({ rows }: { rows: PendingOperationRowModel[] }) {
+  return (
+    <section className="igloo-dashboard-section">
+      <header className="igloo-dashboard-section-head">
+        <span className="igloo-dashboard-section-title">Pending Operations</span>
+        {rows.length > 0 ? <span className="igloo-dashboard-count is-total">{rows.length} active</span> : null}
+      </header>
+      {rows.length > 0 ? (
+        rows.map((operation) => (
+          <div key={operation.id} className="igloo-dashboard-op-row">
+            <span className="igloo-dashboard-op-label">{operation.operationLabel}</span>
+            <span className="igloo-dashboard-op-id">{operation.id}</span>
+            <span className="igloo-dashboard-op-meta">
+              <span>{operation.startedLabel}</span>
+              <span>{operation.timeoutLabel}</span>
+              <span>{operation.responseLabel}</span>
+            </span>
+          </div>
+        ))
+      ) : (
+        <div className="igloo-dashboard-empty">No operations are currently pending.</div>
+      )}
+    </section>
+  );
+}
+
+// Map an event domain label to its Paper badge tone. Checks the more specific
+// "Signer Policy" before the substring "Sign".
+function eventTone(label: string): string {
+  const value = label.toLowerCase();
+  if (value.includes('policy')) return 'is-policy';
+  if (value.includes('sync')) return 'is-sync';
+  if (value.includes('ecdh')) return 'is-ecdh';
+  if (value.includes('ping')) return 'is-ping';
+  if (value.includes('echo')) return 'is-echo';
+  if (value.includes('sign')) return 'is-sign';
+  return 'is-default';
+}
+
+function EventLogSection({ rows, onClear }: { rows: EventLogRowModel[]; onClear?: () => void }) {
   const [activeFilter, setActiveFilter] = React.useState<string | null>(null);
 
   // Distinct domain tags present in the current rows drive the filter chips.
@@ -404,41 +460,97 @@ function EventRows({ rows, onClear }: { rows: EventLogRowModel[]; onClear?: () =
   const visibleRows = effectiveFilter ? rows.filter((row) => row.badgeLabel === effectiveFilter) : rows;
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {domains.length > 1 ? (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <FilterChip label="All" active={effectiveFilter === null} onClick={() => setActiveFilter(null)} />
-            {domains.map((domain) => (
-              <FilterChip
-                key={domain}
-                label={domain}
-                active={effectiveFilter === domain}
-                onClick={() => setActiveFilter(domain)}
-              />
-            ))}
-          </div>
-        ) : (
-          <span />
-        )}
+    <section className="igloo-dashboard-section">
+      <header className="igloo-dashboard-section-head">
+        <span className="igloo-dashboard-section-title">Event Log</span>
+        {rows.length > 0 ? <span className="igloo-dashboard-count is-total">{rows.length} events</span> : null}
+        <span className="igloo-dashboard-section-spacer" />
         {onClear ? (
-          <Button type="button" size="sm" variant="secondary" onClick={onClear}>
-            Clear Log
-          </Button>
+          <button type="button" className="igloo-dashboard-clear" onClick={onClear}>
+            Clear
+          </button>
         ) : null}
-      </div>
-      {visibleRows.map((row) => (
-        <div key={row.id} className="rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5">
-          <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
-            <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2 py-0.5 text-blue-200">
-              {row.badgeLabel}
-            </span>
-            {row.timestampLabel ? <span>{row.timestampLabel}</span> : null}
-          </div>
-          <div className="text-sm text-blue-100">{row.message}</div>
+      </header>
+
+      {domains.length > 1 ? (
+        <div className="igloo-dashboard-filters">
+          <FilterChip label="All" active={effectiveFilter === null} onClick={() => setActiveFilter(null)} />
+          {domains.map((domain) => (
+            <FilterChip
+              key={domain}
+              label={domain}
+              active={effectiveFilter === domain}
+              onClick={() => setActiveFilter(domain)}
+            />
+          ))}
         </div>
-      ))}
-    </div>
+      ) : null}
+
+      {visibleRows.length > 0 ? (
+        visibleRows.map((row) => (
+          <div key={row.id} className="igloo-dashboard-event-row">
+            {row.timestampLabel ? <span className="igloo-dashboard-event-time">{row.timestampLabel}</span> : null}
+            <span className={`igloo-dashboard-event-badge ${eventTone(row.badgeLabel)}`}>{row.badgeLabel}</span>
+            <span className="igloo-dashboard-event-msg">{row.message}</span>
+          </div>
+        ))
+      ) : (
+        <div className="igloo-dashboard-empty">No events captured yet.</div>
+      )}
+    </section>
+  );
+}
+
+function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`igloo-dashboard-filter-chip ${active ? 'is-active' : ''}`}
+    >
+      {label}
+    </button>
+  );
+}
+
+// Stopped-state cards (Paper: screens/dashboard/2-stopped). Static copy: with the
+// signer stopped, nothing is connected, so the counts are zero by construction.
+function ReadinessCard() {
+  return (
+    <section className="igloo-dashboard-card">
+      <span className="igloo-dashboard-card-label">Readiness</span>
+      <div className="igloo-dashboard-readiness-body">
+        <span className="igloo-dashboard-readiness-disc" aria-hidden="true">
+          <span className="igloo-dashboard-readiness-disc-inner">
+            <span className="igloo-dashboard-readiness-disc-dot" />
+          </span>
+        </span>
+        <div>
+          <div className="igloo-dashboard-readiness-title">Offline</div>
+          <div className="igloo-dashboard-readiness-detail">Start signer to restore connectivity.</div>
+        </div>
+      </div>
+      <div className="igloo-dashboard-readiness-badges">
+        <span className="igloo-dashboard-pill is-danger">0 relays connected</span>
+        <span className="igloo-dashboard-pill is-danger">0 peers online</span>
+        <span className="igloo-dashboard-pill is-muted">Signing unavailable</span>
+      </div>
+    </section>
+  );
+}
+
+function NextStepCard() {
+  return (
+    <section className="igloo-dashboard-card">
+      <span className="igloo-dashboard-card-label">Next Step</span>
+      <div className="igloo-dashboard-nextstep-lines">
+        <span>Queued work · preserved</span>
+        <span>New signing · blocked</span>
+        <span>Policy prompts · paused</span>
+      </div>
+      <div className="igloo-dashboard-nextstep-note">Start when ready.</div>
+    </section>
   );
 }
 
