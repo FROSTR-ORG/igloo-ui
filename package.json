@@ -10,11 +10,15 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./dist/styles.css",
+    "./src/styles.css": "./src/styles.css",
+    "./tailwind.preset": "./tailwind.preset.js"
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "tailwind.preset.js",
+    "src"
   ],
   "scripts": {
     "build": "BROWSERSLIST_IGNORE_OLD_DATA=1 rm -rf dist && BROWSERSLIST_IGNORE_OLD_DATA=1 node ./scripts/build.mjs && BROWSERSLIST_IGNORE_OLD_DATA=1 node ./node_modules/typescript/bin/tsc -p tsconfig.json --emitDeclarationOnly && BROWSERSLIST_IGNORE_OLD_DATA=1 tailwindcss -c ./tailwind.config.js -i ./src/styles.css -o ./dist/styles.css",
