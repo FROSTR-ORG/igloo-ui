@@ -14,6 +14,10 @@ import {
   OnboardHandshakePanel,
   OnboardingClientCard,
   OnboardPackageEntry,
+  ReplaceShareFailedPanel,
+  ReplaceSharePackageEntry,
+  ReplaceShareProgressPanel,
+  ReplaceShareSuccessPanel,
   RotateKeysetPanel,
   WelcomeEntryHero,
   WelcomeReturningHero,
@@ -434,6 +438,119 @@ describe('shared host flow components', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Rotate Keyset' }));
     expect(onRotate).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the Paper replace-share package entry section', () => {
+    const onPackageTextChange = vi.fn();
+    const onPackagePasswordChange = vi.fn();
+    const onSubmit = vi.fn();
+    const onScanQr = vi.fn();
+
+    render(
+      <ReplaceSharePackageEntry
+        packageText=""
+        packagePassword=""
+        onPackageTextChange={onPackageTextChange}
+        onPackagePasswordChange={onPackagePasswordChange}
+        onScanQr={onScanQr}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    expect(screen.getByText('Onboarding Package')).toBeInTheDocument();
+    expect(screen.getByText('Paste a bfonboard1... package that was produced outside runtime, or scan its QR code.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Scan QR' }));
+    expect(onScanQr).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(screen.getByTestId('rotation-package-input'), {
+      target: { value: 'bfonboard1demo' },
+    });
+    expect(onPackageTextChange).toHaveBeenCalledWith('bfonboard1demo');
+
+    fireEvent.change(screen.getByTestId('rotation-password-input'), {
+      target: { value: 'package-pass' },
+    });
+    expect(onPackagePasswordChange).toHaveBeenCalledWith('package-pass');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Replace Share' }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the Paper replace-share applying, failed, and success states', () => {
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    const onRetry = vi.fn();
+    const onBack = vi.fn();
+    const onReturn = vi.fn();
+
+    const { rerender } = render(
+      <ReplaceShareProgressPanel
+        keysetName="My Signing Key"
+        memberLabel="Share #1"
+        packageLabel="bfonboard1demo..."
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Applying Replacement' })).toBeInTheDocument();
+    expect(screen.getByText('Validated package')).toBeInTheDocument();
+    expect(screen.getByText('Matched Group Profile')).toBeInTheDocument();
+    expect(screen.getByText('Replacing local share')).toBeInTheDocument();
+    expect(screen.getByText('Saving updated local share')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Replace Share' }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel Replacement' }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <ReplaceShareProgressPanel
+        keysetName="My Signing Key"
+        memberLabel="Share #1"
+        packageLabel="bfonboard1demo..."
+        applying
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Replace Share' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel Replacement' })).toBeDisabled();
+
+    rerender(
+      <ReplaceShareFailedPanel
+        message="Check the package, password, group match, and current share state, then retry replacement."
+        onRetry={onRetry}
+        onBack={onBack}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Replacement Failed' })).toBeInTheDocument();
+    expect(screen.getByText('Onboarding package did not apply')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Replace Share' }));
+    expect(onBack).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <ReplaceShareSuccessPanel
+        groupKeyLabel="npub1group...demo"
+        oldShareKeyLabel="npub1old...share"
+        newShareKeyLabel="npub1new...share"
+        onReturn={onReturn}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Share Replaced' })).toBeInTheDocument();
+    expect(screen.getByText('Replacement share is active on this device')).toBeInTheDocument();
+    expect(screen.getByText('Replacement Summary')).toBeInTheDocument();
+    expect(screen.getByText('Group Public Key')).toBeInTheDocument();
+    expect(screen.getByText('Share Public Key')).toBeInTheDocument();
+    expect(screen.getByText('Group Profile')).toBeInTheDocument();
+    expect(screen.getByText('npub1old...share')).toBeInTheDocument();
+    expect(screen.getByText('npub1new...share')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Return to Signer' }));
+    expect(onReturn).toHaveBeenCalledTimes(1);
   });
 
   it('dispatches distribution field edits and actions', () => {

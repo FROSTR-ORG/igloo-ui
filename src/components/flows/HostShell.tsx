@@ -385,14 +385,32 @@ export function HostFlowShell({
   description,
   onBack,
   backTooltip,
+  variant = 'card',
   children,
 }: {
   title: string;
   description: string;
   onBack: () => void;
   backTooltip: string;
+  variant?: 'card' | 'bare';
   children: React.ReactNode;
 }) {
+  if (variant === 'bare') {
+    return (
+      <section className="igloo-host-flow-bare">
+        <button type="button" className="igloo-host-flow-back" onClick={onBack} aria-label={backTooltip}>
+          <span aria-hidden="true">‹</span>
+          {backTooltip}
+        </button>
+        <div className="igloo-host-flow-heading">
+          <h2>{title}</h2>
+          <p>{description}</p>
+        </div>
+        {children}
+      </section>
+    );
+  }
+
   return (
     <ContentCard title={title} description={description} onBack={onBack} backButtonTooltip={backTooltip}>
       {children}

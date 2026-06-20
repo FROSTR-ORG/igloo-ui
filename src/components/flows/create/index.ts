@@ -23,7 +23,13 @@ export {
   CreateFlowProfileSetup,
   CreateFlowReviewPanel,
 } from './generate';
-export { RotateKeysetPanel } from './rotate';
+export {
+  RotateKeysetPanel,
+  ReplaceSharePackageEntry,
+  ReplaceShareProgressPanel,
+  ReplaceShareFailedPanel,
+  ReplaceShareSuccessPanel,
+} from './rotate';
 export { CreateFlowLocalSaveCard } from './local-save';
 export {
   OnboardingClientCard,
