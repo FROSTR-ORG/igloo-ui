@@ -14,6 +14,7 @@ import { methodToneClass } from '../../lib/method-tone';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
 import { Input } from '../ui/input';
+import { PermissionToken, normalizePermissionMethod } from '../ui/permission-token';
 
 type Props = {
   view: SignerDashboardViewModel | null;
@@ -472,13 +473,25 @@ function EventLogSection({ rows, onClear }: { rows: EventLogRowModel[]; onClear?
       ) : null}
 
       {visibleRows.length > 0 ? (
-        visibleRows.map((row) => (
-          <div key={row.id} className="igloo-dashboard-event-row">
-            {row.timestampLabel ? <span className="igloo-dashboard-event-time">{row.timestampLabel}</span> : null}
-            <span className={`igloo-dashboard-event-badge ${eventTone(row.badgeLabel)}`}>{row.badgeLabel}</span>
-            <span className="igloo-dashboard-event-msg">{row.message}</span>
-          </div>
-        ))
+        visibleRows.map((row) => {
+          const permissionMethod = normalizePermissionMethod(row.badgeLabel);
+          return (
+            <div key={row.id} className="igloo-dashboard-event-row">
+              {row.timestampLabel ? <span className="igloo-dashboard-event-time">{row.timestampLabel}</span> : null}
+              {permissionMethod ? (
+                <PermissionToken
+                  method={permissionMethod}
+                  variant="policy"
+                  as="span"
+                  className="igloo-dashboard-event-token"
+                />
+              ) : (
+                <span className={`igloo-dashboard-event-badge ${eventTone(row.badgeLabel)}`}>{row.badgeLabel}</span>
+              )}
+              <span className="igloo-dashboard-event-msg">{row.message}</span>
+            </div>
+          );
+        })
       ) : (
         <div className="igloo-dashboard-empty">No events captured yet.</div>
       )}

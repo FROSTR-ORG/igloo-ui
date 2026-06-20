@@ -10,6 +10,9 @@ import {
   InputWithValidation,
   Label,
   PageLayout,
+  PermissionToken,
+  PermissionTokenGroup,
+  RelayInput,
 } from '../../src';
 
 const AXE_OPTIONS = {
@@ -121,5 +124,70 @@ describe('PageLayout', () => {
     );
     expect(screen.getByText('Top')).toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();
+  });
+});
+
+describe('PermissionToken', () => {
+  it('renders the Paper policy method order with explicit method states', () => {
+    const { container } = render(
+      <PermissionTokenGroup
+        activeMethods={['sign', 'ping']}
+        getAriaLabel={(method, active) => `${method}: ${active ? 'active' : 'inactive'}`}
+      />,
+    );
+
+    expect(screen.getByLabelText('sign: active')).toHaveTextContent('SIGN');
+    expect(screen.getByLabelText('ecdh: inactive')).toHaveTextContent('ECDH');
+    expect(screen.getByLabelText('ping: active')).toHaveTextContent('PING');
+    expect(screen.getByLabelText('onboard: inactive')).toHaveTextContent('ONBOARD');
+
+    const methods = Array.from(container.querySelectorAll('.igloo-permission-token')).map((node) =>
+      node.getAttribute('data-method'),
+    );
+    expect(methods).toEqual(['sign', 'ecdh', 'ping', 'onboard']);
+    expect(screen.getByLabelText('ecdh: inactive')).toHaveAttribute('data-state', 'inactive');
+  });
+
+  it('uses button semantics only for editable permission tokens', () => {
+    const onClick = vi.fn();
+    const { rerender } = render(
+      <PermissionToken method="onboard" active={false} as="button" ariaLabel="toggle onboard" onClick={onClick} />,
+    );
+
+    const token = screen.getByRole('button', { name: 'toggle onboard', pressed: false });
+    fireEvent.click(token);
+    expect(onClick).toHaveBeenCalledTimes(1);
+
+    rerender(<PermissionToken method="onboard" active={false} as="span" ariaLabel="onboard disabled" />);
+    expect(screen.queryByRole('button', { name: 'onboard disabled' })).toBeNull();
+    expect(screen.getByLabelText('onboard disabled')).toHaveAttribute('data-method', 'onboard');
+  });
+});
+
+describe('RelayInput', () => {
+  it('adds a normalized relay on Enter and clears the field', () => {
+    const onChange = vi.fn();
+    const normalizeRelays = vi.fn((relays: string[]) => ({ relays, errors: [] as string[] }));
+    render(<RelayInput relays={[]} onChange={onChange} normalizeRelays={normalizeRelays} />);
+
+    const input = screen.getByPlaceholderText('wss://relay.example');
+    fireEvent.change(input, { target: { value: 'wss://relay.test' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onChange).toHaveBeenCalledWith(['wss://relay.test']);
+    expect((input as HTMLInputElement).value).toBe('');
+  });
+
+  it('surfaces a normalization error and does not call onChange', () => {
+    const onChange = vi.fn();
+    const normalizeRelays = vi.fn(() => ({ relays: [], errors: ['Invalid relay URL'] }));
+    render(<RelayInput relays={[]} onChange={onChange} normalizeRelays={normalizeRelays} />);
+
+    const input = screen.getByPlaceholderText('wss://relay.example');
+    fireEvent.change(input, { target: { value: 'not-a-relay' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByText('Invalid relay URL')).toBeInTheDocument();
   });
 });

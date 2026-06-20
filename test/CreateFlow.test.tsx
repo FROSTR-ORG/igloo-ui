@@ -824,6 +824,7 @@ describe('shared host flow components', () => {
   });
 
   it('renders the shared distribution section framing together', () => {
+    const onTogglePermission = vi.fn();
     const view = render(
       <CreateFlowDistributionSection
         bannerKicker="Distribute the Keyset"
@@ -849,8 +850,10 @@ describe('shared host flow components', () => {
           },
         }}
         results={{}}
+        permissions={{ 2: ['sign', 'ping'] }}
         onChangeDraft={vi.fn()}
         onDistribute={vi.fn()}
+        onTogglePermission={onTogglePermission}
         onFinish={vi.fn()}
         beforeCards={<div>runtime panel</div>}
       />,
@@ -861,6 +864,10 @@ describe('shared host flow components', () => {
     expect(section.getByText('runtime panel')).toBeInTheDocument();
     expect(section.getByText('Remaining Shares')).toBeInTheDocument();
     expect(section.getByLabelText('Package password')).toBeInTheDocument();
+    expect(section.getByLabelText('Remote Tablet sign permission: enabled')).toHaveAttribute('data-state', 'active');
+    expect(section.getByLabelText('Remote Tablet ecdh permission: disabled')).toHaveAttribute('data-state', 'inactive');
+    fireEvent.click(section.getByLabelText('Remote Tablet ecdh permission: disabled'));
+    expect(onTogglePermission).toHaveBeenCalledWith(2, 'ecdh', true);
     expect(section.getByRole('button', { name: 'Finish Setup' })).toBeEnabled();
   });
 });

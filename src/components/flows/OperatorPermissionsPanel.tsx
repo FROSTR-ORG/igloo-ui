@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { CRITICAL_E2E_TEST_IDS } from '../../lib/e2e-test-ids';
-import { methodToneClass, type MethodTone } from '../../lib/method-tone';
 import type {
   PolicyDashboardViewModel,
   PolicyMethodOverrideState,
@@ -10,6 +9,11 @@ import type {
 } from '../../models/view-models';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
+import {
+  PERMISSION_METHODS,
+  PermissionToken,
+  type PermissionMethod,
+} from '../ui/permission-token';
 
 type Props = {
   view: PolicyDashboardViewModel;
@@ -239,7 +243,7 @@ function PermissionSection({ title, direction, peerPubkey, policy, overrides, on
       <div className="text-[0.68rem] uppercase tracking-[0.18em] text-slate-400">{title}</div>
       <div className="rounded border border-blue-900/20 px-3 py-2">
         <div className="flex flex-wrap gap-2">
-          {(['ping', 'onboard', 'sign', 'ecdh'] as const).map((method) => {
+          {PERMISSION_METHODS.map((method) => {
             const effectiveValue = policy[method];
             const overrideValue = overrides?.[method] ?? 'unset';
             // Show the operator's explicit override when set (incl. `ask`);
@@ -253,9 +257,8 @@ function PermissionSection({ title, direction, peerPubkey, policy, overrides, on
                 peerPubkey={peerPubkey}
                 method={method}
                 label={displayValue}
-                displayValue={displayValue}
                 value={effectiveValue}
-                override={overrideValue}
+                overrideValue={overrideValue}
                 editable={Boolean(onChange)}
                 onClick={onChange ? () => onChange(method, nextOverrideValue(overrideValue)) : undefined}
               />
@@ -285,60 +288,49 @@ function nextOverrideValue(overrideValue: PolicyOverrideValue): PolicyOverrideVa
   }
 }
 
-const DISPOSITION_TONE: Record<DisplayDisposition, string> = {
-  allow: 'is-allow',
-  ask: 'is-ask',
-  deny: 'is-deny',
-};
-
 function MethodToken({
   direction,
   peerPubkey,
   method,
   label,
-  displayValue,
   value,
-  override,
+  overrideValue,
   editable,
   onClick
 }: {
   direction: 'request' | 'respond';
   peerPubkey: string;
-  method: MethodTone;
+  method: PermissionMethod;
   label: string;
-  displayValue: DisplayDisposition;
   value: boolean;
-  override: PolicyOverrideValue;
+  overrideValue: PolicyOverrideValue;
   editable?: boolean;
   onClick?: () => void;
 }) {
-  const tone = `${methodToneClass(method)} ${DISPOSITION_TONE[displayValue]}`;
   const content = `${direction} ${method}: ${label}`;
-  // Stable e2e hook: one id, disambiguated by peer/direction/method. data-allowed
-  // mirrors the live EFFECTIVE policy; data-override mirrors the operator's manual
-  // override (the directly-edited, persisted tri-state). Specs assert either
-  // without parsing copy.
-  const e2eProps = {
-    'data-testid': CRITICAL_E2E_TEST_IDS.permissionToggle,
-    'data-peer-pubkey': peerPubkey,
-    'data-direction': direction,
-    'data-method': method,
-    'data-allowed': value ? 'true' : 'false',
-    'data-override': override,
-  };
-  return editable ? (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`igloo-permission-method-token rounded border px-2.5 py-1 text-xs font-medium ${tone}`}
-      {...e2eProps}
-    >
-      {content}
-    </button>
-  ) : (
-    <span className={`igloo-permission-method-token rounded border px-2.5 py-1 text-xs font-medium ${tone}`} {...e2eProps}>
-      {content}
-    </span>
+  const title =
+    overrideValue === 'unset'
+      ? content
+      : `${content} (manual override: ${overrideValue})`;
+
+  return (
+    <PermissionToken
+      method={method}
+      active={value}
+      variant="policy"
+      as={editable ? 'button' : 'span'}
+      ariaLabel={content}
+      title={title}
+      label={content}
+      testId={CRITICAL_E2E_TEST_IDS.permissionToggle}
+      dataAttributes={{
+        'data-peer-pubkey': peerPubkey,
+        'data-direction': direction,
+        'data-allowed': value ? 'true' : 'false',
+        'data-override': overrideValue,
+      }}
+      onClick={editable ? onClick : undefined}
+    />
   );
 }
 

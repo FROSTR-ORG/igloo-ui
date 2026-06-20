@@ -62,7 +62,7 @@ describe('operator dashboard surface', () => {
     const onRotateShare = vi.fn();
     const onLogout = vi.fn();
 
-    render(
+    const { container } = render(
       <div>
         <OperatorSignerPanel
           view={{
@@ -136,6 +136,13 @@ describe('operator dashboard surface', () => {
 
     // Tri-state forward cycle: unset → allow → ask → deny → unset.
     // request.sign override is 'unset' (effective allow) → first click sets 'allow'.
+    const requestPermissionMethods = Array.from(
+      container.querySelectorAll('.igloo-permission-token[data-variant="policy"]'),
+    )
+      .slice(0, 4)
+      .map((node) => node.getAttribute('data-method'));
+    expect(requestPermissionMethods).toEqual(['sign', 'ecdh', 'ping', 'onboard']);
+
     fireEvent.click(screen.getByRole('button', { name: 'request sign: allow' }));
     expect(onPeerPermissionChange).toHaveBeenCalledWith('peer-1', 'request', 'sign', 'allow');
 
@@ -156,16 +163,19 @@ describe('operator dashboard surface', () => {
     expect(requestSign).toHaveAttribute('data-peer-pubkey', 'peer-1');
     expect(requestSign).toHaveAttribute('data-direction', 'request');
     expect(requestSign).toHaveAttribute('data-method', 'sign');
-    expect(requestSign.className).toContain('is-sign');
-    expect(requestSign.className).toContain('is-allow');
-    expect(requestPing.className).toContain('is-ping');
-    expect(requestPing.className).toContain('is-allow');
-    expect(requestEcdh.className).toContain('is-ecdh');
-    expect(requestEcdh.className).toContain('is-ask');
-    expect(respondSign.className).toContain('is-sign');
-    expect(respondSign.className).toContain('is-deny');
-    expect(respondEcdh.className).toContain('is-ecdh');
-    expect(respondEcdh.className).toContain('is-deny');
+    expect(requestSign).toHaveAttribute('data-state', 'active');
+    expect(requestSign).toHaveAttribute('data-override', 'unset');
+    expect(requestPing).toHaveAttribute('data-method', 'ping');
+    expect(requestPing).toHaveAttribute('data-state', 'active');
+    expect(requestPing).toHaveAttribute('data-override', 'allow');
+    expect(requestEcdh).toHaveAttribute('data-method', 'ecdh');
+    expect(requestEcdh).toHaveAttribute('data-state', 'inactive');
+    expect(requestEcdh).toHaveAttribute('data-override', 'ask');
+    expect(respondSign).toHaveAttribute('data-method', 'sign');
+    expect(respondSign).toHaveAttribute('data-state', 'inactive');
+    expect(respondSign).toHaveAttribute('data-override', 'deny');
+    expect(respondEcdh).toHaveAttribute('data-method', 'ecdh');
+    expect(respondEcdh).toHaveAttribute('data-state', 'inactive');
 
     fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
     expect(onSave).toHaveBeenCalledTimes(1);
