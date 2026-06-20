@@ -33,9 +33,9 @@ export function AppHeader({
   return (
     <header className={cn('flex w-full justify-center px-5 py-5 sm:px-10 lg:px-20', className)}>
       <div
-        className="flex w-full max-w-[1000px] items-center justify-between rounded-xl border border-igloo-border bg-igloo-panel px-5 py-3.5"
+        className="flex w-full max-w-[1000px] min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl border border-igloo-border bg-igloo-panel px-5 py-3.5 sm:flex-nowrap"
       >
-        <div className="flex items-center gap-3.5">
+        <div className="flex min-w-0 items-center gap-3.5">
           {logoSrc && <img src={logoSrc} alt={logoAlt} className="h-9 w-9 object-contain sm:h-10 sm:w-10" />}
           <div className="flex min-h-12 flex-col justify-center gap-0.5">
             <h1
@@ -48,7 +48,7 @@ export function AppHeader({
             </p>
           </div>
         </div>
-        {rightContent && <div className="flex items-center gap-5">{rightContent}</div>}
+        {rightContent && <div className="flex min-w-0 flex-wrap items-center justify-end gap-5">{rightContent}</div>}
       </div>
     </header>
   );

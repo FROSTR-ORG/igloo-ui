@@ -398,6 +398,60 @@
     color: var(--igloo-shell-text);
   }
 
+  .igloo-host-flow-bare {
+    width: min(40rem, 100%);
+    margin-inline: auto;
+    padding-block: 1.5rem 2.5rem;
+    color: var(--igloo-shell-text);
+  }
+
+  .igloo-host-flow-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-bottom: 1.25rem;
+    border: 0;
+    background: transparent;
+    color: #8494a7;
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    padding: 0;
+    transition: color 160ms ease;
+  }
+
+  .igloo-host-flow-back:hover {
+    color: #cbd5e1;
+  }
+
+  .igloo-host-flow-back span {
+    font-size: 1.125rem;
+    line-height: 0.875rem;
+  }
+
+  .igloo-host-flow-heading {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .igloo-host-flow-heading h2 {
+    margin: 0;
+    color: #93c5fd;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 1.5rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 2rem;
+  }
+
+  .igloo-host-flow-heading p {
+    max-width: 38rem;
+    margin: 0;
+    color: #8494a7;
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+  }
+
   .igloo-welcome-entry {
     display: flex;
     flex-direction: column;
@@ -1319,6 +1373,331 @@
     color: #cfe0ff;
     font-size: 0.875rem;
     line-height: 0.875rem;
+  }
+
+  .igloo-replace-share-entry {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .igloo-replace-package {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .igloo-replace-field {
+    display: grid;
+    gap: 0.5rem;
+    color: rgba(147, 197, 253, 0.8);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1rem;
+  }
+
+  .igloo-replace-field small {
+    color: #8494a7;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1rem;
+  }
+
+  .igloo-replace-textarea {
+    min-height: 4.5rem;
+    resize: vertical;
+    border-color: rgba(30, 58, 138, 0.3);
+    border-radius: 0.5rem;
+    background: rgba(15, 23, 42, 0.6);
+    color: #cbd5e1;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    padding: 1rem 0.875rem;
+  }
+
+  .igloo-replace-scan {
+    justify-self: start;
+    min-width: 6.375rem;
+    height: 2.25rem;
+    border-color: rgba(30, 58, 138, 0.3);
+    border-radius: 0.5rem;
+    background: rgba(15, 23, 42, 0.45);
+    color: #e2e8f0;
+  }
+
+  .igloo-replace-divider {
+    height: 1px;
+    background: rgba(30, 58, 138, 0.2);
+  }
+
+  .igloo-replace-package .igloo-password-field {
+    min-height: 2.625rem;
+    background: rgba(15, 23, 42, 0.6);
+  }
+
+  .igloo-replace-package .igloo-create-primary-action {
+    margin-top: 0;
+    height: 3rem;
+  }
+
+  .igloo-replace-status-flow {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .igloo-replace-status-flow header {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .igloo-replace-status-flow h3 {
+    margin: 0;
+    color: #93c5fd;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 1.5rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 2rem;
+  }
+
+  .igloo-replace-status-flow header p {
+    margin: 0;
+    color: #8494a7;
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+  }
+
+  .igloo-replace-timeline {
+    display: grid;
+    gap: 1.125rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .igloo-replace-timeline li {
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+    gap: 0.875rem;
+    color: #64748b;
+  }
+
+  .igloo-replace-timeline li > span {
+    display: grid;
+    width: 1.75rem;
+    height: 1.75rem;
+    place-items: center;
+    border: 1px solid #334155;
+    border-radius: 999px;
+  }
+
+  .igloo-replace-timeline li.is-complete > span {
+    border-color: #22c55e;
+    background: #22c55e;
+    color: #f0fdf4;
+  }
+
+  .igloo-replace-timeline li.is-active > span {
+    border-color: #f59e0b;
+    background: #f59e0b;
+    color: #0f172a;
+    font-family: var(--igloo-font-share-tech-mono);
+  }
+
+  .igloo-replace-timeline li div {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .igloo-replace-timeline strong {
+    color: #e2e8f0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+  }
+
+  .igloo-replace-timeline li.is-active strong {
+    color: #fbbf24;
+  }
+
+  .igloo-replace-timeline small {
+    color: #64748b;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+  }
+
+  .igloo-replace-package-summary {
+    border: 1px solid rgba(30, 58, 138, 0.3);
+    border-radius: 0.5rem;
+    background: rgba(15, 23, 42, 0.45);
+    color: #64748b;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    padding: 0.75rem 0.875rem;
+  }
+
+  .igloo-replace-passphrase {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .igloo-replace-actions {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .igloo-replace-failure-card {
+    display: grid;
+    grid-template-columns: 1.25rem minmax(0, 1fr);
+    gap: 0.75rem;
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    border-radius: 0.625rem;
+    background: rgba(251, 191, 36, 0.08);
+    color: #fde68a;
+    padding: 1rem;
+  }
+
+  .igloo-replace-failure-card > span {
+    display: grid;
+    width: 1.25rem;
+    height: 1.25rem;
+    place-items: center;
+    border-radius: 999px;
+    background: rgba(251, 191, 36, 0.18);
+    color: #fbbf24;
+  }
+
+  .igloo-replace-failure-card strong {
+    color: #fbbf24;
+    font-weight: 700;
+  }
+
+  .igloo-replace-failure-card p {
+    margin: 0.25rem 0 0;
+    color: #fde68a;
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+  }
+
+  .igloo-replace-success-card {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    gap: 0.75rem;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    border-radius: 0.625rem;
+    background: rgba(34, 197, 94, 0.08);
+    padding: 1rem;
+  }
+
+  .igloo-replace-success-card > span {
+    display: grid;
+    width: 1.5rem;
+    height: 1.5rem;
+    place-items: center;
+    border: 1.5px solid #4ade80;
+    border-radius: 999px;
+    color: #4ade80;
+  }
+
+  .igloo-replace-success-card strong {
+    color: #4ade80;
+    font-weight: 700;
+  }
+
+  .igloo-replace-success-card p {
+    margin: 0.125rem 0 0;
+    color: #86efac;
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+  }
+
+  .igloo-replace-summary-card {
+    display: grid;
+    gap: 0.75rem;
+    border: 1px solid rgba(30, 58, 138, 0.3);
+    border-radius: 0.625rem;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 1rem;
+  }
+
+  .igloo-replace-summary-card h4 {
+    margin: 0;
+    color: rgba(147, 197, 253, 0.8);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1rem;
+    text-transform: uppercase;
+  }
+
+  .igloo-replace-summary-row {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.1fr);
+    gap: 1rem;
+    align-items: center;
+    border-top: 1px solid rgba(30, 58, 138, 0.15);
+    padding-top: 0.75rem;
+  }
+
+  .igloo-replace-summary-row > span {
+    color: #8494a7;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .igloo-replace-summary-row > div {
+    display: grid;
+    justify-items: end;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .igloo-replace-summary-value {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.375rem;
+  }
+
+  .igloo-replace-summary-value code {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #60a5fa;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .igloo-replace-summary-value em {
+    flex: none;
+    border-radius: 0.25rem;
+    background: rgba(37, 99, 235, 0.12);
+    color: rgba(96, 165, 250, 0.7);
+    font-size: 0.625rem;
+    font-style: normal;
+    line-height: 0.75rem;
+    padding: 0.125rem 0.375rem;
+  }
+
+  .igloo-replace-summary-value.is-old code {
+    color: rgba(239, 68, 68, 0.7);
+    text-decoration: line-through;
+  }
+
+  .igloo-replace-summary-value.is-old em {
+    background: transparent;
+    color: #ef4444;
+    padding-inline: 0;
+  }
+
+  .igloo-replace-summary-value.is-success code,
+  .igloo-replace-summary-value.is-success em {
+    background: transparent;
+    color: #4ade80;
+    padding-inline: 0;
   }
 
   .igloo-create-relay-list {

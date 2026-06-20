@@ -126,6 +126,10 @@ export {
   CreateFlowTaskBanner,
   CreateFlowGenerateCard,
   RotateKeysetPanel,
+  ReplaceSharePackageEntry,
+  ReplaceShareProgressPanel,
+  ReplaceShareFailedPanel,
+  ReplaceShareSuccessPanel,
   CreateFlowSharePicker,
   CreateFlowLocalSaveCard,
   CreateFlowShareSelection,
@@ -196,6 +200,29 @@ export type {
   OperatorDashboardTabItem,
 } from './components/flows/OperatorDashboardTabs';
 export { OperatorPermissionsPanel } from './components/flows/OperatorPermissionsPanel';
+export {
+  ClearCredentialsDialog,
+  OnboardDeviceSponsorDialog,
+  OnboardDeviceSponsorshipDialog,
+  OperatorSettingsSidebar,
+  OnboardDeviceSponsorshipPanel,
+  ProfilePasswordChangeDialog,
+  SettingsUnsavedChangesDialog,
+} from './components/flows/OperatorSettingsSidebar';
+export type {
+  ClearCredentialsDialogProps,
+  OnboardDeviceSponsorDialogProps,
+  OnboardDeviceSponsorDraft,
+  OnboardDeviceSponsorResult,
+  OnboardDeviceSponsorshipDialogProps,
+  OnboardDeviceSponsorshipPanelProps,
+  OnboardDeviceSponsorshipReadiness,
+  OperatorSettingsSidebarAction,
+  OperatorSettingsSidebarGroupProfile,
+  OperatorSettingsSidebarProps,
+  ProfilePasswordChangeDialogProps,
+  SettingsUnsavedChangesDialogProps,
+} from './components/flows/OperatorSettingsSidebar';
 export { OperatorSettingsPanel } from './components/flows/OperatorSettingsPanel';
 export type {
   OperatorPeerSelectionStrategy,
