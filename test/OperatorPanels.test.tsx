@@ -62,7 +62,7 @@ describe('operator dashboard surface', () => {
     const onRotateShare = vi.fn();
     const onLogout = vi.fn();
 
-    render(
+    const { container } = render(
       <div>
         <OperatorSignerPanel
           view={{
@@ -133,6 +133,17 @@ describe('operator dashboard surface', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear All' }));
     expect(onClearAllPeerPermissions).toHaveBeenCalledTimes(1);
+
+    const requestPermissionMethods = Array.from(
+      container.querySelectorAll('.igloo-permission-token[data-variant="policy"]'),
+    )
+      .slice(0, 4)
+      .map((node) => node.getAttribute('data-method'));
+    expect(requestPermissionMethods).toEqual(['sign', 'ecdh', 'ping', 'onboard']);
+    expect(screen.getByRole('button', { name: 'request ecdh: deny' })).toHaveAttribute(
+      'data-state',
+      'inactive',
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'request sign: allow' }));
     expect(onPeerPermissionChange).toHaveBeenCalledWith('peer-1', 'request', 'sign', 'deny');

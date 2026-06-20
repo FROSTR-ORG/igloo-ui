@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
 import { HelpHint } from '../ui/help-hint';
 import { Input } from '../ui/input';
+import { PermissionToken, normalizePermissionMethod } from '../ui/permission-token';
 
 type Props = {
   view: SignerDashboardViewModel | null;
@@ -342,17 +343,24 @@ function EventRows({ rows, onClear }: { rows: EventLogRowModel[]; onClear?: () =
           </Button>
         ) : null}
       </div>
-      {visibleRows.map((row) => (
-        <div key={row.id} className="rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5">
-          <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
-            <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2 py-0.5 text-blue-200">
-              {row.badgeLabel}
-            </span>
-            {row.timestampLabel ? <span>{row.timestampLabel}</span> : null}
+      {visibleRows.map((row) => {
+        const permissionMethod = normalizePermissionMethod(row.badgeLabel);
+        return (
+          <div key={row.id} className="rounded-lg border border-blue-900/20 bg-gray-950/30 p-3.5">
+            <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
+              {permissionMethod ? (
+                <PermissionToken method={permissionMethod} variant="policy" as="span" />
+              ) : (
+                <span className="rounded-full border border-blue-900/30 bg-blue-950/30 px-2 py-0.5 text-blue-200">
+                  {row.badgeLabel}
+                </span>
+              )}
+              {row.timestampLabel ? <span>{row.timestampLabel}</span> : null}
+            </div>
+            <div className="text-sm text-blue-100">{row.message}</div>
           </div>
-          <div className="text-sm text-blue-100">{row.message}</div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

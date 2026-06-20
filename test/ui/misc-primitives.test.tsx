@@ -10,6 +10,8 @@ import {
   InputWithValidation,
   Label,
   PageLayout,
+  PermissionToken,
+  PermissionTokenGroup,
   RelayInput,
 } from '../../src';
 
@@ -122,6 +124,43 @@ describe('PageLayout', () => {
     );
     expect(screen.getByText('Top')).toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();
+  });
+});
+
+describe('PermissionToken', () => {
+  it('renders the Paper policy method order with explicit method states', () => {
+    const { container } = render(
+      <PermissionTokenGroup
+        activeMethods={['sign', 'ping']}
+        getAriaLabel={(method, active) => `${method}: ${active ? 'active' : 'inactive'}`}
+      />,
+    );
+
+    expect(screen.getByLabelText('sign: active')).toHaveTextContent('SIGN');
+    expect(screen.getByLabelText('ecdh: inactive')).toHaveTextContent('ECDH');
+    expect(screen.getByLabelText('ping: active')).toHaveTextContent('PING');
+    expect(screen.getByLabelText('onboard: inactive')).toHaveTextContent('ONBOARD');
+
+    const methods = Array.from(container.querySelectorAll('.igloo-permission-token')).map((node) =>
+      node.getAttribute('data-method'),
+    );
+    expect(methods).toEqual(['sign', 'ecdh', 'ping', 'onboard']);
+    expect(screen.getByLabelText('ecdh: inactive')).toHaveAttribute('data-state', 'inactive');
+  });
+
+  it('uses button semantics only for editable permission tokens', () => {
+    const onClick = vi.fn();
+    const { rerender } = render(
+      <PermissionToken method="onboard" active={false} as="button" ariaLabel="toggle onboard" onClick={onClick} />,
+    );
+
+    const token = screen.getByRole('button', { name: 'toggle onboard', pressed: false });
+    fireEvent.click(token);
+    expect(onClick).toHaveBeenCalledTimes(1);
+
+    rerender(<PermissionToken method="onboard" active={false} as="span" ariaLabel="onboard disabled" />);
+    expect(screen.queryByRole('button', { name: 'onboard disabled' })).toBeNull();
+    expect(screen.getByLabelText('onboard disabled')).toHaveAttribute('data-method', 'onboard');
   });
 });
 

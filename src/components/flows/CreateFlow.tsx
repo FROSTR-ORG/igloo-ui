@@ -4,6 +4,11 @@ import { AlertTriangle, Check, Copy, EyeOff, HelpCircle, KeyRound, Loader2, Penc
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { PasswordField } from '../ui/password-field';
+import {
+  PERMISSION_METHODS,
+  PermissionTokenGroup,
+  type PermissionMethod,
+} from '../ui/permission-token';
 import { StatusDot } from '../ui/status-indicator';
 import { Textarea } from '../ui/textarea';
 import { CRITICAL_E2E_TEST_IDS } from '../../lib/e2e-test-ids';
@@ -1133,7 +1138,7 @@ function packagePreview(result?: SharedDistributionResult) {
   return `${result.packageText.slice(0, 24)}...`;
 }
 
-export type SharedDistributionPermission = 'sign' | 'ecdh' | 'ping' | 'onboard';
+export type SharedDistributionPermission = PermissionMethod;
 
 function CreatePermissionToggles({
   share,
@@ -1149,22 +1154,20 @@ function CreatePermissionToggles({
       <div>
         <strong>Permissions</strong>
       </div>
-      <div aria-label={`${share.name} permissions`}>
-        {(['sign', 'ecdh', 'ping', 'onboard'] as const).map((permission) => {
-          const isEnabled = enabled.includes(permission);
-          return (
-            <button
-              type="button"
-              key={permission}
-              className={isEnabled ? `is-${permission}` : 'is-disabled'}
-              aria-pressed={isEnabled}
-              onClick={() => onTogglePermission?.(share.member_idx, permission, !isEnabled)}
-            >
-              {permission.toUpperCase()}
-            </button>
-          );
-        })}
-      </div>
+      <PermissionTokenGroup
+        methods={PERMISSION_METHODS}
+        activeMethods={enabled}
+        variant="distribution"
+        ariaLabel={`${share.name} permissions`}
+        onToggle={
+          onTogglePermission
+            ? (permission, isEnabled) => onTogglePermission(share.member_idx, permission, isEnabled)
+            : undefined
+        }
+        getAriaLabel={(permission, isEnabled) =>
+          `${share.name} ${permission} permission: ${isEnabled ? 'enabled' : 'disabled'}`
+        }
+      />
     </div>
   );
 }

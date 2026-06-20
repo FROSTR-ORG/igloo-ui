@@ -96,6 +96,19 @@ export { PageBackLink } from './components/ui/page-back-link';
 export type { PageBackLinkProps } from './components/ui/page-back-link';
 export { PasswordField } from './components/ui/password-field';
 export type { PasswordFieldProps } from './components/ui/password-field';
+export {
+  PERMISSION_METHODS,
+  PermissionToken,
+  PermissionTokenGroup,
+  normalizePermissionMethod,
+} from './components/ui/permission-token';
+export type {
+  PermissionMethod,
+  PermissionTokenGroupProps,
+  PermissionTokenInactiveTone,
+  PermissionTokenProps,
+  PermissionTokenVariant,
+} from './components/ui/permission-token';
 export { PeerList } from './components/ui/peer-list';
 export type { PeerPolicy } from './components/ui/peer-list';
 export { RelayInput } from './components/ui/relay-input';

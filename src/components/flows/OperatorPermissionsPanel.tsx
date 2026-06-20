@@ -8,6 +8,11 @@ import type {
 } from '../../models/view-models';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
+import {
+  PERMISSION_METHODS,
+  PermissionToken,
+  type PermissionMethod,
+} from '../ui/permission-token';
 
 type Props = {
   view: PolicyDashboardViewModel;
@@ -234,7 +239,7 @@ function PermissionSection({ title, direction, policy, overrides, onChange }: Pe
       <div className="text-[0.68rem] uppercase tracking-[0.18em] text-slate-400">{title}</div>
       <div className="rounded border border-blue-900/20 px-3 py-2">
         <div className="flex flex-wrap gap-2">
-          {(['ping', 'onboard', 'sign', 'ecdh'] as const).map((method) => {
+          {PERMISSION_METHODS.map((method) => {
             const effectiveValue = policy[method];
             const overrideValue = overrides?.[method] ?? 'unset';
             const label = effectiveValue ? 'allow' : 'deny';
@@ -245,6 +250,7 @@ function PermissionSection({ title, direction, policy, overrides, onChange }: Pe
                 method={method}
                 label={label}
                 value={effectiveValue}
+                overrideValue={overrideValue}
                 editable={Boolean(onChange)}
                 onClick={
                   onChange
@@ -271,32 +277,34 @@ function MethodToken({
   method,
   label,
   value,
+  overrideValue,
   editable,
   onClick
 }: {
   direction: 'request' | 'respond';
-  method: string;
+  method: PermissionMethod;
   label: string;
   value: boolean;
+  overrideValue: PolicyOverrideValue;
   editable?: boolean;
   onClick?: () => void;
 }) {
-  const tone = value
-    ? 'border-green-500/40 bg-green-500/10 text-green-300'
-    : 'border-red-500/40 bg-red-500/10 text-red-300';
   const content = `${direction} ${method}: ${label}`;
-  return editable ? (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded border px-2.5 py-1 text-xs font-medium ${tone}`}
-    >
-      {content}
-    </button>
-  ) : (
-    <span className={`rounded border px-2.5 py-1 text-xs font-medium ${tone}`}>
-      {content}
-    </span>
+  const title =
+    overrideValue === 'unset'
+      ? content
+      : `${content} (manual override: ${overrideValue})`;
+
+  return (
+    <PermissionToken
+      method={method}
+      active={value}
+      variant="policy"
+      as={editable ? 'button' : 'span'}
+      ariaLabel={content}
+      title={title}
+      onClick={editable ? onClick : undefined}
+    />
   );
 }
 

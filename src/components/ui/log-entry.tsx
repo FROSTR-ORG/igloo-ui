@@ -14,10 +14,11 @@ const levelColors: Record<string, string> = {
   READY: 'text-green-400',
   INFO: 'text-blue-400',
   ERROR: 'text-red-400',
-  SIGN: 'text-cyan-400',
-  ECDH: 'text-purple-400',
+  SIGN: 'text-[#22C55E]',
+  ECDH: 'text-[#22D3EE]',
   ECHO: 'text-emerald-400',
-  PING: 'text-yellow-400'
+  PING: 'text-[#A855F7]',
+  ONBOARD: 'text-[#FBBF24]',
 };
 
 function defaultFormatter(data: unknown): string {
@@ -131,7 +132,7 @@ export function LogEntryComponent({
       {hasData && (
         <div
           className={cn(
-            'overflow-hidden transition-all duration-200 ease-in-out',
+            'overflow-hidden transition-[max-height,opacity] duration-200 ease-in-out',
             isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
           )}
         >
