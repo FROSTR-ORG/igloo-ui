@@ -87,6 +87,8 @@ export {
   CardContent,
   CardFooter,
 } from './components/ui/card';
+export { Checkbox } from './components/ui/checkbox';
+export type { CheckboxProps } from './components/ui/checkbox';
 export { Backdrop } from './components/ui/backdrop';
 export type { BackdropProps } from './components/ui/backdrop';
 export { Collapsible } from './components/ui/collapsible';
