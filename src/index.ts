@@ -199,6 +199,8 @@ export {
   PublicTaskTitle,
 } from './components/flows/HostShell';
 export type {
+  WelcomeHeroAction,
+  WelcomeEntryPrimaryAction,
   WelcomeReturningProfileModel,
 } from './components/flows/HostShell';
 export { DesktopAppShell } from './components/flows/DesktopAppShell';

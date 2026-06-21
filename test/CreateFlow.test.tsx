@@ -79,9 +79,18 @@ describe('shared host flow components', () => {
     render(
       <WelcomeEntryHero
         logoSrc="/igloo-mark.png"
-        onNewKeyset={onNewKeyset}
-        onImportProfile={onImportProfile}
-        onOnboard={onOnboard}
+        productLabel="Igloo Web"
+        tagline="Split your Nostr key. Sign from anywhere."
+        primaryAction={{
+          heading: 'Generate New Keyset',
+          description: 'Generate a new threshold keyset and set up its first device profile.',
+          buttonLabel: 'Generate Keyset',
+          onAction: onNewKeyset,
+        }}
+        secondaryActions={[
+          { id: 'import', label: 'Import Existing Device', onAction: onImportProfile },
+          { id: 'onboard', label: 'Onboard New Device', onAction: onOnboard },
+        ]}
       />,
     );
 
@@ -112,14 +121,17 @@ describe('shared host flow components', () => {
     render(
       <WelcomeReturningHero
         logoSrc="/igloo-mark.png"
+        productLabel="Igloo Web"
         layout="single"
         profiles={[returningProfiles[0]]}
         onUnlock={onUnlock}
         onRotate={onRotate}
         onDelete={onDelete}
-        onNewKeyset={onNewKeyset}
-        onImportProfile={onImportProfile}
-        onOnboard={onOnboard}
+        secondaryActions={[
+          { id: 'generate', label: 'Generate Keyset', onAction: onNewKeyset },
+          { id: 'import', label: 'Import Existing Device', onAction: onImportProfile },
+          { id: 'onboard', label: 'Onboard New Device', onAction: onOnboard },
+        ]}
       />,
     );
 
@@ -154,14 +166,17 @@ describe('shared host flow components', () => {
 
     render(
       <WelcomeReturningHero
+        productLabel="Igloo Web"
         layout="multi"
         profiles={returningProfiles.slice(0, 3)}
         onUnlock={onUnlock}
         onRotate={onRotate}
         onDelete={vi.fn()}
-        onNewKeyset={vi.fn()}
-        onImportProfile={vi.fn()}
-        onOnboard={vi.fn()}
+        secondaryActions={[
+          { id: 'generate', label: 'Generate Keyset', onAction: vi.fn() },
+          { id: 'import', label: 'Import Existing Device', onAction: vi.fn() },
+          { id: 'onboard', label: 'Onboard New Device', onAction: vi.fn() },
+        ]}
       />,
     );
 
@@ -181,14 +196,17 @@ describe('shared host flow components', () => {
   it('renders the returning Paper welcome many-profile layout', () => {
     render(
       <WelcomeReturningHero
+        productLabel="Igloo Web"
         layout="many"
         profiles={returningProfiles}
         onUnlock={vi.fn()}
         onRotate={vi.fn()}
         onDelete={vi.fn()}
-        onNewKeyset={vi.fn()}
-        onImportProfile={vi.fn()}
-        onOnboard={vi.fn()}
+        secondaryActions={[
+          { id: 'generate', label: 'Generate Keyset', onAction: vi.fn() },
+          { id: 'import', label: 'Import Existing Device', onAction: vi.fn() },
+          { id: 'onboard', label: 'Onboard New Device', onAction: vi.fn() },
+        ]}
       />,
     );
 

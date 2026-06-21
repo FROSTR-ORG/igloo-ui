@@ -10,26 +10,46 @@ import { Modal } from '../ui/modal';
 import { PasswordField } from '../ui/password-field';
 import { StepIndicator } from '../ui/step-indicator';
 
+export type WelcomeHeroAction = {
+  id: string;
+  label: string;
+  onAction: () => void;
+  testId?: string;
+};
+
+export type WelcomeEntryPrimaryAction = {
+  heading: string;
+  description: string;
+  buttonLabel: string;
+  onAction: () => void;
+  testId?: string;
+  showInfo?: boolean;
+};
+
 export function WelcomeEntryHero({
   logoSrc,
   logoAlt = 'Igloo',
-  onNewKeyset,
-  onImportProfile,
-  onOnboard,
+  productLabel,
+  tagline,
+  primaryAction,
+  secondaryActions,
+  footer,
 }: {
   logoSrc?: string;
   logoAlt?: string;
-  onNewKeyset: () => void;
-  onImportProfile: () => void;
-  onOnboard: () => void;
+  productLabel: string;
+  tagline: string;
+  primaryAction: WelcomeEntryPrimaryAction;
+  secondaryActions: WelcomeHeroAction[];
+  footer?: React.ReactNode;
 }) {
   return (
     <section className="igloo-welcome-entry" aria-labelledby="igloo-welcome-entry-title">
       <div className="igloo-welcome-entry-brand">
         {logoSrc ? <img src={logoSrc} alt={logoAlt} className="igloo-welcome-entry-logo" /> : null}
         <div className="igloo-welcome-entry-copy">
-          <h2 id="igloo-welcome-entry-title">Igloo Web</h2>
-          <p>Split your Nostr key. Sign from anywhere.</p>
+          <h2 id="igloo-welcome-entry-title">{productLabel}</h2>
+          <p>{tagline}</p>
         </div>
       </div>
 
@@ -37,29 +57,28 @@ export function WelcomeEntryHero({
         <div className="igloo-welcome-entry-panel-body">
           <div className="igloo-welcome-entry-panel-heading">
             <div className="igloo-welcome-entry-title-row">
-              <h3>Generate New Keyset</h3>
-              <Info size={14} aria-hidden="true" />
+              <h3>{primaryAction.heading}</h3>
+              {primaryAction.showInfo !== false ? <Info size={14} aria-hidden="true" /> : null}
             </div>
           </div>
-          <p>Generate a new threshold keyset and set up its first device profile.</p>
+          <p>{primaryAction.description}</p>
         </div>
         <div className="igloo-welcome-entry-primary">
-          <Button type="button" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryGenerate} onClick={onNewKeyset}>
-            Generate Keyset
+          <Button type="button" data-testid={primaryAction.testId} onClick={primaryAction.onAction}>
+            {primaryAction.buttonLabel}
           </Button>
         </div>
         <div className="igloo-welcome-entry-secondary">
           <span>or</span>
-          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryImport} onClick={onImportProfile}>
-            Import Existing Device
-          </Button>
-          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryOnboard} onClick={onOnboard}>
-            Onboard New Device
-          </Button>
+          {secondaryActions.map((a) => (
+            <Button key={a.id} type="button" size="sm" variant="secondary" data-testid={a.testId} onClick={a.onAction}>
+              {a.label}
+            </Button>
+          ))}
         </div>
       </div>
 
-      <PublicFocusFooter />
+      {footer}
     </section>
   );
 }
@@ -70,6 +89,9 @@ export type WelcomeReturningProfileModel = {
   thresholdLabel: string;
   memberLabel: string;
   publicKeyLabel: string;
+  canRotate?: boolean;
+  canRecover?: boolean;
+  canDelete?: boolean;
 };
 
 export function PublicFocusFooter() {
@@ -105,27 +127,29 @@ export function PublicTaskTitle({
 export function WelcomeReturningHero({
   logoSrc,
   logoAlt = 'Igloo',
+  productLabel,
+  tagline = 'Welcome back.',
   layout,
   profiles,
   onUnlock,
   onRotate,
   onRecover,
   onDelete,
-  onNewKeyset,
-  onImportProfile,
-  onOnboard,
+  secondaryActions,
+  footer,
 }: {
   logoSrc?: string;
   logoAlt?: string;
+  productLabel: string;
+  tagline?: string;
   layout: 'single' | 'multi' | 'many';
   profiles: WelcomeReturningProfileModel[];
   onUnlock: (profileId: string) => void;
   onRotate: (profileId: string) => void;
   onRecover?: (profileId: string) => void;
   onDelete: (profileId: string) => void;
-  onNewKeyset: () => void;
-  onImportProfile: () => void;
-  onOnboard: () => void;
+  secondaryActions: WelcomeHeroAction[];
+  footer?: React.ReactNode;
 }) {
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
   return (
@@ -133,110 +157,118 @@ export function WelcomeReturningHero({
       <div className="igloo-welcome-entry-brand">
         {logoSrc ? <img src={logoSrc} alt={logoAlt} className="igloo-welcome-entry-logo" /> : null}
         <div className="igloo-welcome-entry-copy">
-          <h2 id="igloo-welcome-returning-title">Igloo Web</h2>
-          <p>Welcome back.</p>
+          <h2 id="igloo-welcome-returning-title">{productLabel}</h2>
+          <p>{tagline}</p>
         </div>
       </div>
 
       <div className={`igloo-welcome-returning-stack is-${layout}`}>
         <div className="igloo-welcome-profile-list">
-          {profiles.map((profile) => (
-            <div
-              className="igloo-welcome-profile-row"
-              key={profile.id}
-              data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileRow}
-              data-profile-id={profile.id}
-            >
-              <div className="igloo-welcome-profile-icon" aria-hidden="true">
-                <Lock size={20} />
-              </div>
-              <div className="igloo-welcome-profile-copy">
-                <h3>{profile.label}</h3>
-                <div className="igloo-welcome-profile-meta">
-                  <span>{profile.thresholdLabel}</span>
-                  <span className="igloo-welcome-profile-dot">.</span>
-                  <span>{profile.memberLabel}</span>
-                  <span className="igloo-welcome-profile-dot">.</span>
-                  <span className="igloo-welcome-profile-key">{profile.publicKeyLabel}</span>
+          {profiles.map((profile) => {
+            const showRotate = profile.canRotate !== false;
+            const showRecover = profile.canRecover ?? Boolean(onRecover);
+            const showDelete = profile.canDelete !== false;
+            return (
+              <div
+                className="igloo-welcome-profile-row"
+                key={profile.id}
+                data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileRow}
+                data-profile-id={profile.id}
+              >
+                <div className="igloo-welcome-profile-icon" aria-hidden="true">
+                  <Lock size={20} />
                 </div>
-              </div>
-              <div className="igloo-welcome-profile-actions">
-                <Button type="button" data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileUnlock} onClick={() => onUnlock(profile.id)}>
-                  Unlock
-                </Button>
-                <div className="igloo-welcome-profile-menu">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    aria-label="More actions"
-                    aria-haspopup="menu"
-                    aria-expanded={openMenuId === profile.id}
-                    data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuTrigger}
-                    onClick={() => setOpenMenuId(openMenuId === profile.id ? null : profile.id)}
-                  >
-                    <MoreVertical size={16} aria-hidden="true" />
+                <div className="igloo-welcome-profile-copy">
+                  <h3>{profile.label}</h3>
+                  <div className="igloo-welcome-profile-meta">
+                    <span>{profile.thresholdLabel}</span>
+                    <span className="igloo-welcome-profile-dot">.</span>
+                    <span>{profile.memberLabel}</span>
+                    <span className="igloo-welcome-profile-dot">.</span>
+                    <span className="igloo-welcome-profile-key">{profile.publicKeyLabel}</span>
+                  </div>
+                </div>
+                <div className="igloo-welcome-profile-actions">
+                  <Button type="button" data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileUnlock} onClick={() => onUnlock(profile.id)}>
+                    Unlock
                   </Button>
-                  {openMenuId === profile.id ? (
-                    <div className="igloo-welcome-profile-dropdown" role="menu">
-                      <button
-                        type="button"
-                        role="menuitem"
-                        data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuRotate}
-                        onClick={() => {
-                          setOpenMenuId(null);
-                          onRotate(profile.id);
-                        }}
-                      >
-                        Rotate
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        disabled={!onRecover}
-                        data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuRecover}
-                        onClick={() => {
-                          setOpenMenuId(null);
-                          onRecover?.(profile.id);
-                        }}
-                      >
-                        Recover
-                      </button>
-                      <div className="igloo-welcome-profile-dropdown-divider" aria-hidden="true" />
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="is-destructive"
-                        data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuDelete}
-                        onClick={() => {
-                          setOpenMenuId(null);
-                          onDelete(profile.id);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  ) : null}
+                  <div className="igloo-welcome-profile-menu">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      aria-label="More actions"
+                      aria-haspopup="menu"
+                      aria-expanded={openMenuId === profile.id}
+                      data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuTrigger}
+                      onClick={() => setOpenMenuId(openMenuId === profile.id ? null : profile.id)}
+                    >
+                      <MoreVertical size={16} aria-hidden="true" />
+                    </Button>
+                    {openMenuId === profile.id ? (
+                      <div className="igloo-welcome-profile-dropdown" role="menu">
+                        {showRotate ? (
+                          <button
+                            type="button"
+                            role="menuitem"
+                            data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuRotate}
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              onRotate(profile.id);
+                            }}
+                          >
+                            Rotate
+                          </button>
+                        ) : null}
+                        {showRecover ? (
+                          <button
+                            type="button"
+                            role="menuitem"
+                            data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuRecover}
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              onRecover?.(profile.id);
+                            }}
+                          >
+                            Recover
+                          </button>
+                        ) : null}
+                        {showDelete ? (
+                          <>
+                            <div className="igloo-welcome-profile-dropdown-divider" aria-hidden="true" />
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="is-destructive"
+                              data-testid={CRITICAL_E2E_TEST_IDS.welcomeProfileMenuDelete}
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                onDelete(profile.id);
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="igloo-welcome-entry-secondary">
           <span>or</span>
-          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryGenerate} onClick={onNewKeyset}>
-            Generate Keyset
-          </Button>
-          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryImport} onClick={onImportProfile}>
-            Import Existing Device
-          </Button>
-          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.welcomeEntryOnboard} onClick={onOnboard}>
-            Onboard New Device
-          </Button>
+          {secondaryActions.map((a) => (
+            <Button key={a.id} type="button" size="sm" variant="secondary" data-testid={a.testId} onClick={a.onAction}>
+              {a.label}
+            </Button>
+          ))}
         </div>
       </div>
 
-      <PublicFocusFooter />
+      {footer}
     </section>
   );
 }
