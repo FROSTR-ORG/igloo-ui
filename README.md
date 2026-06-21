@@ -50,10 +50,12 @@ external design repos or desktop design tooling.
 
 Primary flow exports:
 
-- `HostEntryTile`
 - `HostFlowShell`
-- `StoredProfilesLandingCard`
 - `StepProgress`
+- `WelcomeEntryHero`
+- `WelcomeReturningHero`
+- `WelcomeUnlockModal`
+- `WelcomeDeleteModal`
 - `CreateFlowTaskBanner`
 - `CreateFlowGenerateCard`
 - `CreateFlowLocalSaveCard`
