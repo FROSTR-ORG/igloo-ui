@@ -9,6 +9,7 @@
 /* utils & ids                                                        */
 /* ------------------------------------------------------------------ */
 export { cn } from './lib/utils';
+export { downloadText } from './lib/download';
 export { CRITICAL_E2E_TEST_IDS } from './lib/e2e-test-ids';
 export type { CriticalE2ETestId } from './lib/e2e-test-ids';
 export { passwordManagerOptOutProps } from './lib/password-manager';
