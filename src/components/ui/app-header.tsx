@@ -6,29 +6,21 @@ type AppHeaderProps = {
   className?: string;
   logoSrc?: string;
   logoAlt?: string;
-  links?: Array<{ label: string; href: string }>;
   taskLabel?: string;
   profileName?: string;
   actions?: React.ReactNode;
 };
-
-const defaultLinks = [
-  { label: 'Website', href: '#' },
-  { label: 'Docs', href: '#' },
-  { label: 'GitHub', href: '#' },
-];
 
 export function AppHeader({
   mode,
   className,
   logoSrc,
   logoAlt = 'FROSTR',
-  links = defaultLinks,
   taskLabel,
   profileName,
   actions,
 }: AppHeaderProps) {
-  const rightContent = renderShellRightContent({ mode, links, taskLabel, profileName, actions });
+  const rightContent = renderShellRightContent({ mode, taskLabel, profileName, actions });
 
   return (
     <header className={cn('flex w-full justify-center px-5 py-5 sm:px-10 lg:px-20', className)}>
@@ -56,23 +48,17 @@ export function AppHeader({
 
 function renderShellRightContent({
   mode,
-  links,
   taskLabel,
   profileName,
   actions,
 }: {
   mode: AppHeaderProps['mode'];
-  links: NonNullable<AppHeaderProps['links']>;
   taskLabel?: string;
   profileName?: string;
   actions?: React.ReactNode;
 }) {
   if (mode === 'welcome') {
-    return links.map((link) => (
-      <a key={link.label} href={link.href} className="font-sharetech text-[13px] leading-4 text-[#8494A7] transition-colors hover:text-igloo-primary">
-        {link.label}
-      </a>
-    ));
+    return null;
   }
 
   if (mode === 'task') {

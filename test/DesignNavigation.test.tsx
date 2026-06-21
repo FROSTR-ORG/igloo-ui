@@ -4,14 +4,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { AppHeader, PageBackLink, PageLayout } from '../src';
 
 describe('design navigation primitives', () => {
-  it('renders the welcome header links', () => {
+  it('renders the welcome header with logo and title only', () => {
     render(<AppHeader mode="welcome" />);
 
     expect(screen.getByText('Igloo')).toHaveClass('text-igloo-primary');
     expect(screen.getByText('Threshold Signing for Nostr')).toHaveClass('text-igloo-subtle');
-    expect(screen.getByRole('link', { name: 'Website' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Docs' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'GitHub' })).toBeInTheDocument();
+    expect(screen.queryByRole('link')).toBeNull();
   });
 
   it('renders task, profile, and dashboard header modes without generic right content', () => {
