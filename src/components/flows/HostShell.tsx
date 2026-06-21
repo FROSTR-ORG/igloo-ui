@@ -298,7 +298,7 @@ export function WelcomeUnlockModal({
 }) {
   if (!profile) return null;
 
-  const profileSummary = `${profile.label} · ${profile.thresholdLabel} · ${profile.memberLabel}`;
+  const profileSummary = [profile.label, profile.thresholdLabel, profile.memberLabel].filter(Boolean).join(' · ');
 
   return (
     <Modal open={open} onClose={onClose} className="igloo-welcome-unlock-modal">
@@ -352,7 +352,7 @@ export function WelcomeDeleteModal({
 }) {
   if (!profile) return null;
 
-  const profileSummary = `${profile.label} · ${profile.thresholdLabel} · ${profile.memberLabel}`;
+  const profileSummary = [profile.label, profile.thresholdLabel, profile.memberLabel].filter(Boolean).join(' · ');
 
   return (
     <Modal open={open} onClose={onClose} className="igloo-welcome-delete-modal">

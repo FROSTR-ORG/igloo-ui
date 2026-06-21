@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, test } from 'vitest';
 
-import { WelcomeEntryHero, WelcomeReturningHero } from '../src/components/flows/HostShell';
+import { WelcomeDeleteModal, WelcomeEntryHero, WelcomeReturningHero, WelcomeUnlockModal } from '../src/components/flows/HostShell';
 import { CRITICAL_E2E_TEST_IDS } from '../src/lib/e2e-test-ids';
 
 afterEach(() => {
@@ -42,6 +42,43 @@ test('WelcomeReturningHero hides ⋮ menu items the host does not support', () =
   fireEvent.click(screen.getByTestId(CRITICAL_E2E_TEST_IDS.welcomeProfileMenuTrigger));
   expect(screen.queryByRole('menuitem', { name: 'Rotate' })).not.toBeInTheDocument();
   expect(screen.queryByRole('menuitem', { name: 'Recover' })).not.toBeInTheDocument();
+});
+
+test('WelcomeUnlockModal subtitle omits empty separators when thresholdLabel and memberLabel are empty', () => {
+  render(
+    <WelcomeUnlockModal
+      open={true}
+      profile={{ id: 'p1', label: 'Chrome Key', thresholdLabel: '', memberLabel: '', publicKeyLabel: 'npub…', canRotate: false, canRecover: false, canDelete: true }}
+      password=""
+      onPasswordChange={noop}
+      onSubmit={(e) => e.preventDefault()}
+      onClose={noop}
+    />,
+  );
+  // The subtitle paragraph inside the heading block should just be the label
+  const heading = document.querySelector('.igloo-welcome-unlock-heading');
+  expect(heading).not.toBeNull();
+  const subtitle = heading!.querySelector('p');
+  expect(subtitle).not.toBeNull();
+  const text = subtitle!.textContent ?? '';
+  expect(text).toBe('Chrome Key');
+});
+
+test('WelcomeDeleteModal subtitle omits empty separators when thresholdLabel and memberLabel are empty', () => {
+  render(
+    <WelcomeDeleteModal
+      open={true}
+      profile={{ id: 'p1', label: 'Chrome Key', thresholdLabel: '', memberLabel: '', publicKeyLabel: 'npub…', canRotate: false, canRecover: false, canDelete: true }}
+      onConfirm={noop}
+      onClose={noop}
+    />,
+  );
+  const heading = document.querySelector('.igloo-welcome-unlock-heading');
+  expect(heading).not.toBeNull();
+  const subtitle = heading!.querySelector('p');
+  expect(subtitle).not.toBeNull();
+  const text = subtitle!.textContent ?? '';
+  expect(text).toBe('Chrome Key');
 });
 
 test('WelcomeReturningHero meta row shows only publicKeyLabel when thresholdLabel and memberLabel are empty', () => {
