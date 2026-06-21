@@ -16,9 +16,6 @@ import { Input } from '../ui/input';
 
 type Props = {
   view: SignerDashboardViewModel | null;
-  // Retained for API compatibility with igloo-chrome / igloo-home call sites.
-  // The Paper dashboard drops the intro banner, so this is no longer rendered.
-  introMessage?: string;
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: React.ReactNode;

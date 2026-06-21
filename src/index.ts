@@ -177,12 +177,6 @@ export type {
   SharedRecoverSource,
   OnboardTimelineStepKey,
 } from './components/flows/CreateFlow';
-export { CreateImportPanel } from './components/flows/CreateImportPanel';
-export type {
-  GeneratedShareDraft,
-  GeneratedShareCard,
-  GeneratedKeysetView,
-} from './components/flows/CreateImportPanel';
 export { ExportPackageModal } from './components/flows/ExportPackageModal';
 export {
   HostFlowShell,
@@ -200,14 +194,6 @@ export type {
   WelcomeEntryPrimaryAction,
   WelcomeReturningProfileModel,
 } from './components/flows/HostShell';
-export { DesktopAppShell } from './components/flows/DesktopAppShell';
-export type {
-  DesktopShellTab,
-  DesktopShellPath,
-  DesktopShellStatus,
-} from './components/flows/DesktopAppShell';
-export { ManagedProfilesPanel } from './components/flows/ManagedProfilesPanel';
-export type { ManagedProfileSummary } from './components/flows/ManagedProfilesPanel';
 export { OperatorDashboardTabs } from './components/flows/OperatorDashboardTabs';
 export type {
   OperatorDashboardTab,
@@ -229,4 +215,3 @@ export {
 } from './components/flows/DashboardStateScreens';
 export { ProfileConfirmationCard } from './components/flows/ProfileConfirmationCard';
 export { QrPayloadModal } from './components/flows/QrPayloadModal';
-export { RecoveryWorkspace } from './components/flows/RecoveryWorkspace';
