@@ -181,11 +181,17 @@ export function WelcomeReturningHero({
                 <div className="igloo-welcome-profile-copy">
                   <h3>{profile.label}</h3>
                   <div className="igloo-welcome-profile-meta">
-                    <span>{profile.thresholdLabel}</span>
-                    <span className="igloo-welcome-profile-dot">.</span>
-                    <span>{profile.memberLabel}</span>
-                    <span className="igloo-welcome-profile-dot">.</span>
-                    <span className="igloo-welcome-profile-key">{profile.publicKeyLabel}</span>
+                    {[
+                      profile.thresholdLabel ? <span key="threshold">{profile.thresholdLabel}</span> : null,
+                      profile.memberLabel ? <span key="member">{profile.memberLabel}</span> : null,
+                      profile.publicKeyLabel ? <span key="pubkey" className="igloo-welcome-profile-key">{profile.publicKeyLabel}</span> : null,
+                    ]
+                      .filter(Boolean)
+                      .flatMap((node, index, arr) =>
+                        index < arr.length - 1
+                          ? [node, <span key={`dot-${index}`} className="igloo-welcome-profile-dot">.</span>]
+                          : [node],
+                      )}
                   </div>
                 </div>
                 <div className="igloo-welcome-profile-actions">

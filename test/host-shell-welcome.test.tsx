@@ -43,3 +43,28 @@ test('WelcomeReturningHero hides ⋮ menu items the host does not support', () =
   expect(screen.queryByRole('menuitem', { name: 'Rotate' })).not.toBeInTheDocument();
   expect(screen.queryByRole('menuitem', { name: 'Recover' })).not.toBeInTheDocument();
 });
+
+test('WelcomeReturningHero meta row shows only publicKeyLabel when thresholdLabel and memberLabel are empty', () => {
+  render(
+    <WelcomeReturningHero
+      productLabel="Igloo Home"
+      layout="single"
+      profiles={[{ id: 'abc12345', label: 'My Desktop Key', thresholdLabel: '', memberLabel: '', publicKeyLabel: 'abc12345', canRotate: true, canRecover: true, canDelete: true }]}
+      onUnlock={noop}
+      onRotate={noop}
+      onDelete={noop}
+      secondaryActions={[]}
+    />,
+  );
+  const metaRow = document.querySelector('.igloo-welcome-profile-meta');
+  expect(metaRow).not.toBeNull();
+  const text = metaRow!.textContent ?? '';
+  // Should contain the public key label
+  expect(text).toContain('abc12345');
+  // Should NOT start with a separator dot
+  expect(text.trimStart()).not.toMatch(/^\./);
+  // Should have no leading or doubled separator dots
+  expect(text).not.toContain('..');
+  // Should not render empty values before/after the key label
+  expect(text.trim()).toBe('abc12345');
+});
