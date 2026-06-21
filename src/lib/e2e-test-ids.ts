@@ -121,9 +121,6 @@ export const CRITICAL_E2E_TEST_IDS = {
   rotationPasswordInput: 'rotation-password-input',
   rotationConfirmSubmit: 'rotation-confirm-submit',
   rotationConnectSubmit: 'rotation-connect-submit',
-  storedProfileEntry: 'stored-profile-entry',
-  storedProfileLoad: 'stored-profile-load',
-  storedProfileUnlockSubmit: 'stored-profile-unlock-submit',
 } as const;
 
 export type CriticalE2ETestId =

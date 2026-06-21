@@ -82,7 +82,7 @@ test('WelcomeDeleteModal subtitle omits empty separators when thresholdLabel and
 });
 
 test('WelcomeReturningHero meta row shows only publicKeyLabel when thresholdLabel and memberLabel are empty', () => {
-  render(
+  const { container } = render(
     <WelcomeReturningHero
       productLabel="Igloo Home"
       layout="single"
@@ -93,7 +93,7 @@ test('WelcomeReturningHero meta row shows only publicKeyLabel when thresholdLabe
       secondaryActions={[]}
     />,
   );
-  const metaRow = document.querySelector('.igloo-welcome-profile-meta');
+  const metaRow = container.querySelector('.igloo-welcome-profile-meta');
   expect(metaRow).not.toBeNull();
   const text = metaRow!.textContent ?? '';
   // Should contain the public key label

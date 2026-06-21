@@ -26,7 +26,6 @@ export type {
   IglooTypographyTokens,
 } from './tokens/design-tokens';
 export type {
-  StoredProfileCardModel,
   FlowStepState,
   FlowStepModel,
   DashboardKeyModel,

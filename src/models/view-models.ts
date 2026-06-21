@@ -1,17 +1,5 @@
 import type * as React from 'react';
 
-export type StoredProfileCardModel = {
-  id: string;
-  label: string;
-  shortId: string;
-  thresholdLabel?: string;
-  publicKeyLabel?: string;
-  updatedLabel?: string;
-  state?: 'available' | 'locked' | 'active';
-  primaryActionLabel?: string;
-  destructiveActionLabel?: string;
-};
-
 export type FlowStepState = 'active' | 'pending' | 'complete' | 'error' | 'loading';
 
 export type FlowStepModel = {
