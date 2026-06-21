@@ -17,7 +17,6 @@ import {
   Dialog,
   EventLog,
   HelpHint,
-  HostEntryTile,
   Input,
   LogEntryComponent,
   PeerList,
@@ -257,17 +256,4 @@ describe('a11y: primitives have no axe violations', () => {
     await expectNoViolations(container);
   });
 
-  it('HostEntryTile', async () => {
-    const { container } = render(
-      <HostEntryTile
-        kicker="Get started"
-        title="Create a keyset"
-        description="Generate fresh shares."
-        actionLabel="Create"
-        icon={<span aria-hidden="true">+</span>}
-        onAction={() => {}}
-      />,
-    );
-    await expectNoViolations(container);
-  });
 });

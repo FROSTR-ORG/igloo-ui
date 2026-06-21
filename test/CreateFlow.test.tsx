@@ -15,7 +15,6 @@ import {
   OnboardingClientCard,
   OnboardPackageEntry,
   RotateKeysetPanel,
-  StoredProfilesLandingCard,
   WelcomeEntryHero,
   WelcomeReturningHero,
   WelcomeUnlockModal,
@@ -257,59 +256,6 @@ describe('shared host flow components', () => {
     );
 
     expect(screen.getByText('Incorrect password. Please try again.')).toBeInTheDocument();
-  });
-
-  it('renders stored profile card models on landing and dispatches explicit actions', () => {
-    const onSelect = vi.fn();
-    const onLoad = vi.fn();
-    const onDelete = vi.fn();
-
-    render(
-      <StoredProfilesLandingCard
-        profiles={[
-          {
-            id: 'profile-1',
-            label: 'Primary Browser Device',
-            shortId: 'npub1qe3...7k4m',
-            thresholdLabel: '2/3',
-            publicKeyLabel: 'group-pub-1',
-            updatedLabel: 'Updated today',
-            state: 'available',
-            primaryActionLabel: 'Load Profile',
-            destructiveActionLabel: 'Delete',
-          },
-          {
-            id: 'profile-2',
-            label: 'Backup Device',
-            shortId: 'npub1backup...8mx',
-            thresholdLabel: '2/3',
-            state: 'locked',
-            primaryActionLabel: 'Open Dashboard',
-            destructiveActionLabel: 'Remove',
-          }
-        ]}
-        selectedProfileId="profile-2"
-        onSelect={onSelect}
-        onLoad={onLoad}
-        onDelete={onDelete}
-      />,
-    );
-
-    expect(screen.getByText('Stored Profiles')).toBeInTheDocument();
-    expect(screen.getByText('npub1qe3...7k4m')).toBeInTheDocument();
-    expect(screen.getAllByText('2/3')).toHaveLength(2);
-    expect(screen.getByText('group-pub-1')).toBeInTheDocument();
-    expect(screen.getByText('Updated today')).toBeInTheDocument();
-    expect(screen.getByText('available')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Primary Browser Device').closest('button')!);
-    expect(onSelect).toHaveBeenCalledWith('profile-1');
-
-    const backupCard = screen.getByText('Backup Device').closest('.rounded-xl') as HTMLElement;
-    fireEvent.click(within(backupCard).getByRole('button', { name: 'Open Dashboard' }));
-    expect(onLoad).toHaveBeenCalledWith('profile-2');
-
-    fireEvent.click(within(backupCard).getByRole('button', { name: 'Remove' }));
-    expect(onDelete).toHaveBeenCalledWith('profile-2');
   });
 
   it('dispatches create-flow keyset edits with the Paper four-step copy', () => {

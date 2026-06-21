@@ -186,10 +186,8 @@ export type {
 } from './components/flows/CreateImportPanel';
 export { ExportPackageModal } from './components/flows/ExportPackageModal';
 export {
-  HostEntryTile,
   HostFlowShell,
   StepProgress,
-  StoredProfilesLandingCard,
   WelcomeEntryHero,
   WelcomeReturningHero,
   WelcomeUnlockModal,
