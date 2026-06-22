@@ -161,7 +161,7 @@ export {
   WarningCard,
   OnboardFailedPanel,
   OnboardCompletePanel,
-} from './components/flows/CreateFlow';
+} from './components/flows/create';
 export type {
   SharedCreateFormState,
   SharedRotationSource,
@@ -177,7 +177,7 @@ export type {
   RelayPingFn,
   SharedRecoverSource,
   OnboardTimelineStepKey,
-} from './components/flows/CreateFlow';
+} from './components/flows/create';
 export { ExportPackageModal } from './components/flows/ExportPackageModal';
 export {
   HostFlowShell,
