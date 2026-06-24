@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { CRITICAL_E2E_TEST_IDS } from '../../lib/e2e-test-ids';
+import { methodToneClass, type MethodTone } from '../../lib/method-tone';
 import type {
   PolicyDashboardViewModel,
   PolicyMethodOverrideState,
@@ -285,9 +286,9 @@ function nextOverrideValue(overrideValue: PolicyOverrideValue): PolicyOverrideVa
 }
 
 const DISPOSITION_TONE: Record<DisplayDisposition, string> = {
-  allow: 'border-green-500/40 bg-green-500/10 text-green-300',
-  ask: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
-  deny: 'border-red-500/40 bg-red-500/10 text-red-300',
+  allow: 'is-allow',
+  ask: 'is-ask',
+  deny: 'is-deny',
 };
 
 function MethodToken({
@@ -303,7 +304,7 @@ function MethodToken({
 }: {
   direction: 'request' | 'respond';
   peerPubkey: string;
-  method: string;
+  method: MethodTone;
   label: string;
   displayValue: DisplayDisposition;
   value: boolean;
@@ -311,7 +312,7 @@ function MethodToken({
   editable?: boolean;
   onClick?: () => void;
 }) {
-  const tone = DISPOSITION_TONE[displayValue];
+  const tone = `${methodToneClass(method)} ${DISPOSITION_TONE[displayValue]}`;
   const content = `${direction} ${method}: ${label}`;
   // Stable e2e hook: one id, disambiguated by peer/direction/method. data-allowed
   // mirrors the live EFFECTIVE policy; data-override mirrors the operator's manual
@@ -329,13 +330,13 @@ function MethodToken({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded border px-2.5 py-1 text-xs font-medium ${tone}`}
+      className={`igloo-permission-method-token rounded border px-2.5 py-1 text-xs font-medium ${tone}`}
       {...e2eProps}
     >
       {content}
     </button>
   ) : (
-    <span className={`rounded border px-2.5 py-1 text-xs font-medium ${tone}`} {...e2eProps}>
+    <span className={`igloo-permission-method-token rounded border px-2.5 py-1 text-xs font-medium ${tone}`} {...e2eProps}>
       {content}
     </span>
   );

@@ -4,6 +4,7 @@ import { Check, Copy, KeyRound, Play, QrCode, RotateCcw, Square, X } from 'lucid
 import { Button } from '../../ui/button';
 import { StatusDot } from '../../ui/status-indicator';
 import { CRITICAL_E2E_TEST_IDS } from '../../../lib/e2e-test-ids';
+import { methodToneClass } from '../../../lib/method-tone';
 import { passwordManagerOptOutProps } from '../../../lib/password-manager';
 import type {
   SharedGeneratedShare,
@@ -56,7 +57,7 @@ function CreatePermissionToggles({
             <button
               type="button"
               key={permission}
-              className={isEnabled ? `is-${permission}` : 'is-disabled'}
+              className={`${methodToneClass(permission)} ${isEnabled ? 'is-enabled' : 'is-disabled'}`}
               aria-pressed={isEnabled}
               onClick={() => onTogglePermission?.(share.member_idx, permission, !isEnabled)}
             >

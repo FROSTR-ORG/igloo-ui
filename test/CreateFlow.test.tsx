@@ -295,9 +295,8 @@ describe('shared host flow components', () => {
     expect(onGenerate).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the Paper select-share step with group public key copy', () => {
+  it('renders the Paper select-share step with info-only group public key formats', () => {
     const onSelectShare = vi.fn();
-    const onCopyGroupPublicKey = vi.fn();
     const onAction = vi.fn();
 
     render(
@@ -309,17 +308,17 @@ describe('shared host flow components', () => {
         ]}
         selectedMemberIdx={1}
         keysetName="My Signing Key"
-        groupPublicKey="group-pub-1"
+        groupPublicKey={'11'.repeat(32)}
+        groupPublicKeyNpub="npub1examplegroupkey"
         onSelectShare={onSelectShare}
-        onCopyGroupPublicKey={onCopyGroupPublicKey}
         onAction={onAction}
       />,
     );
 
     expect(screen.getByText('Choose Local Share')).toBeInTheDocument();
-    expect(screen.getByText('group-pub-1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Copy group public key' }));
-    expect(onCopyGroupPublicKey).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('npub1examplegroupkey')).toBeInTheDocument();
+    expect(screen.getByText('11'.repeat(32))).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copy group public key' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Share 3/i }));
     expect(onSelectShare).toHaveBeenCalledWith(2);

@@ -66,7 +66,7 @@ describe('operator dashboard surface', () => {
                 request: { ping: true, onboard: true, sign: true, ecdh: false },
                 respond: { ping: true, onboard: false, sign: false, ecdh: false },
                 manualOverride: {
-                  request: { ping: 'allow', onboard: 'unset', sign: 'unset', ecdh: 'unset' },
+                  request: { ping: 'allow', onboard: 'unset', sign: 'unset', ecdh: 'ask' },
                   respond: { ping: 'unset', onboard: 'unset', sign: 'deny', ecdh: 'unset' },
                 },
               },
@@ -123,6 +123,26 @@ describe('operator dashboard surface', () => {
     // respond.sign override is 'deny' → wraps back to 'unset'.
     fireEvent.click(screen.getByRole('button', { name: 'respond sign: deny' }));
     expect(onPeerPermissionChange).toHaveBeenCalledWith('peer-1', 'respond', 'sign', 'unset');
+
+    const requestSign = screen.getByRole('button', { name: 'request sign: allow' });
+    const requestPing = screen.getByRole('button', { name: 'request ping: allow' });
+    const requestEcdh = screen.getByRole('button', { name: 'request ecdh: ask' });
+    const respondSign = screen.getByRole('button', { name: 'respond sign: deny' });
+    const respondEcdh = screen.getByRole('button', { name: 'respond ecdh: deny' });
+    expect(requestSign).toHaveAttribute('data-testid', 'permission-toggle');
+    expect(requestSign).toHaveAttribute('data-peer-pubkey', 'peer-1');
+    expect(requestSign).toHaveAttribute('data-direction', 'request');
+    expect(requestSign).toHaveAttribute('data-method', 'sign');
+    expect(requestSign.className).toContain('is-sign');
+    expect(requestSign.className).toContain('is-allow');
+    expect(requestPing.className).toContain('is-ping');
+    expect(requestPing.className).toContain('is-allow');
+    expect(requestEcdh.className).toContain('is-ecdh');
+    expect(requestEcdh.className).toContain('is-ask');
+    expect(respondSign.className).toContain('is-sign');
+    expect(respondSign.className).toContain('is-deny');
+    expect(respondEcdh.className).toContain('is-ecdh');
+    expect(respondEcdh.className).toContain('is-deny');
 
     fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }));
     expect(onSave).toHaveBeenCalledTimes(1);

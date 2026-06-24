@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Copy, EyeOff, HelpCircle, Loader2, Pencil, RefreshCw, X } from 'lucide-react';
+import { EyeOff, HelpCircle, Loader2, Pencil, RefreshCw, X } from 'lucide-react';
 
 import { Button } from '../../ui/button';
 import { PasswordField } from '../../ui/password-field';
@@ -208,9 +208,9 @@ export function CreateFlowShareSelection({
   selectedMemberIdx,
   keysetName,
   groupPublicKey,
+  groupPublicKeyNpub,
   actionLabel = 'Next Step',
   onSelectShare,
-  onCopyGroupPublicKey,
   onAction,
   onBack,
 }: {
@@ -218,9 +218,9 @@ export function CreateFlowShareSelection({
   selectedMemberIdx: number | null;
   keysetName: string;
   groupPublicKey: string;
+  groupPublicKeyNpub?: string;
   actionLabel?: string;
   onSelectShare: (memberIdx: number) => void;
-  onCopyGroupPublicKey: () => void;
   onAction: () => void;
   onBack?: () => void;
 }) {
@@ -231,17 +231,19 @@ export function CreateFlowShareSelection({
       <section className="igloo-create-profile-panel">
         <header>
           <h3>Group Public Key</h3>
-          <p>Copy this key when you need to identify the new keyset outside this device.</p>
+          <p>This identifies the shared signer for every device in the keyset.</p>
         </header>
-        <div className="igloo-create-profile-summary">
+        <div className="igloo-create-profile-summary" aria-label={`${keysetName} group public key`}>
+          {groupPublicKeyNpub ? (
+            <div>
+              <span>npub</span>
+              <strong>{groupPublicKeyNpub}</strong>
+            </div>
+          ) : null}
           <div>
-            <span>{keysetName}</span>
+            <span>hex</span>
             <strong>{groupPublicKey}</strong>
           </div>
-          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.selectShareCopyGroupKey} onClick={onCopyGroupPublicKey}>
-            <Copy size={13} aria-hidden="true" />
-            Copy group public key
-          </Button>
         </div>
       </section>
 

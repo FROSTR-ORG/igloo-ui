@@ -2002,6 +2002,7 @@
   .igloo-create-share-option {
     display: grid;
     min-height: 4rem;
+    min-width: 0;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.75rem;
@@ -2047,6 +2048,10 @@
   }
 
   .igloo-create-share-copy strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: #e2e8f0;
     font-family: var(--igloo-font-share-tech-mono);
     font-size: 0.875rem;
@@ -2056,9 +2061,20 @@
 
   .igloo-create-share-copy small,
   .igloo-create-share-state {
+    min-width: 0;
     color: #64748b;
     font-size: 0.6875rem;
     line-height: 0.875rem;
+  }
+
+  .igloo-create-share-copy small {
+    overflow-wrap: anywhere;
+  }
+
+  .igloo-create-share-state {
+    justify-self: end;
+    text-align: right;
+    white-space: normal;
   }
 
   .igloo-create-share-option.is-selected .igloo-create-share-state {
@@ -2071,13 +2087,15 @@
   }
 
   .igloo-create-profile-summary {
-    display: flex;
-    gap: 2rem;
+    display: grid;
+    min-width: 0;
+    gap: 0.75rem;
     padding-top: 0.25rem;
   }
 
   .igloo-create-profile-summary div {
     display: grid;
+    min-width: 0;
     gap: 0.25rem;
   }
 
@@ -2090,11 +2108,25 @@
   }
 
   .igloo-create-profile-summary strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
     color: #93c5fd;
     font-family: var(--igloo-font-share-tech-mono);
     font-size: 0.875rem;
     font-weight: 400;
     line-height: 1.125rem;
+  }
+
+  @media (max-width: 520px) {
+    .igloo-create-share-option {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .igloo-create-share-state {
+      grid-column: 2;
+      justify-self: start;
+      text-align: left;
+    }
   }
 
   .igloo-create-profile-field {
@@ -2305,6 +2337,14 @@
     opacity: 0.5;
   }
 
+  .igloo-create-peer-permission-row .is-enabled {
+    background: rgba(37, 99, 235, 0.08);
+  }
+
+  .igloo-create-peer-permission-row .is-disabled {
+    opacity: 0.45;
+  }
+
   .igloo-create-peer-permission-row .is-sign {
     border-color: rgba(34, 197, 94, 0.45);
     color: #22c55e;
@@ -2323,6 +2363,52 @@
   .igloo-create-peer-permission-row .is-onboard {
     border-color: rgba(234, 179, 8, 0.45);
     color: #facc15;
+  }
+
+  .igloo-permission-method-token {
+    background: var(--igloo-method-bg, rgba(15, 23, 42, 0.5));
+    border-color: var(--igloo-method-border, rgba(30, 58, 138, 0.42));
+    box-shadow: var(--igloo-method-glow, none);
+    color: var(--igloo-method-color, #94a3b8);
+  }
+
+  .igloo-permission-method-token.is-sign {
+    --igloo-method-hue: 34 197 94;
+    --igloo-method-color: #86efac;
+  }
+
+  .igloo-permission-method-token.is-ecdh {
+    --igloo-method-hue: 14 165 233;
+    --igloo-method-color: #7dd3fc;
+  }
+
+  .igloo-permission-method-token.is-ping {
+    --igloo-method-hue: 168 85 247;
+    --igloo-method-color: #d8b4fe;
+  }
+
+  .igloo-permission-method-token.is-onboard {
+    --igloo-method-hue: 234 179 8;
+    --igloo-method-color: #fde68a;
+  }
+
+  .igloo-permission-method-token.is-allow {
+    --igloo-method-bg: rgb(var(--igloo-method-hue) / 0.14);
+    --igloo-method-border: rgb(var(--igloo-method-hue) / 0.5);
+    --igloo-method-glow: 0 0 0 1px rgb(var(--igloo-method-hue) / 0.12), 0 0 18px rgb(var(--igloo-method-hue) / 0.12);
+  }
+
+  .igloo-permission-method-token.is-ask {
+    --igloo-method-bg: rgb(var(--igloo-method-hue) / 0.08);
+    --igloo-method-border: rgb(var(--igloo-method-hue) / 0.38);
+    --igloo-method-glow: 0 0 0 1px rgb(var(--igloo-method-hue) / 0.08);
+  }
+
+  .igloo-permission-method-token.is-deny {
+    --igloo-method-bg: rgb(var(--igloo-method-hue) / 0.035);
+    --igloo-method-border: rgb(var(--igloo-method-hue) / 0.2);
+    --igloo-method-glow: none;
+    opacity: 0.62;
   }
 
   .igloo-create-review-form,

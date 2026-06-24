@@ -10,6 +10,7 @@ import type {
   SignerDashboardViewModel,
 } from '../../models/view-models';
 import { CRITICAL_E2E_TEST_IDS as TID } from '../../lib/e2e-test-ids';
+import { methodToneClass } from '../../lib/method-tone';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
 import { Input } from '../ui/input';
@@ -304,19 +305,6 @@ function formatLatency(peer: PeerReadinessRowModel): React.ReactNode {
   return `${peer.lastResponseLatencyMs}ms`;
 }
 
-function methodTone(method: PendingApprovalRowModel['method']): string {
-  switch (method) {
-    case 'sign':
-      return 'is-sign';
-    case 'ecdh':
-      return 'is-ecdh';
-    case 'ping':
-      return 'is-ping';
-    default:
-      return 'is-default';
-  }
-}
-
 function shortKey(pubkey: string): string {
   if (pubkey.length <= 14) return pubkey;
   return `${pubkey.slice(0, 6)}…${pubkey.slice(-4)}`;
@@ -345,7 +333,7 @@ function PendingApprovalsSection({
           rows.map((approval) => (
             <div key={approval.id} data-approval-id={approval.id} className="igloo-dashboard-approval-row">
               <span className="igloo-dashboard-approval-dot" />
-              <span className={`igloo-dashboard-method ${methodTone(approval.method)}`}>{approval.methodLabel}</span>
+              <span className={`igloo-dashboard-method ${methodToneClass(approval.method)}`}>{approval.methodLabel}</span>
               <span className="igloo-dashboard-approval-peer">
                 <span className="igloo-dashboard-approval-peer-name">{approval.peerLabel}</span>
                 <span className="igloo-dashboard-approval-peer-key">{shortKey(approval.pubkey)}</span>
