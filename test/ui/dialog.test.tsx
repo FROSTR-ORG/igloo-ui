@@ -40,6 +40,16 @@ describe('Dialog', () => {
     expect(document.body.style.overflow).toBe('');
   });
 
+  it('renders above sidebar overlays', () => {
+    render(
+      <Dialog open onClose={() => {}} title="T">
+        <button type="button">A</button>
+      </Dialog>,
+    );
+
+    expect(screen.getByRole('dialog').parentElement).toHaveClass('z-[80]');
+  });
+
   it('moves focus into the dialog on open (first tabbable, else the panel)', () => {
     render(
       <Dialog open onClose={() => {}} title="T">

@@ -133,6 +133,8 @@ export type {
 export { PeerList } from './components/ui/peer-list';
 export type { PeerPolicy } from './components/ui/peer-list';
 export { RelayInput } from './components/ui/relay-input';
+export { RelayList } from './components/ui/relay-list';
+export type { RelayListProps } from './components/ui/relay-list';
 export { SensitiveField } from './components/ui/sensitive-field';
 export type { SensitiveFieldProps } from './components/ui/sensitive-field';
 export { SensitiveTextarea } from './components/ui/sensitive-textarea';

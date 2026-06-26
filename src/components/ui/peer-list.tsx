@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { ChevronDown, ChevronUp, HelpCircle, Loader2, Radio, RefreshCw, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, ChevronUp, Radio, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { HelpHint } from './help-hint';
 import { IconButton } from './icon-button';
 import { StatusBadge, type StatusState } from './status-indicator';
 
@@ -205,9 +206,11 @@ function PeerCard({ peer, onPing, onPolicyChange, disabled }: PeerCardProps) {
             <IconButton
               variant="ghost"
               size="sm"
-              icon={pinging ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Radio className="h-3.5 w-3.5" />}
+              icon={<Radio className="h-3.5 w-3.5" />}
               onClick={handlePing}
               disabled={disabled || pinging}
+              loading={pinging}
+              loadingLabel="Pinging..."
               tooltip="Ping"
               className="text-gray-400 hover:text-blue-300"
             />
@@ -219,9 +222,12 @@ function PeerCard({ peer, onPing, onPolicyChange, disabled }: PeerCardProps) {
         <div className="space-y-3 border-t border-blue-900/20 bg-gray-900/30 p-3">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-300">Policy controls</span>
-            <span title="Outbound controls requests you initiate; inbound gates requests arriving from this peer.">
-              <HelpCircle size={14} className="cursor-help text-gray-500" />
-            </span>
+            <HelpHint
+              ariaLabel="About policy controls"
+              content="Peer policy tags define peer actions: SIGN, ECDH, PING, ONBOARD. Requests not explicitly allowed by signer policies require a peer policy decision."
+              placement="top"
+              iconSize={14}
+            />
           </div>
 
           <div className="flex gap-2">

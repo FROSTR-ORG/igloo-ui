@@ -15,3 +15,4 @@ The format is based on Keep a Changelog, adapted for this repository.
 ### Changed
 - `igloo-home` and `igloo-pwa` now consume a deeper shared host-shell and create-flow surface from `igloo-ui`.
 - Shared host-flow docs now describe `igloo-ui` as the owner of the host-shell and create/distribution UI contract.
+- Recover collection now distinguishes validated and passphrase-locked local shares and uses the Paper-aligned failure card structure.

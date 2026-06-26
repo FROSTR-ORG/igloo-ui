@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChevronRight, Info } from 'lucide-react';
+import { ChevronRight, Circle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface LogEntryData {
@@ -116,7 +116,7 @@ export function LogEntryComponent({
           </div>
         ) : (
           <div className="mt-0.5 flex-shrink-0 text-gray-600/50">
-            <Info className="h-4 w-4" />
+            <Circle className="h-4 w-4" />
           </div>
         )}
         <div className="min-w-0 flex-1">

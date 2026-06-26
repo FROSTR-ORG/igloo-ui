@@ -94,4 +94,30 @@ describe('PeerList', () => {
     fireEvent.click(inbound);
     expect(calls).toContainEqual([peer.pubkey, 'receive', true]);
   });
+
+  it('marks a peer ping action busy while the ping is in flight', async () => {
+    let resolvePing: (value: { success: boolean; latency?: number }) => void = () => {};
+    const peer = makePeer();
+    render(
+      <PeerList
+        peers={[peer]}
+        onPing={() =>
+          new Promise((resolve) => {
+            resolvePing = resolve;
+          })
+        }
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ping' }));
+
+    const pinging = await screen.findByRole('button', { name: 'Pinging...' });
+    expect(pinging).toBeDisabled();
+    expect(pinging).toHaveAttribute('aria-busy', 'true');
+    expect(pinging).toHaveAttribute('data-loading', 'true');
+    expect(pinging.querySelector('.igloo-spin')).toBeInTheDocument();
+
+    resolvePing({ success: true, latency: 36 });
+    expect(await screen.findByText('Ping: 36ms')).toBeInTheDocument();
+  });
 });

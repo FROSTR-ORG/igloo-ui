@@ -180,7 +180,7 @@ export function Dialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto px-3 py-3 sm:px-4">
       <Backdrop
         onDismiss={() => {
           if (!preventDismissOnBackdrop) onClose();
@@ -194,7 +194,7 @@ export function Dialog({
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={cn(
-          'relative z-10 w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl border border-igloo-border bg-igloo-panel-strong p-6 shadow-2xl outline-none',
+          'relative z-10 w-full max-w-2xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-xl border border-igloo-border bg-igloo-panel-strong p-4 shadow-2xl outline-none sm:max-h-[calc(100vh-2rem)] sm:p-6',
           className,
         )}
       >
