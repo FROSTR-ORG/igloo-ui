@@ -167,8 +167,8 @@ export function OperatorSettingsPanel({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button onClick={onSave} disabled={saving || saveDisabled}>
-                {saving ? 'Saving...' : 'Save Settings'}
+              <Button onClick={onSave} disabled={saving || saveDisabled} loading={saving} loadingLabel="Saving...">
+                Save Settings
               </Button>
             </div>
           </div>

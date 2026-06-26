@@ -9,6 +9,7 @@ import {
   CreateFlowShareSelection,
   CreateFlowLocalSaveCard,
   CreateFlowProfileSetup,
+  ImportProfileEntry,
   OnboardCompletePanel,
   OnboardFailedPanel,
   OnboardHandshakePanel,
@@ -18,6 +19,7 @@ import {
   ReplaceSharePackageEntry,
   ReplaceShareProgressPanel,
   ReplaceShareSuccessPanel,
+  RecoverCollectSharesPanel,
   RotateKeysetPanel,
   StoredProfilesLandingCard,
   WelcomeEntryHero,
@@ -94,6 +96,11 @@ describe('shared host flow components', () => {
 
     expect(screen.getByRole('heading', { name: 'Generate New Keyset' })).toBeInTheDocument();
     expect(screen.queryByTestId('welcome-new-keyset-plus')).not.toBeInTheDocument();
+    const welcomeHelp = screen.getByRole('button', { name: 'About generating a new keyset' });
+    expect(welcomeHelp).toHaveAttribute('data-tooltip-placement', 'right');
+    const welcomeTooltip = document.getElementById(welcomeHelp.getAttribute('aria-describedby') ?? '');
+    expect(welcomeTooltip).toHaveClass('igloo-tooltip-content');
+    expect(welcomeTooltip).toHaveTextContent('Generate a new set of signing keys and devices.');
 
     fireEvent.click(screen.getByRole('button', { name: 'Generate Keyset' }));
     expect(onNewKeyset).toHaveBeenCalledTimes(1);
@@ -203,6 +210,34 @@ describe('shared host flow components', () => {
     expect(screen.getByText('Onboard New Device')).toBeInTheDocument();
   });
 
+  it('renders resumable devices with resume and forget actions', () => {
+    const onResumeDevice = vi.fn();
+    const onForgetDevice = vi.fn();
+
+    render(
+      <WelcomeReturningHero
+        layout="single"
+        profiles={[returningProfiles[0]]}
+        onUnlock={vi.fn()}
+        onRotate={vi.fn()}
+        onDelete={vi.fn()}
+        onNewKeyset={vi.fn()}
+        onImportProfile={vi.fn()}
+        onOnboard={vi.fn()}
+        resumeDevices={[{ id: 'old-instance', label: 'Old Browser', metaLabel: '1 profile' }]}
+        onResumeDevice={onResumeDevice}
+        onForgetDevice={onForgetDevice}
+      />,
+    );
+
+    expect(screen.getByText('Old Browser')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
+    expect(onResumeDevice).toHaveBeenCalledWith('old-instance');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Forget Old Browser' }));
+    expect(onForgetDevice).toHaveBeenCalledWith('old-instance');
+  });
+
   it('renders the returning Paper welcome unlock modal states', () => {
     const onPasswordChange = vi.fn();
     const onSubmit = vi.fn((event: FormEvent<HTMLFormElement>) => event.preventDefault());
@@ -243,6 +278,360 @@ describe('shared host flow components', () => {
     );
 
     expect(screen.getByText('Incorrect password. Please try again.')).toBeInTheDocument();
+  });
+
+  it('keeps recover collection blocked until threshold-worthy source material is complete', () => {
+    const onNext = vi.fn();
+
+    render(
+      <RecoverCollectSharesPanel
+        sources={[{ packageText: 'bfshare1remote', packagePassword: '' }]}
+        threshold={2}
+        collectedCount={1}
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={onNext}
+      />,
+    );
+
+    expect(screen.getByText('1 of 2 required')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Old devices do not need to be online. Provide enough source packages and passwords to meet the threshold.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Add another source package and password to continue.',
+    );
+    const nextButton = screen.getByRole('button', { name: 'Next Step' });
+    expect(nextButton).toBeDisabled();
+
+    fireEvent.click(nextButton);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it('labels the recover collection live status', () => {
+    render(
+      <RecoverCollectSharesPanel
+        sources={[{ packageText: 'bfshare1remote', packagePassword: '' }]}
+        threshold={2}
+        collectedCount={1}
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('status', { name: 'Recovery collection status' })).toHaveTextContent(
+      'Add another source package and password to continue.',
+    );
+  });
+
+  it('exposes recover threshold progress as a progressbar', () => {
+    render(
+      <RecoverCollectSharesPanel
+        sources={[{ packageText: '', packagePassword: '' }, { packageText: '', packagePassword: '' }]}
+        threshold={3}
+        collectedCount={1}
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    const progress = screen.getByRole('progressbar', { name: 'Recovery threshold progress' });
+    expect(progress).toHaveAttribute('aria-valuemin', '0');
+    expect(progress).toHaveAttribute('aria-valuemax', '3');
+    expect(progress).toHaveAttribute('aria-valuenow', '1');
+    expect(progress).toHaveAttribute('aria-valuetext', '1 of 3 required');
+  });
+
+  it('renders an empty remote-source state before recovery sources are added', () => {
+    const onAddSource = vi.fn();
+
+    render(
+      <RecoverCollectSharesPanel
+        sources={[]}
+        threshold={2}
+        collectedCount={1}
+        onChangeSource={vi.fn()}
+        onAddSource={onAddSource}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    const emptyState = screen.getByRole('status', { name: 'Remote recovery sources' });
+    expect(emptyState).toHaveTextContent('No remote source packages added yet.');
+    expect(emptyState).toHaveTextContent('Add a source package from another device or backup to meet the threshold.');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Source' }));
+    expect(onAddSource).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows which recovery source field is missing before a share can count', () => {
+    render(
+      <RecoverCollectSharesPanel
+        sources={[{ packageText: 'bfshare1remote', packagePassword: '' }]}
+        threshold={2}
+        collectedCount={1}
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Password required')).toBeInTheDocument();
+    expect(screen.getByText('Add the package password to count Share #2.')).toBeInTheDocument();
+  });
+
+  it('labels each recover source card as a share-specific group', () => {
+    render(
+      <RecoverCollectSharesPanel
+        sources={[
+          { packageText: 'bfshare1remote', packagePassword: '' },
+          { packageText: '', packagePassword: 'remote-pass' },
+        ]}
+        threshold={3}
+        collectedCount={1}
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('group', { name: 'Share #2 recovery source: Password required' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Share #3 recovery source: Package required' })).toBeInTheDocument();
+  });
+
+  it('marks recover source fields invalid after a recovery failure', () => {
+    render(
+      <RecoverCollectSharesPanel
+        sources={[{ packageText: 'bfshare1remote', packagePassword: 'remote-pass' }]}
+        threshold={2}
+        collectedCount={2}
+        error="Recovery failed. Check the source package and package password, then try again."
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('alert', { name: 'Recovery failed' })).toHaveTextContent(
+      'Recovery failed. Check the source package and package password, then try again.',
+    );
+    expect(screen.getByLabelText('Source Package')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Package Password')).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('marks completed recover sources for review after a recovery failure', () => {
+    render(
+      <RecoverCollectSharesPanel
+        sources={[{ packageText: 'bfshare1remote', packagePassword: 'remote-pass' }]}
+        threshold={2}
+        collectedCount={2}
+        error="Recovery failed. Check the source package and package password, then try again."
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('group', { name: 'Share #2 recovery source: Review required' })).toBeInTheDocument();
+    expect(screen.getByText('Check Share #2 source package and password, then try again.')).toBeInTheDocument();
+    expect(screen.queryByText('Share #2 can count toward the threshold.')).not.toBeInTheDocument();
+  });
+
+  it('announces recover failures in the collection status', () => {
+    render(
+      <RecoverCollectSharesPanel
+        sources={[{ packageText: 'bfshare1remote', packagePassword: 'remote-pass' }]}
+        threshold={2}
+        collectedCount={2}
+        error="Recovery failed. Check the source package and package password, then try again."
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('status', { name: 'Recovery collection status' })).toHaveTextContent(
+      'Recovery failed. Update the highlighted source package or password, then try again.',
+    );
+  });
+
+  it('renders recovery failures with the Paper failure-state structure', () => {
+    render(
+      <RecoverCollectSharesPanel
+        sources={[{ packageText: 'bfshare1remote', packagePassword: '' }]}
+        threshold={2}
+        collectedCount={1}
+        error="Provided 1 of 2 required shares. Add at least 1 more share to continue reconstructing your nsec."
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+      />,
+    );
+
+    const failure = screen.getByRole('alert', { name: 'Recovery failed' });
+    expect(within(failure).getByText('Recovery Failed')).toBeInTheDocument();
+    expect(failure).toHaveTextContent(
+      'Provided 1 of 2 required shares. Add at least 1 more share to continue reconstructing your nsec.',
+    );
+    expect(within(failure).getByText('Shares: 1/2 (need 2)')).toBeInTheDocument();
+  });
+
+  it('locks recover source material while recovery is in flight', () => {
+    const onAddSource = vi.fn();
+    const onRemoveSource = vi.fn();
+
+    render(
+      <RecoverCollectSharesPanel
+        sources={[{ packageText: 'bfshare1remote', packagePassword: 'remote-pass' }]}
+        threshold={2}
+        collectedCount={2}
+        onChangeSource={vi.fn()}
+        onAddSource={onAddSource}
+        onRemoveSource={onRemoveSource}
+        onNext={vi.fn()}
+        actionBusy
+      />,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Recovering private key from collected shares...',
+    );
+    expect(screen.getByLabelText('Source Package')).toBeDisabled();
+    expect(screen.getByLabelText('Package Password')).toBeDisabled();
+
+    const remove = screen.getByRole('button', { name: 'Remove Share #2 source' });
+    expect(remove).toBeDisabled();
+    fireEvent.click(remove);
+    expect(onRemoveSource).not.toHaveBeenCalled();
+
+    const add = screen.getByRole('button', { name: 'Add Source' });
+    expect(add).toBeDisabled();
+    fireEvent.click(add);
+    expect(onAddSource).not.toHaveBeenCalled();
+
+    const next = screen.getByRole('button', { name: 'Recovering...' });
+    expect(next).toBeDisabled();
+    expect(next).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('can render the Paper fixed recovery source set without add or remove controls', () => {
+    render(
+      <RecoverCollectSharesPanel
+        sources={[{ packageText: '', packagePassword: '' }]}
+        threshold={2}
+        collectedCount={1}
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+        sourceControls="fixed"
+      />,
+    );
+
+    expect(screen.getByText('Share #1 (this device)')).toBeInTheDocument();
+    expect(screen.getByText('Share #2')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add Source' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument();
+  });
+
+  it('shows when the local recovery share is locked behind the device passphrase', () => {
+    render(
+      <RecoverCollectSharesPanel
+        sources={[
+          { packageText: '', packagePassword: '' },
+          { packageText: '', packagePassword: '' },
+        ]}
+        threshold={2}
+        collectedCount={0}
+        deviceShareState="locked"
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+        sourceControls="fixed"
+      />,
+    );
+
+    expect(screen.getByRole('group', { name: 'Share #1 (this device): Passphrase required' })).toBeInTheDocument();
+    expect(screen.getByText('Passphrase required')).toBeInTheDocument();
+    expect(screen.getByText('0 of 2 required')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next Step' })).toBeDisabled();
+  });
+
+  it('asks for this device passphrase and flags duplicate local packages during recover collection', () => {
+    const onLocalPassphraseChange = vi.fn();
+    const onSubmitLocalPassphrase = vi.fn();
+
+    const { rerender } = render(
+      <RecoverCollectSharesPanel
+        sources={[
+          { packageText: 'bfprofile1local', packagePassword: 'local-pass', duplicateOfLocal: true },
+          { packageText: '', packagePassword: '' },
+        ]}
+        threshold={2}
+        collectedCount={0}
+        deviceShareLabel="This Device Share (#2)"
+        deviceShareState="locked"
+        localPassphrase=""
+        onLocalPassphraseChange={onLocalPassphraseChange}
+        onSubmitLocalPassphrase={onSubmitLocalPassphrase}
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+        sourceControls="fixed"
+      />,
+    );
+
+    expect(screen.getByRole('group', { name: 'This Device Share (#2): Passphrase required' })).toBeInTheDocument();
+    expect(screen.getByText(/Unlock this profile or provide enough remote source packages/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unlock Share' })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Profile Passphrase'), {
+      target: { value: 'device-passphrase' },
+    });
+    expect(onLocalPassphraseChange).toHaveBeenCalledWith('device-passphrase');
+    expect(onSubmitLocalPassphrase).not.toHaveBeenCalled();
+
+    rerender(
+      <RecoverCollectSharesPanel
+        sources={[
+          { packageText: 'bfprofile1local', packagePassword: 'local-pass', duplicateOfLocal: true },
+          { packageText: '', packagePassword: '' },
+        ]}
+        threshold={2}
+        collectedCount={0}
+        deviceShareLabel="This Device Share (#2)"
+        deviceShareState="locked"
+        localPassphrase="device-passphrase"
+        onLocalPassphraseChange={onLocalPassphraseChange}
+        onSubmitLocalPassphrase={onSubmitLocalPassphrase}
+        onChangeSource={vi.fn()}
+        onAddSource={vi.fn()}
+        onRemoveSource={vi.fn()}
+        onNext={vi.fn()}
+        sourceControls="fixed"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock Share' }));
+    expect(onSubmitLocalPassphrase).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Local share')).toBeInTheDocument();
+    expect(screen.getByText(/matches this device/i)).toBeInTheDocument();
+    expect(screen.getByText('0 of 2 required')).toBeInTheDocument();
   });
 
   it('renders stored profile card models on landing and dispatches explicit actions', () => {
@@ -317,6 +706,18 @@ describe('shared host flow components', () => {
     expect(screen.getByText('Threshold')).toBeInTheDocument();
     expect(screen.getByText('Existing Private Key (optional)')).toBeInTheDocument();
     expect(screen.getByText('Any 2 of 3 shares can sign - min threshold is 2, min shares is 3')).toBeInTheDocument();
+    const thresholdHelp = screen.getByRole('button', { name: 'About threshold' });
+    const totalSharesHelp = screen.getByRole('button', { name: 'About total shares' });
+    const existingPrivateKeyHelp = screen.getByRole('button', { name: 'About existing private keys' });
+    expect(thresholdHelp).toHaveAttribute('data-tooltip-placement', 'right');
+    expect(totalSharesHelp).toHaveAttribute('data-tooltip-placement', 'right');
+    expect(existingPrivateKeyHelp).toHaveAttribute('data-tooltip-placement', 'right');
+    expect(thresholdHelp).not.toHaveAttribute('title');
+    const thresholdTooltip = document.getElementById(thresholdHelp.getAttribute('aria-describedby') ?? '');
+    expect(thresholdTooltip).toHaveClass('igloo-tooltip-content');
+    expect(thresholdTooltip).toHaveTextContent(/The minimum number of shares required to sign/);
+    expect(screen.getByText(/Specify the total number of shares to create/)).toBeInTheDocument();
+    expect(screen.getByText(/Provide an existing nsec or hex private key/)).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Group Name'), {
       target: { value: 'Treasury Signers' },
@@ -335,10 +736,53 @@ describe('shared host flow components', () => {
     expect(onGenerate).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the Paper select-share step with group public key copy', () => {
+  it('locks create-flow keyset inputs while generation is in flight', () => {
+    render(
+      <CreateFlowGenerateCard
+        groupName="Treasury Signers"
+        threshold="2"
+        count="3"
+        privateKey="nsec1existing"
+        onChangeForm={vi.fn()}
+        onGenerate={vi.fn()}
+        onBack={vi.fn()}
+        actionBusy
+      />,
+    );
+
+    expect(screen.getByLabelText('Group Name')).toBeDisabled();
+    expect(screen.getByLabelText('Threshold')).toBeDisabled();
+    expect(screen.getByLabelText('Total Shares')).toBeDisabled();
+    expect(screen.getByLabelText('Existing Private Key (optional)')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Decrease Threshold' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Increase Threshold' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Back to Welcome' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generating...' })).toBeDisabled();
+  });
+
+  it('renders the create-flow private key validation state inline', () => {
+    render(
+      <CreateFlowGenerateCard
+        groupName=""
+        threshold="2"
+        count="3"
+        privateKey="not-a-valid-key"
+        privateKeyError="Invalid private key format."
+        onChangeForm={vi.fn()}
+        onGenerate={vi.fn()}
+      />,
+    );
+
+    const privateKey = screen.getByLabelText('Existing Private Key (optional)');
+    expect(privateKey).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByText('Invalid private key format.')).toHaveClass('igloo-field-error');
+    expect(screen.queryByText(/Provide an existing key/)).not.toBeInTheDocument();
+  });
+
+  it('renders the select-share group public key as info in npub and raw hex formats', () => {
     const onSelectShare = vi.fn();
-    const onCopyGroupPublicKey = vi.fn();
     const onAction = vi.fn();
+    const groupHex = 'ab'.repeat(32);
 
     render(
       <CreateFlowShareSelection
@@ -349,23 +793,47 @@ describe('shared host flow components', () => {
         ]}
         selectedMemberIdx={1}
         keysetName="My Signing Key"
-        groupPublicKey="group-pub-1"
+        groupPublicKey={groupHex}
+        groupPublicKeyNpub="npub1group...demo"
+        groupPublicKeyHex={groupHex}
         onSelectShare={onSelectShare}
-        onCopyGroupPublicKey={onCopyGroupPublicKey}
         onAction={onAction}
       />,
     );
 
     expect(screen.getByText('Choose Local Share')).toBeInTheDocument();
-    expect(screen.getByText('group-pub-1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Copy group public key' }));
-    expect(onCopyGroupPublicKey).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('npub1group...demo')).toBeInTheDocument();
+    expect(screen.getByText(groupHex)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copy group public key' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Share 3/i }));
     expect(onSelectShare).toHaveBeenCalledWith(2);
 
     fireEvent.click(screen.getByRole('button', { name: 'Next Step' }));
     expect(onAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('locks select-share choices while the local share is being saved', () => {
+    render(
+      <CreateFlowShareSelection
+        shares={[
+          { name: 'Share 1', member_idx: 0, share_public_key: 'share-pub-1' },
+          { name: 'Share 2', member_idx: 1, share_public_key: 'share-pub-2' },
+        ]}
+        selectedMemberIdx={0}
+        keysetName="My Signing Key"
+        groupPublicKey="npub1group...demo"
+        onSelectShare={vi.fn()}
+        onAction={vi.fn()}
+        onBack={vi.fn()}
+        actionBusy
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /Share 1/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Share 2/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Go Back' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Continuing...' })).toBeDisabled();
   });
 
   it('renders the Paper save-profile setup surface without peer permissions', () => {
@@ -411,6 +879,35 @@ describe('shared host flow components', () => {
     expect(onAction).toHaveBeenCalledTimes(1);
   });
 
+  it('locks save-profile inputs while the local profile is being saved', () => {
+    render(
+      <CreateFlowProfileSetup
+        draft={{
+          label: 'Igloo Web',
+          relayUrls: 'wss://relay.primal.net\nwss://relay.example.com',
+          primarySecret: 'secret',
+          secondarySecret: 'secret',
+        }}
+        actionLabel="Next Step"
+        onLabelChange={vi.fn()}
+        onPrimarySecretChange={vi.fn()}
+        onSecondarySecretChange={vi.fn()}
+        onRelaysChange={vi.fn()}
+        onAction={vi.fn()}
+        onBack={vi.fn()}
+        actionBusy
+      />,
+    );
+
+    expect(screen.getByLabelText('Device Profile Name')).toBeDisabled();
+    expect(screen.getByLabelText('Device Password')).toBeDisabled();
+    expect(screen.getByLabelText('Confirm Password')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Remove wss://relay.example.com' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Add relay' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go Back' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Saving...' })).toBeDisabled();
+  });
+
   it('keeps the device name editable on the onboard save surface while relays stay locked', () => {
     const onLabelChange = vi.fn();
 
@@ -440,9 +937,7 @@ describe('shared host flow components', () => {
   });
 
   it('renders rotate-keyset source and recovery share inputs separately', () => {
-    const onChangeSourceProfile = vi.fn();
     const onChangeRotationSource = vi.fn();
-    const onAddRotationSource = vi.fn();
     const onRemoveRotationSource = vi.fn();
     const onRotate = vi.fn();
 
@@ -450,31 +945,151 @@ describe('shared host flow components', () => {
       <RotateKeysetPanel
         sourceProfileId="profile-1"
         availableProfiles={[{ id: 'profile-1', label: 'Primary Browser Device' }]}
-        rotationSources={[{ packageText: '', packagePassword: '' }]}
-        onChangeSourceProfile={onChangeSourceProfile}
+        localSourceLabel="Share #1 (this device)"
+        threshold={2}
+        collectedCount={2}
+        rotationSources={[{ packageText: 'bfprofile1source', packagePassword: 'source-pass' }]}
+        onChangeSourceProfile={vi.fn()}
         onChangeRotationSource={onChangeRotationSource}
-        onAddRotationSource={onAddRotationSource}
+        onAddRotationSource={vi.fn()}
         onRemoveRotationSource={onRemoveRotationSource}
         onRotate={onRotate}
       />,
     );
 
-    expect(screen.getByRole('heading', { name: 'Rotate Keyset' })).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Source Profile'), {
-      target: { value: 'profile-1' },
+    expect(screen.getByRole('group', { name: 'Share #1 (this device): Ready' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Source Profile')).not.toBeInTheDocument();
+    expect(screen.getByText('Remote Source #1')).toBeInTheDocument();
+    expect(screen.getByText('Shares Collected')).toBeInTheDocument();
+    expect(screen.getByText('2 of 2 required')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Source Package'), {
+      target: { value: 'bfprofile1...' },
     });
-    expect(onChangeSourceProfile).toHaveBeenCalledWith('profile-1');
+    expect(onChangeRotationSource).toHaveBeenCalledWith(0, 'packageText', 'bfprofile1...');
 
-    fireEvent.change(screen.getByLabelText('bfshare'), {
-      target: { value: 'bfshare1...' },
-    });
-    expect(onChangeRotationSource).toHaveBeenCalledWith(0, 'packageText', 'bfshare1...');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add bfshare Source' }));
-    expect(onAddRotationSource).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Rotate Keyset' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next Step' }));
     expect(onRotate).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks for this device passphrase and flags duplicate local packages during rotate collection', () => {
+    const onLocalPassphraseChange = vi.fn();
+    const onSubmitLocalPassphrase = vi.fn();
+
+    const { rerender } = render(
+      <RotateKeysetPanel
+        sourceProfileId="profile-1"
+        availableProfiles={[{ id: 'profile-1', label: 'Primary Browser Device' }]}
+        localSourceLabel="Share #2 (this device)"
+        localSourceState="locked"
+        localPassphrase=""
+        threshold={2}
+        collectedCount={0}
+        rotationSources={[
+          { packageText: 'bfprofile1local', packagePassword: 'local-pass', duplicateOfLocal: true },
+        ]}
+        onChangeSourceProfile={vi.fn()}
+        onLocalPassphraseChange={onLocalPassphraseChange}
+        onSubmitLocalPassphrase={onSubmitLocalPassphrase}
+        onChangeRotationSource={vi.fn()}
+        onAddRotationSource={vi.fn()}
+        onRemoveRotationSource={vi.fn()}
+        onRotate={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('group', { name: 'Share #2 (this device): Passphrase required' })).toBeInTheDocument();
+    expect(screen.getByText(/This device share is available but not counted yet/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unlock Share' })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Profile Passphrase'), {
+      target: { value: 'device-passphrase' },
+    });
+    expect(onLocalPassphraseChange).toHaveBeenCalledWith('device-passphrase');
+    expect(onSubmitLocalPassphrase).not.toHaveBeenCalled();
+    rerender(
+      <RotateKeysetPanel
+        sourceProfileId="profile-1"
+        availableProfiles={[{ id: 'profile-1', label: 'Primary Browser Device' }]}
+        localSourceLabel="Share #2 (this device)"
+        localSourceState="locked"
+        localPassphrase="device-passphrase"
+        threshold={2}
+        collectedCount={0}
+        rotationSources={[
+          { packageText: 'bfprofile1local', packagePassword: 'local-pass', duplicateOfLocal: true },
+        ]}
+        onChangeSourceProfile={vi.fn()}
+        onLocalPassphraseChange={onLocalPassphraseChange}
+        onSubmitLocalPassphrase={onSubmitLocalPassphrase}
+        onChangeRotationSource={vi.fn()}
+        onAddRotationSource={vi.fn()}
+        onRemoveRotationSource={vi.fn()}
+        onRotate={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock Share' }));
+    expect(onSubmitLocalPassphrase).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Remote Source #1')).toBeInTheDocument();
+    expect(screen.getByText('Local share')).toBeInTheDocument();
+    expect(screen.getByText(/matches this device/i)).toBeInTheDocument();
+    expect(screen.getByText('0 of 2 required')).toBeInTheDocument();
+  });
+
+  it('shows rotate source profile and add controls only when needed', () => {
+    const onChangeSourceProfile = vi.fn();
+    const onAddRotationSource = vi.fn();
+
+    render(
+      <RotateKeysetPanel
+        sourceProfileId="profile-1"
+        availableProfiles={[
+          { id: 'profile-1', label: 'Primary Browser Device' },
+          { id: 'profile-2', label: 'Laptop Device' },
+        ]}
+        localSourceLabel="Share #1 (this device)"
+        threshold={3}
+        collectedCount={1}
+        rotationSources={[{ packageText: '', packagePassword: '' }]}
+        onChangeSourceProfile={onChangeSourceProfile}
+        onChangeRotationSource={vi.fn()}
+        onAddRotationSource={onAddRotationSource}
+        onRemoveRotationSource={vi.fn()}
+        onRotate={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText('Source Profile'), {
+      target: { value: 'profile-2' },
+    });
+    expect(onChangeSourceProfile).toHaveBeenCalledWith('profile-2');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Source' }));
+    expect(onAddRotationSource).toHaveBeenCalledTimes(1);
+  });
+
+  it('locks rotate-keyset source inputs while rotation is in flight', () => {
+    render(
+      <RotateKeysetPanel
+        sourceProfileId="profile-1"
+        availableProfiles={[{ id: 'profile-1', label: 'Primary Browser Device' }]}
+        localSourceLabel="Share #1 (this device)"
+        threshold={3}
+        collectedCount={2}
+        rotationSources={[{ packageText: 'bfshare1source', packagePassword: 'source-pass' }]}
+        onChangeSourceProfile={vi.fn()}
+        onChangeRotationSource={vi.fn()}
+        onAddRotationSource={vi.fn()}
+        onRemoveRotationSource={vi.fn()}
+        onRotate={vi.fn()}
+        actionBusy
+      />,
+    );
+
+    expect(screen.getByLabelText('Source Package')).toBeDisabled();
+    expect(screen.getByLabelText('Package Password')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Remove Remote Source #1' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add Source' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Rotating...' })).toBeDisabled();
   });
 
   it('renders the Paper replace-share package entry section', () => {
@@ -494,8 +1109,11 @@ describe('shared host flow components', () => {
       />,
     );
 
-    expect(screen.getByText('Onboarding Package')).toBeInTheDocument();
-    expect(screen.getByText('Paste a bfonboard1... package that was produced outside runtime, or scan its QR code.')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Replacement Package' })).toBeInTheDocument();
+    expect(screen.getByText('Replacement Package')).toBeInTheDocument();
+    expect(screen.getByText('Paste a prepared bfonboard1... replacement package, or scan its QR code.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'About replacement packages' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'About package passwords' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Scan QR' }));
     expect(onScanQr).toHaveBeenCalledTimes(1);
 
@@ -511,6 +1129,25 @@ describe('shared host flow components', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Replace Share' }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('locks replace-share package entry inputs while connecting', () => {
+    render(
+      <ReplaceSharePackageEntry
+        packageText="bfonboard1demo"
+        packagePassword="package-pass"
+        onPackageTextChange={vi.fn()}
+        onPackagePasswordChange={vi.fn()}
+        onScanQr={vi.fn()}
+        onSubmit={vi.fn()}
+        actionBusy
+      />,
+    );
+
+    expect(screen.getByTestId('rotation-package-input')).toBeDisabled();
+    expect(screen.getByTestId('rotation-password-input')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Scan QR' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Connecting...' })).toBeDisabled();
   });
 
   it('renders the Paper replace-share applying, failed, and success states', () => {
@@ -563,7 +1200,7 @@ describe('shared host flow components', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Replacement Failed' })).toBeInTheDocument();
-    expect(screen.getByText('Onboarding package did not apply')).toBeInTheDocument();
+    expect(screen.getByText('Replacement package did not apply')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole('button', { name: 'Back to Replace Share' }));
@@ -737,6 +1374,8 @@ describe('shared host flow components', () => {
     );
 
     expect(screen.getByText('Onboarding Package')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'About onboarding packages' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'About encryption passwords' })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('bfonboard'), {
       target: { value: 'bfonboard1example' },
     });
@@ -749,6 +1388,41 @@ describe('shared host flow components', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Apply Onboarding Package' }));
     expect(onConnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('locks onboarding package entry inputs while connecting', () => {
+    render(
+      <OnboardPackageEntry
+        packageText="bfonboard1example"
+        password="package-pass"
+        onPackageTextChange={vi.fn()}
+        onPasswordChange={vi.fn()}
+        onConnect={vi.fn()}
+        actionBusy
+      />,
+    );
+
+    expect(screen.getByLabelText('bfonboard')).toBeDisabled();
+    expect(screen.getByLabelText('Encryption Password')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Scan QR' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Connecting...' })).toBeDisabled();
+  });
+
+  it('locks import profile entry inputs while loading the profile', () => {
+    render(
+      <ImportProfileEntry
+        profileString="bfprofile1example"
+        password="backup-pass"
+        onProfileStringChange={vi.fn()}
+        onPasswordChange={vi.fn()}
+        onNext={vi.fn()}
+        actionBusy
+      />,
+    );
+
+    expect(screen.getByLabelText('Profile Backup')).toBeDisabled();
+    expect(screen.getByLabelText('Backup Password')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Importing...' })).toBeDisabled();
   });
 
   it('renders onboarding handshake and failure panels', () => {
@@ -806,6 +1480,7 @@ describe('shared host flow components', () => {
     expect(screen.getByText('My Signing Key')).toBeInTheDocument();
     expect(screen.getByText('2 of 3')).toBeInTheDocument();
     expect(screen.getByText('#0 (Index 0)')).toBeInTheDocument();
+    expect(screen.getByText('Peer Permissions')).toBeInTheDocument();
     expect(screen.getByText('3 total')).toBeInTheDocument();
     expect(screen.getByLabelText('Device Name')).toHaveValue('Remote Tablet');
 

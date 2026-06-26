@@ -18,9 +18,12 @@ type Props = {
   view: PolicyDashboardViewModel;
   loading?: boolean;
   onRefresh?: () => void;
+  refreshLoading?: boolean;
   onClearAllSitePermissions?: () => void;
+  clearAllSitePermissionsLoading?: boolean;
   onRevokeSitePermission?: (permissionId: string) => void;
   onClearAllPeerPermissions?: () => void;
+  clearAllPeerPermissionsLoading?: boolean;
   onPeerPolicyOverrideChange?: (
     pubkey: string,
     direction: 'request' | 'respond',
@@ -46,9 +49,12 @@ export function OperatorPermissionsPanel({
   view,
   loading = false,
   onRefresh,
+  refreshLoading = loading,
   onClearAllSitePermissions,
+  clearAllSitePermissionsLoading = false,
   onRevokeSitePermission,
   onClearAllPeerPermissions,
+  clearAllPeerPermissionsLoading = false,
   onPeerPolicyOverrideChange,
   // "Permissions" is the canonical user-facing term (the policies declare
   // permissions); Paper labels these sections "Signer Permissions" / "Peer
@@ -69,6 +75,8 @@ export function OperatorPermissionsPanel({
     (policy) => policy.respond.sign || policy.respond.ecdh
   ).length;
   const showSummary = Boolean(view.siteRows) || showPeerSummary;
+  const permissionsActionsBusy =
+    loading || refreshLoading || clearAllSitePermissionsLoading || clearAllPeerPermissionsLoading;
 
   return (
     <div className="space-y-6">
@@ -96,7 +104,14 @@ export function OperatorPermissionsPanel({
           action={
             <div className="flex gap-2">
               {onRefresh ? (
-                <Button variant="secondary" size="sm" onClick={onRefresh} disabled={loading}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  loading={refreshLoading}
+                  loadingLabel="Refreshing..."
+                  onClick={onRefresh}
+                  disabled={permissionsActionsBusy}
+                >
                   Refresh
                 </Button>
               ) : null}
@@ -104,8 +119,10 @@ export function OperatorPermissionsPanel({
                 <Button
                   variant="destructive"
                   size="sm"
+                  loading={clearAllSitePermissionsLoading}
+                  loadingLabel="Clearing..."
                   onClick={onClearAllSitePermissions}
-                  disabled={!siteRows.length}
+                  disabled={!siteRows.length || permissionsActionsBusy}
                 >
                   Clear All
                 </Button>
@@ -144,7 +161,12 @@ export function OperatorPermissionsPanel({
                         {permission.state}
                       </span>
                       {onRevokeSitePermission ? (
-                        <Button variant="secondary" size="sm" onClick={() => onRevokeSitePermission(permission.id)}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={permissionsActionsBusy}
+                          onClick={() => onRevokeSitePermission(permission.id)}
+                        >
                           Revoke
                         </Button>
                       ) : null}
@@ -163,7 +185,14 @@ export function OperatorPermissionsPanel({
         action={
           <div className="flex gap-2">
             {onRefresh ? (
-              <Button variant="secondary" size="sm" onClick={onRefresh} disabled={loading}>
+              <Button
+                variant="secondary"
+                size="sm"
+                loading={refreshLoading}
+                loadingLabel="Refreshing..."
+                onClick={onRefresh}
+                disabled={permissionsActionsBusy}
+              >
                 Refresh
               </Button>
             ) : null}
@@ -171,8 +200,10 @@ export function OperatorPermissionsPanel({
               <Button
                 variant="destructive"
                 size="sm"
+                loading={clearAllPeerPermissionsLoading}
+                loadingLabel="Clearing..."
                 onClick={onClearAllPeerPermissions}
-                disabled={!view.peerRows.length}
+                disabled={!view.peerRows.length || permissionsActionsBusy}
               >
                 {peerClearAllLabel}
               </Button>
@@ -203,6 +234,7 @@ export function OperatorPermissionsPanel({
                         ? (method, value) => onPeerPolicyOverrideChange(policy.pubkey, 'request', method, value)
                         : undefined
                     }
+                    disabled={permissionsActionsBusy}
                   />
                   <PermissionSection
                     title="Respond"
@@ -214,6 +246,7 @@ export function OperatorPermissionsPanel({
                         ? (method, value) => onPeerPolicyOverrideChange(policy.pubkey, 'respond', method, value)
                         : undefined
                     }
+                    disabled={permissionsActionsBusy}
                   />
                 </div>
               </div>
@@ -231,9 +264,10 @@ type PermissionSectionProps = {
   policy: PolicyMethodState;
   overrides?: PolicyMethodOverrideState;
   onChange?: (method: keyof PolicyMethodOverrideState, value: PolicyOverrideValue) => void;
+  disabled?: boolean;
 };
 
-function PermissionSection({ title, direction, policy, overrides, onChange }: PermissionSectionProps) {
+function PermissionSection({ title, direction, policy, overrides, onChange, disabled = false }: PermissionSectionProps) {
   return (
     <div className="space-y-2">
       <div className="text-[0.68rem] uppercase tracking-[0.18em] text-slate-400">{title}</div>
@@ -252,6 +286,7 @@ function PermissionSection({ title, direction, policy, overrides, onChange }: Pe
                 value={effectiveValue}
                 overrideValue={overrideValue}
                 editable={Boolean(onChange)}
+                disabled={disabled}
                 onClick={
                   onChange
                     ? () => onChange(method, nextOverrideValue(effectiveValue, overrideValue))
@@ -279,6 +314,7 @@ function MethodToken({
   value,
   overrideValue,
   editable,
+  disabled,
   onClick
 }: {
   direction: 'request' | 'respond';
@@ -287,6 +323,7 @@ function MethodToken({
   value: boolean;
   overrideValue: PolicyOverrideValue;
   editable?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
 }) {
   const content = `${direction} ${method}: ${label}`;
@@ -303,6 +340,7 @@ function MethodToken({
       as={editable ? 'button' : 'span'}
       ariaLabel={content}
       title={title}
+      disabled={disabled}
       onClick={editable ? onClick : undefined}
     />
   );

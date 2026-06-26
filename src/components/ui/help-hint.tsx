@@ -1,15 +1,16 @@
 import * as React from 'react';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Info } from 'lucide-react';
 
 import { cn } from '../../lib/utils';
-import { Tooltip } from './tooltip';
+import { Tooltip, type TooltipProps } from './tooltip';
 
 export type HelpHintProps = {
   content: React.ReactNode;
   ariaLabel: string;
-  placement?: 'top' | 'bottom';
+  placement?: TooltipProps['placement'];
   className?: string;
   iconSize?: number;
+  icon?: 'help' | 'info';
 };
 
 /**
@@ -23,22 +24,23 @@ export function HelpHint({
   ariaLabel,
   placement = 'bottom',
   className,
-  iconSize = 15,
+  iconSize = 14,
+  icon = 'help',
 }: HelpHintProps) {
+  const Icon = icon === 'info' ? Info : HelpCircle;
+
   return (
     <Tooltip
       className={className}
       content={content}
+      placement={placement}
       trigger={
         <button
           type="button"
           aria-label={ariaLabel}
-          data-placement={placement}
-          className={cn(
-            'inline-flex items-center justify-center rounded-full text-blue-400 outline-none transition-colors hover:text-blue-300 focus-visible:ring-2 focus-visible:ring-blue-400/60',
-          )}
+          className={cn('igloo-help-hint-trigger')}
         >
-          <HelpCircle size={iconSize} aria-hidden="true" />
+          <Icon size={iconSize} aria-hidden="true" />
         </button>
       }
     />

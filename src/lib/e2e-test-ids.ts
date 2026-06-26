@@ -21,6 +21,7 @@ export const CRITICAL_E2E_TEST_IDS = {
   welcomeResumeDevices: 'welcome-resume-devices',
   welcomeResumeDevice: 'welcome-resume-device',
   welcomeResumeDeviceButton: 'welcome-resume-device-button',
+  welcomeResumeDeviceForget: 'welcome-resume-device-forget',
   welcomeProfileMenuTrigger: 'welcome-profile-menu-trigger',
   welcomeProfileMenuRotate: 'welcome-profile-menu-rotate',
   welcomeProfileMenuRecover: 'welcome-profile-menu-recover',
@@ -34,6 +35,10 @@ export const CRITICAL_E2E_TEST_IDS = {
   createModeRotate: 'create-mode-rotate',
   createGenerateNext: 'create-generate-next',
   rotateSourceProfile: 'rotate-source-profile',
+  rotateLocalPassphrase: 'rotate-local-passphrase',
+  rotateLocalPassphraseSubmit: 'rotate-local-passphrase-submit',
+  recoverLocalPassphrase: 'recover-local-passphrase',
+  recoverLocalPassphraseSubmit: 'recover-local-passphrase-submit',
   rotateAddSource: 'rotate-add-source',
   rotateSubmit: 'rotate-submit',
   selectShareOption: 'select-share-option',
@@ -80,7 +85,9 @@ export const CRITICAL_E2E_TEST_IDS = {
   dashboardSettingsSidebar: 'dashboard-settings-sidebar',
   dashboardSettingsSidebarBody: 'dashboard-settings-sidebar-body',
   dashboardSettingsSidebarClose: 'dashboard-settings-sidebar-close',
-  // Merged identity/runtime card — split copy controls (npub default + hex caret)
+  // Merged identity/runtime card — group/keyset split copy control (npub default + hex caret).
+  // Share key ids remain reserved for older harnesses, but the signer dashboard
+  // no longer renders a share public key row.
   dashboardGroupKeyCopy: 'dashboard-group-key-copy',
   dashboardGroupKeyFormat: 'dashboard-group-key-format',
   dashboardShareKeyCopy: 'dashboard-share-key-copy',

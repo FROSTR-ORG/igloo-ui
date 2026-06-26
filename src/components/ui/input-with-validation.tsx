@@ -14,11 +14,13 @@ export function InputWithValidation({
   hint,
   ...props
 }: InputWithValidationProps) {
+  const ariaInvalid = error ? true : props['aria-invalid'];
   return (
     <div className="grid gap-2">
       <Input
-        className={cn(error ? 'border-rose-500/40 focus-visible:ring-rose-500' : '', className)}
+        className={cn(error ? 'border-rose-500/50 focus-visible:ring-rose-500/35' : '', className)}
         {...props}
+        aria-invalid={ariaInvalid}
       />
       {error ? <span className="text-xs text-rose-300">{error}</span> : null}
       {!error && hint ? <span className="text-xs text-slate-400">{hint}</span> : null}

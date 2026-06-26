@@ -39,7 +39,7 @@ export function RecoveryWorkspace({
             <CardTitle>Recover nsec</CardTitle>
             <HelpHint
               ariaLabel="About nsec recovery"
-              content="Provide the group package plus enough share packages to meet threshold, then reconstruct the original nsec."
+              content="Use the threshold number of shares to recover the original nsec."
             />
           </div>
           <Button type="button" size="sm" variant="secondary" onClick={() => onAddShareSlot()}>

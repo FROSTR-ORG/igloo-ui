@@ -1,9 +1,11 @@
 import * as React from 'react';
-import { AlertTriangle, Check, Copy, EyeOff, HelpCircle, KeyRound, Loader2, Pencil, Play, QrCode, RefreshCw, RotateCcw, Square, X } from 'lucide-react';
+import { AlertTriangle, Check, Copy, EyeOff, KeyRound, Pencil, Play, QrCode, RotateCcw, Square, X } from 'lucide-react';
 
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { HelpHint } from '../ui/help-hint';
 import { PasswordField } from '../ui/password-field';
+import { RelayList, type RelayNormalizeFn, type RelayPingFn } from '../ui/relay-list';
 import {
   PERMISSION_METHODS,
   PermissionTokenGroup,
@@ -24,6 +26,7 @@ export type SharedCreateFormState = {
 export type SharedRotationSource = {
   packageText: string;
   packagePassword: string;
+  duplicateOfLocal?: boolean;
 };
 
 export type SharedGeneratedShare = {
@@ -48,6 +51,11 @@ export type SharedDistributionResult = {
 
 export type SharedDistributionAction = 'prepare' | 'copy' | 'qr' | 'save' | 'mark' | 'cancel' | 'revert';
 
+export type SharedDistributionBusyAction = {
+  memberIdx: number;
+  kind: SharedDistributionAction;
+};
+
 export type SharedLocalSaveDraft = {
   label: string;
   relayUrls: string;
@@ -66,6 +74,25 @@ export type SharedPeerPermissionRow = {
   label: string;
   detail?: string;
   enabled: Array<'sign' | 'ecdh' | 'ping' | 'onboard'>;
+};
+
+const HELP_TEXT = {
+  threshold:
+    'The minimum number of shares required to sign. Must be at least 2 and no more than the total number of keys.',
+  totalShares:
+    'Specify the total number of shares to create and the required threshold to sign.',
+  existingPrivateKey:
+    'Provide an existing nsec or hex private key if you already have one. Leave this blank and Igloo will generate a new private key in the next step.',
+  onboardingPackage:
+    'A credential used to onboard a new peer/device into a keyset. Contains share data, onboarding peer key, and relay addresses. Encoded as bfonboard1... (bech32m).',
+  packagePassword:
+    'Encrypts the bfonboard package emitted for a remote device. The recipient needs this password to decrypt and adopt their share.',
+  profilePassword:
+    'Used to encrypt/decrypt a profile on this device.',
+  profileBackup:
+    'A full encrypted bfprofile1... backup of a saved profile. Import it on another device or keep it as an encrypted archive.',
+  backupPassword:
+    'Decrypts the encrypted profile backup so it can be reviewed and saved locally on this device.',
 };
 
 export function CreateFlowTaskBanner({
@@ -104,12 +131,29 @@ export function CreateFlowTaskBanner({
   );
 }
 
-function CreateActionRow({ onBack, children }: { onBack?: () => void; children: React.ReactNode }) {
+function CreateActionRow({
+  onBack,
+  backDisabled = false,
+  backLabel = 'Go Back',
+  children,
+}: {
+  onBack?: () => void;
+  backDisabled?: boolean;
+  backLabel?: string;
+  children: React.ReactNode;
+}) {
   if (!onBack) return <>{children}</>;
   return (
     <div className="igloo-create-action-row">
-      <Button type="button" variant="secondary" className="igloo-create-back-action" data-testid={CRITICAL_E2E_TEST_IDS.createBack} onClick={onBack}>
-        Go Back
+      <Button
+        type="button"
+        variant="secondary"
+        className="igloo-create-back-action"
+        data-testid={CRITICAL_E2E_TEST_IDS.createBack}
+        disabled={backDisabled}
+        onClick={onBack}
+      >
+        {backLabel}
       </Button>
       {children}
     </div>
@@ -121,21 +165,28 @@ export function CreateFlowGenerateCard({
   threshold,
   count,
   privateKey = '',
+  privateKeyError = null,
   onChangeForm,
   onGenerate,
   onBack,
+  actionBusy = false,
+  actionLoadingLabel = 'Generating...',
 }: {
   groupName: string;
   threshold: string;
   count: string;
   privateKey?: string;
+  privateKeyError?: string | null;
   onChangeForm: (
     field: 'groupName' | 'threshold' | 'count' | 'privateKey',
     value: string,
   ) => void;
   onGenerate: () => void;
   onBack?: () => void;
+  actionBusy?: boolean;
+  actionLoadingLabel?: string;
 }) {
+  const privateKeyErrorId = React.useId();
   const thresholdValue = Number.parseInt(threshold, 10) || 2;
   const countValue = Number.parseInt(count, 10) || 3;
   const thresholdSummary = `Any ${thresholdValue} of ${countValue} shares can sign - min threshold is 2, min shares is 3`;
@@ -155,6 +206,7 @@ export function CreateFlowGenerateCard({
           <input
             aria-label="Group Name"
             value={groupName}
+            disabled={actionBusy}
             onChange={(event) => onChangeForm('groupName', event.target.value)}
             placeholder="e.g. My Signing Key, Work Key..."
           />
@@ -166,6 +218,9 @@ export function CreateFlowGenerateCard({
         <CreateCounterControl
           label="Threshold"
           value={threshold}
+          helpContent={HELP_TEXT.threshold}
+          helpPlacement="right"
+          disabled={actionBusy}
           onDecrease={() => adjustNumber('threshold', -1)}
           onIncrease={() => adjustNumber('threshold', 1)}
           onChange={(value) => onChangeForm('threshold', value)}
@@ -174,6 +229,9 @@ export function CreateFlowGenerateCard({
         <CreateCounterControl
           label="Total Shares"
           value={count}
+          helpContent={HELP_TEXT.totalShares}
+          helpPlacement="right"
+          disabled={actionBusy}
           onDecrease={() => adjustNumber('count', -1)}
           onIncrease={() => adjustNumber('count', 1)}
           onChange={(value) => onChangeForm('count', value)}
@@ -185,24 +243,43 @@ export function CreateFlowGenerateCard({
       <label className="igloo-create-field">
         <span className="igloo-create-label-with-help">
           Existing Private Key (optional)
-          <HelpCircle size={14} aria-hidden="true" />
+          <HelpHint
+            ariaLabel="About existing private keys"
+            content={HELP_TEXT.existingPrivateKey}
+            placement="right"
+            iconSize={14}
+          />
         </span>
         <div className="igloo-create-private-row">
-          <div className="igloo-create-input-shell">
+          <div className={privateKeyError ? 'igloo-create-input-shell igloo-create-input-shell-error' : 'igloo-create-input-shell'}>
             <input
               aria-label="Existing Private Key (optional)"
               value={privateKey}
+              disabled={actionBusy}
+              aria-invalid={privateKeyError ? 'true' : undefined}
+              aria-describedby={privateKeyError ? privateKeyErrorId : undefined}
               onChange={(event) => onChangeForm('privateKey', event.target.value)}
               placeholder="Paste an nsec1... key or leave blank"
             />
             <EyeOff size={16} aria-hidden="true" />
           </div>
         </div>
-        <small>Provide an existing key, otherwise a new one will be generated for you in the next step.</small>
+        {privateKeyError ? (
+          <small id={privateKeyErrorId} className="igloo-field-error">{privateKeyError}</small>
+        ) : (
+          <small>Provide an existing key, otherwise a new one will be generated for you in the next step.</small>
+        )}
       </label>
 
-      <CreateActionRow onBack={onBack}>
-        <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.createGenerateNext} onClick={onGenerate}>
+      <CreateActionRow onBack={onBack} backDisabled={actionBusy} backLabel="Back to Welcome">
+        <Button
+          type="button"
+          className="igloo-create-primary-action"
+          data-testid={CRITICAL_E2E_TEST_IDS.createGenerateNext}
+          loading={actionBusy}
+          loadingLabel={actionLoadingLabel}
+          onClick={onGenerate}
+        >
           Next Step
         </Button>
       </CreateActionRow>
@@ -213,12 +290,18 @@ export function CreateFlowGenerateCard({
 function CreateCounterControl({
   label,
   value,
+  helpContent,
+  helpPlacement = 'bottom',
+  disabled = false,
   onDecrease,
   onIncrease,
   onChange,
 }: {
   label: string;
   value: string;
+  helpContent: React.ReactNode;
+  helpPlacement?: React.ComponentProps<typeof HelpHint>['placement'];
+  disabled?: boolean;
   onDecrease: () => void;
   onIncrease: () => void;
   onChange: (value: string) => void;
@@ -227,10 +310,15 @@ function CreateCounterControl({
     <label className="igloo-create-field">
       <span className="igloo-create-label-with-help">
         {label}
-        <HelpCircle size={14} aria-hidden="true" />
+        <HelpHint
+          ariaLabel={`About ${label.toLowerCase()}`}
+          content={helpContent}
+          placement={helpPlacement}
+          iconSize={14}
+        />
       </span>
       <div className="igloo-create-counter">
-        <button type="button" aria-label={`Decrease ${label}`} onClick={onDecrease}>
+        <button type="button" aria-label={`Decrease ${label}`} disabled={disabled} onClick={onDecrease}>
           -
         </button>
         <input
@@ -238,9 +326,10 @@ function CreateCounterControl({
           type="number"
           min={2}
           value={value}
+          disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
         />
-        <button type="button" aria-label={`Increase ${label}`} onClick={onIncrease}>
+        <button type="button" aria-label={`Increase ${label}`} disabled={disabled} onClick={onIncrease}>
           +
         </button>
       </div>
@@ -251,40 +340,111 @@ function CreateCounterControl({
 export function RotateKeysetPanel({
   sourceProfileId,
   availableProfiles,
+  localSourceLabel,
+  localSourceState,
+  localPassphrase = '',
   rotationSources,
+  threshold = 2,
+  collectedCount,
   onChangeSourceProfile,
+  onLocalPassphraseChange,
+  onSubmitLocalPassphrase,
   onChangeRotationSource,
   onAddRotationSource,
   onRemoveRotationSource,
   onRotate,
-  title = 'Rotate Keyset',
-  description = 'Select the source profile and add recovery shares for the existing keyset.',
-  actionLabel = 'Rotate Keyset',
+  onBack,
+  title,
+  description,
+  actionLabel = 'Next Step',
+  actionBusy = false,
+  actionLoadingLabel = 'Rotating...',
+  localPassphraseActionBusy = false,
+  localPassphraseError = null,
 }: {
   sourceProfileId: string;
   availableProfiles: Array<{ id: string; label: string }>;
+  localSourceLabel?: string;
+  localSourceState?: RecoverDeviceShareState;
+  localPassphrase?: string;
   rotationSources: SharedRotationSource[];
+  threshold?: number;
+  collectedCount?: number;
   onChangeSourceProfile: (profileId: string) => void;
+  onLocalPassphraseChange?: (value: string) => void;
+  onSubmitLocalPassphrase?: () => void;
   onChangeRotationSource: (index: number, field: 'packageText' | 'packagePassword', value: string) => void;
   onAddRotationSource: () => void;
   onRemoveRotationSource: (index: number) => void;
   onRotate: () => void;
+  onBack?: () => void;
   title?: string;
   description?: string;
   actionLabel?: string;
+  actionBusy?: boolean;
+  actionLoadingLabel?: string;
+  localPassphraseActionBusy?: boolean;
+  localPassphraseError?: string | null;
 }) {
+  const selectedProfileLabel = availableProfiles.find((profile) => profile.id === sourceProfileId)?.label;
+  const shouldShowProfileSelector = availableProfiles.length > 1 || !sourceProfileId;
+  const normalizedThreshold = Math.max(1, Math.trunc(threshold));
+  const effectiveLocalSourceState: RecoverDeviceShareState = localSourceState ?? (localSourceLabel ? 'validated' : 'locked');
+  const normalizedCollectedCount = Math.max(
+    0,
+    Math.trunc(collectedCount ?? (effectiveLocalSourceState === 'validated' ? 1 : 0)),
+  );
+  const displayedCollectedCount = Math.min(normalizedCollectedCount, normalizedThreshold);
+  const progress = Math.min(100, Math.round((displayedCollectedCount / normalizedThreshold) * 100));
+  const readyToRotate = normalizedCollectedCount >= normalizedThreshold;
+  const showLocalPassphrase = Boolean(localSourceLabel && effectiveLocalSourceState === 'locked' && onLocalPassphraseChange);
+  const localSourceStatus =
+    effectiveLocalSourceState === 'validated'
+      ? {
+          label: 'Ready',
+          detail: 'This device share is unlocked and counts toward the rotation threshold.',
+        }
+      : {
+          label: 'Passphrase required',
+          detail: 'This device share is available but not counted yet. Enter its profile passphrase, or provide enough remote source packages without it.',
+        };
+  const requiredRemoteSources = Math.max(1, normalizedThreshold - (effectiveLocalSourceState === 'validated' ? 1 : 0));
+  const canAddSource = rotationSources.length < requiredRemoteSources;
+  const localPassphraseReady = localPassphrase.trim().length > 0;
+  const collectionStatus = actionBusy
+    ? 'Rotating keyset from collected shares...'
+    : readyToRotate
+      ? 'Threshold met. Continue to select the local share for this device.'
+      : showLocalPassphrase
+        ? 'Enter this device passphrase or add enough remote source packages to continue.'
+        : 'Add another source package and password to continue.';
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="igloo-stack">
-        <label>
-          Source Profile
+    <div className="igloo-recover-collect igloo-rotate-collect">
+      {onBack ? (
+        <button
+          type="button"
+          className="igloo-recover-back"
+          data-testid={CRITICAL_E2E_TEST_IDS.createBack}
+          disabled={actionBusy}
+          onClick={onBack}
+        >
+          ‹ Back
+        </button>
+      ) : null}
+      {title || description ? (
+        <header className="igloo-rotate-collect-heading">
+          {title ? <h3>{title}</h3> : null}
+          {description ? <p>{description}</p> : null}
+        </header>
+      ) : null}
+      {shouldShowProfileSelector ? (
+        <label className="igloo-rotate-source-select">
+          <span>Source Profile</span>
           <select
             data-testid={CRITICAL_E2E_TEST_IDS.rotateSourceProfile}
             value={sourceProfileId}
+            disabled={actionBusy}
             onChange={(event) => onChangeSourceProfile(event.target.value)}
           >
             <option value="">Select a local profile</option>
@@ -295,51 +455,166 @@ export function RotateKeysetPanel({
             ))}
           </select>
         </label>
-        <div className="igloo-stack">
-          {rotationSources.map((source, index) => (
-            <div key={`rotation-source-${index}`} className="igloo-generated-card">
+      ) : null}
+      <div
+        className="igloo-recover-device-row"
+        data-state={effectiveLocalSourceState}
+        role="group"
+        aria-label={`${localSourceLabel ?? selectedProfileLabel ?? 'Local source share'}: ${localSourceStatus.label}`}
+      >
+        <div className="igloo-recover-device-main">
+          <strong>{localSourceLabel ?? selectedProfileLabel ?? 'Select a local source profile'}</strong>
+          <p>{localSourceStatus.detail}</p>
+        </div>
+        <span className="igloo-recover-device-badge" data-state={effectiveLocalSourceState}>
+          {effectiveLocalSourceState === 'validated' ? (
+            <Check size={14} aria-hidden="true" />
+          ) : (
+            <AlertTriangle size={14} aria-hidden="true" />
+          )}
+          {localSourceStatus.label}
+        </span>
+        {showLocalPassphrase ? (
+          <label className="igloo-rotate-local-passphrase">
+            <span>Profile Passphrase</span>
+            <div className="igloo-rotate-local-passphrase-row">
+              <PasswordField
+                data-testid={CRITICAL_E2E_TEST_IDS.rotateLocalPassphrase}
+                value={localPassphrase}
+                disabled={actionBusy || localPassphraseActionBusy}
+                onChange={(event) => onLocalPassphraseChange?.(event.target.value)}
+                placeholder="Enter this device profile passphrase"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="igloo-rotate-local-passphrase-submit"
+                data-testid={CRITICAL_E2E_TEST_IDS.rotateLocalPassphraseSubmit}
+                disabled={actionBusy || localPassphraseActionBusy || !localPassphraseReady || !onSubmitLocalPassphrase}
+                loading={localPassphraseActionBusy}
+                loadingLabel="Unlocking..."
+                onClick={onSubmitLocalPassphrase}
+              >
+                Unlock Share
+              </Button>
+            </div>
+            {localPassphraseError ? (
+              <p className="igloo-rotate-local-passphrase-error">{localPassphraseError}</p>
+            ) : null}
+          </label>
+        ) : null}
+      </div>
+      <div className="igloo-stack">
+        {rotationSources.map((source, index) => {
+          const sourceLabel = `Remote Source #${index + 1}`;
+          const sourceStatus = recoverSourceStatus(source, sourceLabel);
+          return (
+            <div
+              key={`rotation-source-${index}`}
+              className="igloo-generated-card igloo-recover-source-card"
+              role="group"
+              aria-label={`${sourceLabel}: ${sourceStatus.label}`}
+            >
               <header>
-                <strong>Recovery Share {index + 1}</strong>
-                <span>Add threshold bfshare packages to reconstruct the current keyset.</span>
+                <div className="igloo-recover-source-title-row">
+                  <strong>{sourceLabel}</strong>
+                  {sourceStatus.state !== 'empty' ? (
+                    <span className="igloo-recover-source-badge" data-state={sourceStatus.state}>
+                      {sourceStatus.label}
+                    </span>
+                  ) : null}
+                </div>
+                {sourceStatus.state !== 'empty' ? (
+                  <p className="igloo-recover-source-detail" data-state={sourceStatus.state}>
+                    {sourceStatus.detail}
+                  </p>
+                ) : null}
               </header>
               <label>
-                bfshare
+                Source Package
                 <Textarea
-                  className="min-h-[96px]"
+                  className="igloo-rotate-source-textarea"
                   value={source.packageText}
+                  disabled={actionBusy}
                   onChange={(event) => onChangeRotationSource(index, 'packageText', event.target.value)}
-                  placeholder="Paste bfshare1..."
+                  placeholder="Paste bfprofile or bfshare from another device or backup..."
                 />
               </label>
               <label>
                 Package Password
-                <input
-                  type="password"
-                  {...passwordManagerOptOutProps}
+                <PasswordField
                   value={source.packagePassword}
+                  disabled={actionBusy}
                   onChange={(event) => onChangeRotationSource(index, 'packagePassword', event.target.value)}
+                  placeholder="Enter password to decrypt"
                 />
               </label>
               <div className="igloo-button-row">
-                <Button type="button" size="sm" variant="secondary" onClick={() => onRemoveRotationSource(index)}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  aria-label={`Remove ${sourceLabel}`}
+                  disabled={actionBusy}
+                  onClick={() => onRemoveRotationSource(index)}
+                >
                   Remove
                 </Button>
               </div>
             </div>
-          ))}
+          );
+        })}
+        {canAddSource ? (
           <div className="igloo-button-row">
-            <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.rotateAddSource} onClick={onAddRotationSource}>
-              Add bfshare Source
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid={CRITICAL_E2E_TEST_IDS.rotateAddSource}
+              disabled={actionBusy}
+              onClick={onAddRotationSource}
+            >
+              Add Source
             </Button>
           </div>
+        ) : null}
+      </div>
+      <div className="igloo-recover-meter">
+        <div className="igloo-recover-meter-head">
+          <span>Shares Collected</span>
+          <span>{displayedCollectedCount} of {normalizedThreshold} required</span>
         </div>
-        <div className="igloo-button-row">
-          <Button type="button" size="sm" data-testid={CRITICAL_E2E_TEST_IDS.rotateSubmit} onClick={onRotate}>
-            {actionLabel}
-          </Button>
+        <div
+          className="igloo-recover-meter-track"
+          role="progressbar"
+          aria-label="Rotation threshold progress"
+          aria-valuemin={0}
+          aria-valuemax={normalizedThreshold}
+          aria-valuenow={displayedCollectedCount}
+          aria-valuetext={`${displayedCollectedCount} of ${normalizedThreshold} required`}
+        >
+          <div className="igloo-recover-meter-fill" style={{ width: `${progress}%` }} />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      <p className="igloo-recover-helper">
+        Old devices do not need to be online. Provide enough source packages and passwords to meet the threshold.
+      </p>
+      <p role="status" aria-live="polite" aria-label="Rotation collection status" className="igloo-recover-status">
+        {collectionStatus}
+      </p>
+      <Button
+        type="button"
+        className="igloo-create-primary-action"
+        data-testid={CRITICAL_E2E_TEST_IDS.rotateSubmit}
+        disabled={!readyToRotate || actionBusy}
+        loading={actionBusy}
+        loadingLabel={actionLoadingLabel}
+        onClick={onRotate}
+      >
+        {actionLabel}
+      </Button>
+    </div>
   );
 }
 
@@ -351,6 +626,8 @@ export function ReplaceSharePackageEntry({
   onSubmit,
   onScanQr,
   actionLabel = 'Replace Share',
+  actionBusy = false,
+  actionLoadingLabel = 'Connecting...',
 }: {
   packageText: string;
   packagePassword: string;
@@ -359,27 +636,42 @@ export function ReplaceSharePackageEntry({
   onSubmit: () => void;
   onScanQr?: () => void;
   actionLabel?: string;
+  actionBusy?: boolean;
+  actionLoadingLabel?: string;
 }) {
   return (
     <div className="igloo-replace-share-entry">
-      <section className="igloo-replace-package" aria-label="Onboarding Package">
+      <section className="igloo-replace-package" aria-label="Replacement Package">
         <label className="igloo-replace-field">
           <span className="igloo-create-label-with-help">
-            Onboarding Package
-            <HelpCircle size={14} aria-hidden="true" />
+            Replacement Package
+            <HelpHint
+              ariaLabel="About replacement packages"
+              content={HELP_TEXT.onboardingPackage}
+              placement="bottom"
+              iconSize={14}
+            />
           </span>
-          <small>Paste a bfonboard1... package that was produced outside runtime, or scan its QR code.</small>
+          <small>Paste a prepared bfonboard1... replacement package, or scan its QR code.</small>
           <Textarea
             className="igloo-replace-textarea"
             data-testid={CRITICAL_E2E_TEST_IDS.rotationPackageInput}
             value={packageText}
             onChange={(event) => onPackageTextChange(event.target.value)}
-            placeholder="Paste bfonboard1..."
+            placeholder="Paste bfonboard1... replacement package"
+            disabled={actionBusy}
           />
         </label>
 
         {onScanQr ? (
-          <Button type="button" size="sm" variant="secondary" className="igloo-replace-scan" onClick={onScanQr}>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            className="igloo-replace-scan"
+            disabled={actionBusy}
+            onClick={onScanQr}
+          >
             Scan QR
           </Button>
         ) : null}
@@ -389,12 +681,18 @@ export function ReplaceSharePackageEntry({
         <label className="igloo-replace-field">
           <span className="igloo-create-label-with-help">
             Package Password
-            <HelpCircle size={14} aria-hidden="true" />
+            <HelpHint
+              ariaLabel="About package passwords"
+              content={HELP_TEXT.packagePassword}
+              placement="bottom"
+              iconSize={14}
+            />
           </span>
           <PasswordField
             data-testid={CRITICAL_E2E_TEST_IDS.rotationPasswordInput}
             value={packagePassword}
             onChange={(event) => onPackagePasswordChange(event.target.value)}
+            disabled={actionBusy}
           />
         </label>
 
@@ -402,6 +700,8 @@ export function ReplaceSharePackageEntry({
           type="button"
           className="igloo-create-primary-action"
           data-testid={CRITICAL_E2E_TEST_IDS.rotationConnectSubmit}
+          loading={actionBusy}
+          loadingLabel={actionLoadingLabel}
           onClick={onSubmit}
         >
           {actionLabel}
@@ -442,7 +742,7 @@ export function ReplaceShareProgressPanel({
         <header>
           <h3 id="replace-share-applying-title">Applying Replacement</h3>
           <p>
-            Validating the onboarding package and replacing this device's local share.
+            Validating the replacement package and replacing this device's local share.
             The group public key and Group Profile stay the same.
           </p>
         </header>
@@ -468,7 +768,7 @@ export function ReplaceShareProgressPanel({
       </ol>
 
       <div className="igloo-replace-package-summary">
-        Onboarding package: {packageLabel} · {memberLabel}
+        Replacement package: {packageLabel} · {memberLabel}
       </div>
 
       {passphraseField ? <div className="igloo-replace-passphrase">{passphraseField}</div> : null}
@@ -513,7 +813,7 @@ export function ReplaceShareFailedPanel({
         <header>
           <h3 id="replace-share-failed-title">Replacement Failed</h3>
           <p>
-            The onboarding package could not be applied. Your current local share,
+            The replacement package could not be applied. Your current local share,
             group public key, and Group Profile were not changed.
           </p>
         </header>
@@ -523,7 +823,7 @@ export function ReplaceShareFailedPanel({
           <AlertTriangle size={14} />
         </span>
         <div>
-          <strong>Onboarding package did not apply</strong>
+          <strong>Replacement package did not apply</strong>
           <p>{message}</p>
         </div>
       </div>
@@ -774,40 +1074,59 @@ export function CreateFlowShareSelection({
   selectedMemberIdx,
   keysetName,
   groupPublicKey,
+  groupPublicKeyNpub,
+  groupPublicKeyHex,
   actionLabel = 'Next Step',
   onSelectShare,
-  onCopyGroupPublicKey,
   onAction,
   onBack,
+  actionBusy = false,
+  actionLoadingLabel = 'Continuing...',
 }: {
   shares: SharedGeneratedShare[];
   selectedMemberIdx: number | null;
   keysetName: string;
   groupPublicKey: string;
+  groupPublicKeyNpub?: string;
+  groupPublicKeyHex?: string;
   actionLabel?: string;
   onSelectShare: (memberIdx: number) => void;
-  onCopyGroupPublicKey: () => void;
+  onCopyGroupPublicKey?: () => void;
   onAction: () => void;
   onBack?: () => void;
+  actionBusy?: boolean;
+  actionLoadingLabel?: string;
 }) {
   const selectedShare = shares.find((share) => share.member_idx === selectedMemberIdx) ?? shares[0] ?? null;
+  const npubValue = groupPublicKeyNpub ?? (groupPublicKey.startsWith('npub1') ? groupPublicKey : null);
+  const hexValue = groupPublicKeyHex ?? (groupPublicKey.startsWith('npub1') ? null : groupPublicKey);
 
   return (
     <div className="igloo-create-profile-form">
       <section className="igloo-create-profile-panel">
         <header>
           <h3>Group Public Key</h3>
-          <p>Copy this key when you need to identify the new keyset outside this device.</p>
+          <p>Use these identifiers when you need to recognize the new keyset outside this device.</p>
         </header>
         <div className="igloo-create-profile-summary">
-          <div>
-            <span>{keysetName}</span>
-            <strong>{groupPublicKey}</strong>
-          </div>
-          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.selectShareCopyGroupKey} onClick={onCopyGroupPublicKey}>
-            <Copy size={13} aria-hidden="true" />
-            Copy group public key
-          </Button>
+          {npubValue ? (
+            <div>
+              <span>Keyset npub</span>
+              <strong>{npubValue}</strong>
+            </div>
+          ) : null}
+          {hexValue ? (
+            <div>
+              <span>Raw hex</span>
+              <strong>{hexValue}</strong>
+            </div>
+          ) : null}
+          {!npubValue && !hexValue ? (
+            <div>
+              <span>{keysetName}</span>
+              <strong>{groupPublicKey}</strong>
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -824,11 +1143,12 @@ export function CreateFlowShareSelection({
                 type="button"
                 key={share.member_idx}
                 className={isSelected ? 'igloo-create-share-option is-selected' : 'igloo-create-share-option'}
-                data-testid={CRITICAL_E2E_TEST_IDS.selectShareOption}
-                data-member-idx={share.member_idx}
-                onClick={() => onSelectShare(share.member_idx)}
-                aria-pressed={isSelected}
-              >
+	                data-testid={CRITICAL_E2E_TEST_IDS.selectShareOption}
+	                data-member-idx={share.member_idx}
+	                disabled={actionBusy}
+	                onClick={() => onSelectShare(share.member_idx)}
+	                aria-pressed={isSelected}
+	              >
                 <span className="igloo-create-share-radio" aria-hidden="true" />
                 <span className="igloo-create-share-copy">
                   <strong>{share.name}</strong>
@@ -843,8 +1163,15 @@ export function CreateFlowShareSelection({
         </div>
       </section>
 
-      <CreateActionRow onBack={onBack}>
-        <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.selectShareNext} onClick={onAction}>
+	      <CreateActionRow onBack={onBack} backDisabled={actionBusy}>
+        <Button
+          type="button"
+          className="igloo-create-primary-action"
+          data-testid={CRITICAL_E2E_TEST_IDS.selectShareNext}
+          loading={actionBusy}
+          loadingLabel={actionLoadingLabel}
+          onClick={onAction}
+        >
           {actionLabel}
         </Button>
       </CreateActionRow>
@@ -852,120 +1179,7 @@ export function CreateFlowShareSelection({
   );
 }
 
-export type RelayPingFn = (url: string) => Promise<{ latencyMs?: number; error?: string }>;
-
-type RelayPingState = { status: 'idle' | 'pinging' | 'ok' | 'failed'; latencyMs?: number };
-
-function RelayList({
-  relays,
-  onChange,
-  onPing,
-  readOnly = false,
-}: {
-  relays: string[];
-  onChange: (relays: string[]) => void;
-  onPing?: RelayPingFn;
-  readOnly?: boolean;
-}) {
-  const [pings, setPings] = React.useState<Record<string, RelayPingState>>({});
-  const [draft, setDraft] = React.useState('');
-
-  const runPing = React.useCallback(
-    async (url: string) => {
-      if (!onPing) return;
-      setPings((current) => ({ ...current, [url]: { status: 'pinging' } }));
-      const result = await onPing(url);
-      setPings((current) => ({
-        ...current,
-        [url]:
-          typeof result.latencyMs === 'number'
-            ? { status: 'ok', latencyMs: result.latencyMs }
-            : { status: 'failed' },
-      }));
-    },
-    [onPing],
-  );
-
-  // Auto-ping relays that don't yet have a recorded result (initial mount + new adds).
-  React.useEffect(() => {
-    for (const url of relays) {
-      if (!pings[url]) void runPing(url);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [relays]);
-
-  function addRelay() {
-    const next = draft.trim();
-    if (!next || relays.includes(next)) {
-      setDraft('');
-      return;
-    }
-    onChange([...relays, next]);
-    setDraft('');
-  }
-
-  return (
-    <div className="igloo-create-relay-list" data-testid={CRITICAL_E2E_TEST_IDS.relayList}>
-      {relays.map((relay) => {
-        const ping = pings[relay];
-        const status = ping?.status ?? 'idle';
-        const dotState = status === 'ok' ? 'online' : status === 'failed' ? 'offline' : status === 'pinging' ? 'warning' : 'idle';
-        return (
-          <div className="igloo-create-relay-row" key={relay} data-testid={CRITICAL_E2E_TEST_IDS.relayRow} data-relay-url={relay}>
-            <span className="igloo-create-relay-url">{relay}</span>
-            <span className="igloo-create-relay-status" aria-label={`Status: ${status}`}>
-              {status === 'pinging' ? (
-                <Loader2 size={14} aria-hidden="true" className="igloo-spin" />
-              ) : (
-                <StatusDot state={dotState} />
-              )}
-            </span>
-            <span className="igloo-create-relay-ping">{ping?.latencyMs != null ? `${ping.latencyMs}ms` : '---'}</span>
-            <button
-              type="button"
-              className="igloo-create-relay-icon"
-              aria-label={`Ping ${relay}`}
-              onClick={() => void runPing(relay)}
-              disabled={!onPing || status === 'pinging'}
-            >
-              <RefreshCw size={14} aria-hidden="true" />
-            </button>
-            {readOnly ? null : (
-              <button
-                type="button"
-                className="igloo-create-relay-icon igloo-create-relay-remove"
-                aria-label={`Remove ${relay}`}
-                onClick={() => onChange(relays.filter((entry) => entry !== relay))}
-              >
-                <X size={14} aria-hidden="true" />
-              </button>
-            )}
-          </div>
-        );
-      })}
-      {readOnly ? null : (
-        <div className="igloo-create-relay-add">
-          <input
-            aria-label="Add relay"
-            data-testid={CRITICAL_E2E_TEST_IDS.relayAddInput}
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                addRelay();
-              }
-            }}
-            placeholder="wss://relay.example.com"
-          />
-          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.relayAddSubmit} onClick={addRelay}>
-            Add Relay
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
+export type { RelayNormalizeFn, RelayPingFn };
 
 export function CreateFlowProfileSetup({
   draft,
@@ -975,10 +1189,13 @@ export function CreateFlowProfileSetup({
   onSecondarySecretChange,
   onRelaysChange,
   onPingRelay,
+  normalizeRelays,
   onAction,
   onBack,
   lockIdentity = false,
   lockName = lockIdentity,
+  actionBusy = false,
+  actionLoadingLabel = 'Saving...',
 }: {
   draft: SharedLocalSaveDraft;
   actionLabel: string;
@@ -987,6 +1204,7 @@ export function CreateFlowProfileSetup({
   onSecondarySecretChange: (value: string) => void;
   onRelaysChange: (relays: string[]) => void;
   onPingRelay?: RelayPingFn;
+  normalizeRelays?: RelayNormalizeFn;
   onAction: () => void;
   onBack?: () => void;
   lockIdentity?: boolean;
@@ -994,6 +1212,8 @@ export function CreateFlowProfileSetup({
   // callers are unchanged; the onboard flow opts out so the recipient can name
   // their own device while the keyset relays stay locked.
   lockName?: boolean;
+  actionBusy?: boolean;
+  actionLoadingLabel?: string;
 }) {
   const relayRows = draft.relayUrls
     .split(/\r?\n/)
@@ -1006,12 +1226,13 @@ export function CreateFlowProfileSetup({
         <span>Profile Name</span>
         <small>A name for this profile to identify it in the peer list.</small>
         <input
-          aria-label="Device Profile Name"
-          data-testid={CRITICAL_E2E_TEST_IDS.saveProfileName}
-          value={draft.label}
-          onChange={(event) => onLabelChange(event.target.value)}
-          readOnly={lockName}
-        />
+	          aria-label="Device Profile Name"
+	          data-testid={CRITICAL_E2E_TEST_IDS.saveProfileName}
+	          value={draft.label}
+	          disabled={actionBusy}
+	          onChange={(event) => onLabelChange(event.target.value)}
+	          readOnly={lockName}
+	        />
       </label>
 
       <section className="igloo-create-profile-section">
@@ -1023,20 +1244,22 @@ export function CreateFlowProfileSetup({
           <label>
             <span>Password</span>
             <PasswordField
-              aria-label="Device Password"
-              data-testid={CRITICAL_E2E_TEST_IDS.saveProfilePassword}
-              value={draft.primarySecret}
-              onChange={(event) => onPrimarySecretChange(event.target.value)}
-            />
+	              aria-label="Device Password"
+	              data-testid={CRITICAL_E2E_TEST_IDS.saveProfilePassword}
+	              value={draft.primarySecret}
+	              disabled={actionBusy}
+	              onChange={(event) => onPrimarySecretChange(event.target.value)}
+	            />
           </label>
           <label>
             <span>Confirm Password</span>
             <PasswordField
-              aria-label="Confirm Password"
-              data-testid={CRITICAL_E2E_TEST_IDS.saveProfileConfirm}
-              value={draft.secondarySecret ?? ''}
-              onChange={(event) => onSecondarySecretChange(event.target.value)}
-            />
+	              aria-label="Confirm Password"
+	              data-testid={CRITICAL_E2E_TEST_IDS.saveProfileConfirm}
+	              value={draft.secondarySecret ?? ''}
+	              disabled={actionBusy}
+	              onChange={(event) => onSecondarySecretChange(event.target.value)}
+	            />
           </label>
         </div>
       </section>
@@ -1048,13 +1271,21 @@ export function CreateFlowProfileSetup({
         <RelayList
           relays={relayRows}
           onChange={onRelaysChange}
-          onPing={onPingRelay}
-          readOnly={lockIdentity}
-        />
-      </section>
+	          onPing={onPingRelay}
+	          normalizeRelays={normalizeRelays}
+	          readOnly={lockIdentity || actionBusy}
+	        />
+	      </section>
 
-      <CreateActionRow onBack={onBack}>
-        <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.saveProfileNext} onClick={onAction}>
+	      <CreateActionRow onBack={onBack} backDisabled={actionBusy}>
+        <Button
+          type="button"
+          className="igloo-create-primary-action"
+          data-testid={CRITICAL_E2E_TEST_IDS.saveProfileNext}
+          loading={actionBusy}
+          loadingLabel={actionLoadingLabel}
+          onClick={onAction}
+        >
           {actionLabel}
         </Button>
       </CreateActionRow>
@@ -1071,6 +1302,8 @@ export function CreateFlowReviewPanel({
   onAccept,
   title = 'Review Device Profile',
   description = 'Confirm the local profile details before this browser initializes the signer and prepares remote bfonboard packages.',
+  actionBusy = false,
+  actionLoadingLabel = 'Continuing...',
 }: {
   profileName: string;
   sharePublicKey: string;
@@ -1080,6 +1313,8 @@ export function CreateFlowReviewPanel({
   onAccept: () => void;
   title?: string;
   description?: string;
+  actionBusy?: boolean;
+  actionLoadingLabel?: string;
 }) {
   const rows = [
     { label: 'Device Label', value: profileName },
@@ -1105,7 +1340,13 @@ export function CreateFlowReviewPanel({
           ))}
         </div>
       </section>
-      <Button type="button" className="igloo-create-primary-action" onClick={onAccept}>
+      <Button
+        type="button"
+        className="igloo-create-primary-action"
+        loading={actionBusy}
+        loadingLabel={actionLoadingLabel}
+        onClick={onAccept}
+      >
         {actionLabel}
       </Button>
     </div>
@@ -1179,6 +1420,8 @@ export function OnboardingClientCard({
   signerPubkey,
   onStart,
   onStop,
+  startBusy = false,
+  stopBusy = false,
 }: {
   running: boolean;
   relayCount: number;
@@ -1186,6 +1429,8 @@ export function OnboardingClientCard({
   signerPubkey?: string;
   onStart: () => void;
   onStop: () => void;
+  startBusy?: boolean;
+  stopBusy?: boolean;
 }) {
   const metaParts = [`${relayCount} ${relayCount === 1 ? 'relay' : 'relays'}`];
   if (typeof peerCount === 'number') {
@@ -1206,12 +1451,12 @@ export function OnboardingClientCard({
         <p>{metaParts.join(' · ')}</p>
       </div>
       {running ? (
-        <Button type="button" size="sm" variant="secondary" onClick={onStop}>
+        <Button type="button" size="sm" variant="secondary" loading={stopBusy} loadingLabel="Stopping..." onClick={onStop}>
           <Square size={13} aria-hidden="true" />
           Stop
         </Button>
       ) : (
-        <Button type="button" size="sm" onClick={onStart}>
+        <Button type="button" size="sm" loading={startBusy} loadingLabel="Starting..." onClick={onStart}>
           <Play size={13} aria-hidden="true" />
           Start
         </Button>
@@ -1228,6 +1473,7 @@ function CreateFlowDistributionCard({
   onTogglePermission,
   onChangeDraft,
   onDistribute,
+  busyAction = null,
 }: {
   share: SharedGeneratedShare;
   draft: SharedDistributionDraft;
@@ -1240,12 +1486,16 @@ function CreateFlowDistributionCard({
     value: string,
   ) => void;
   onDistribute: (memberIdx: number, kind: SharedDistributionAction) => void;
+  busyAction?: SharedDistributionBusyAction | null;
 }) {
   const status: SharedDistributionStatus = result?.status ?? 'draft';
   const isDraft = status === 'draft';
   const isPackaged = status === 'packaged';
   const isCompleted = status === 'delivered' || status === 'saved' || status === 'onboarded';
   const enabledPermissions = permissions ?? ['sign', 'ecdh', 'ping', 'onboard'];
+  const shareBusy = busyAction?.memberIdx === share.member_idx;
+  const isBusy = (kind: SharedDistributionAction) => shareBusy && busyAction?.kind === kind;
+  const isBlockedByBusy = (kind: SharedDistributionAction) => shareBusy && busyAction?.kind !== kind;
 
   const statusClass =
     status === 'onboarded'
@@ -1293,6 +1543,7 @@ function CreateFlowDistributionCard({
                 data-testid={CRITICAL_E2E_TEST_IDS.distributionPackagePassword}
                 type="password"
                 {...passwordManagerOptOutProps}
+                disabled={shareBusy}
                 value={draft.packagePassword}
                 onChange={(event) => {
                   onChangeDraft(share.member_idx, 'packagePassword', event.target.value);
@@ -1302,7 +1553,15 @@ function CreateFlowDistributionCard({
               />
             </label>
           </div>
-          <Button type="button" className="igloo-create-package-action" data-testid={CRITICAL_E2E_TEST_IDS.distributionPrepare} onClick={() => onDistribute(share.member_idx, 'prepare')}>
+          <Button
+            type="button"
+            className="igloo-create-package-action"
+            data-testid={CRITICAL_E2E_TEST_IDS.distributionPrepare}
+            loading={isBusy('prepare')}
+            loadingLabel="Creating..."
+            disabled={isBlockedByBusy('prepare')}
+            onClick={() => onDistribute(share.member_idx, 'prepare')}
+          >
             <KeyRound size={14} aria-hidden="true" />
             Create Package
           </Button>
@@ -1315,24 +1574,68 @@ function CreateFlowDistributionCard({
             <code>{packagePreview(result)}</code>
           </div>
           <div className="igloo-create-distribution-actions">
-            <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.distributionCopy} onClick={() => onDistribute(share.member_idx, 'copy')}>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid={CRITICAL_E2E_TEST_IDS.distributionCopy}
+              loading={isBusy('copy')}
+              loadingLabel="Copying..."
+              disabled={isBlockedByBusy('copy')}
+              onClick={() => onDistribute(share.member_idx, 'copy')}
+            >
               <Copy size={13} aria-hidden="true" />
               Copy
             </Button>
-            <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.distributionSave} onClick={() => onDistribute(share.member_idx, 'save')}>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid={CRITICAL_E2E_TEST_IDS.distributionSave}
+              loading={isBusy('save')}
+              loadingLabel="Saving..."
+              disabled={isBlockedByBusy('save')}
+              onClick={() => onDistribute(share.member_idx, 'save')}
+            >
               Save
             </Button>
-            <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.distributionQr} onClick={() => onDistribute(share.member_idx, 'qr')}>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid={CRITICAL_E2E_TEST_IDS.distributionQr}
+              loading={isBusy('qr')}
+              loadingLabel="Opening..."
+              disabled={isBlockedByBusy('qr')}
+              onClick={() => onDistribute(share.member_idx, 'qr')}
+            >
               <QrCode size={13} aria-hidden="true" />
               QR code
             </Button>
           </div>
           <div className="igloo-create-distribution-actions">
-            <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.distributionCancel} onClick={() => onDistribute(share.member_idx, 'cancel')}>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid={CRITICAL_E2E_TEST_IDS.distributionCancel}
+              loading={isBusy('cancel')}
+              loadingLabel="Cancelling..."
+              disabled={isBlockedByBusy('cancel')}
+              onClick={() => onDistribute(share.member_idx, 'cancel')}
+            >
               <X size={13} aria-hidden="true" />
               Cancel
             </Button>
-            <Button type="button" size="sm" data-testid={CRITICAL_E2E_TEST_IDS.distributionMark} onClick={() => onDistribute(share.member_idx, 'mark')}>
+            <Button
+              type="button"
+              size="sm"
+              data-testid={CRITICAL_E2E_TEST_IDS.distributionMark}
+              loading={isBusy('mark')}
+              loadingLabel="Marking..."
+              disabled={isBlockedByBusy('mark')}
+              onClick={() => onDistribute(share.member_idx, 'mark')}
+            >
               <Check size={13} aria-hidden="true" />
               Mark Delivered
             </Button>
@@ -1342,7 +1645,16 @@ function CreateFlowDistributionCard({
 
       {isCompleted ? (
         <div className="igloo-create-distribution-actions">
-          <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.distributionRevert} onClick={() => onDistribute(share.member_idx, 'revert')}>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            data-testid={CRITICAL_E2E_TEST_IDS.distributionRevert}
+            loading={isBusy('revert')}
+            loadingLabel="Reverting..."
+            disabled={isBlockedByBusy('revert')}
+            onClick={() => onDistribute(share.member_idx, 'revert')}
+          >
             <RotateCcw size={13} aria-hidden="true" />
             Revert
           </Button>
@@ -1363,6 +1675,9 @@ export function CreateFlowDistributionCards({
   onFinish,
   onBack,
   finishLabel = 'Finish Setup',
+  busyAction = null,
+  finishBusy = false,
+  finishLoadingLabel = 'Finishing...',
 }: {
   shares: SharedGeneratedShare[];
   drafts: Record<number, SharedDistributionDraft>;
@@ -1378,6 +1693,9 @@ export function CreateFlowDistributionCards({
   onFinish: () => void;
   onBack?: () => void;
   finishLabel?: string;
+  busyAction?: SharedDistributionBusyAction | null;
+  finishBusy?: boolean;
+  finishLoadingLabel?: string;
 }) {
   const orderedShares = [...shares].sort((a, b) => a.member_idx - b.member_idx);
 
@@ -1400,11 +1718,19 @@ export function CreateFlowDistributionCards({
             onTogglePermission={onTogglePermission}
             onChangeDraft={onChangeDraft}
             onDistribute={onDistribute}
+            busyAction={busyAction}
           />
         );
       })}
       <CreateActionRow onBack={onBack}>
-        <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.distributionFinish} onClick={onFinish}>
+        <Button
+          type="button"
+          className="igloo-create-primary-action"
+          data-testid={CRITICAL_E2E_TEST_IDS.distributionFinish}
+          loading={finishBusy}
+          loadingLabel={finishLoadingLabel}
+          onClick={onFinish}
+        >
           {finishLabel}
         </Button>
       </CreateActionRow>
@@ -1426,6 +1752,9 @@ export function CreateFlowDistributionSection({
   onBack,
   finishLabel,
   beforeCards,
+  busyAction,
+  finishBusy,
+  finishLoadingLabel,
 }: {
   bannerKicker?: string;
   bannerDescription?: React.ReactNode;
@@ -1447,6 +1776,9 @@ export function CreateFlowDistributionSection({
   onBack?: () => void;
   finishLabel?: string;
   beforeCards?: React.ReactNode;
+  busyAction?: SharedDistributionBusyAction | null;
+  finishBusy?: boolean;
+  finishLoadingLabel?: string;
 }) {
   return (
     <section className="igloo-create-distribution-form">
@@ -1466,6 +1798,9 @@ export function CreateFlowDistributionSection({
         onFinish={onFinish}
         onBack={onBack}
         finishLabel={finishLabel}
+        busyAction={busyAction}
+        finishBusy={finishBusy}
+        finishLoadingLabel={finishLoadingLabel}
       />
     </section>
   );
@@ -1478,6 +1813,8 @@ export function OnboardPackageEntry({
   onPasswordChange,
   onConnect,
   actionLabel = 'Apply Onboarding Package',
+  actionBusy = false,
+  actionLoadingLabel = 'Connecting...',
 }: {
   packageText: string;
   password: string;
@@ -1485,6 +1822,8 @@ export function OnboardPackageEntry({
   onPasswordChange: (value: string) => void;
   onConnect: () => void;
   actionLabel?: string;
+  actionBusy?: boolean;
+  actionLoadingLabel?: string;
 }) {
   const hasPackage = packageText.trim().startsWith('bfonboard1');
 
@@ -1494,7 +1833,12 @@ export function OnboardPackageEntry({
         <label className="igloo-onboard-field">
           <span className="igloo-create-label-with-help">
             Onboarding Package
-            <HelpCircle size={14} aria-hidden="true" />
+            <HelpHint
+              ariaLabel="About onboarding packages"
+              content={HELP_TEXT.onboardingPackage}
+              placement="bottom"
+              iconSize={14}
+            />
           </span>
           <small>Paste a bfonboard1... package or scan its QR code.</small>
           <Textarea
@@ -1503,10 +1847,11 @@ export function OnboardPackageEntry({
             value={packageText}
             onChange={(event) => onPackageTextChange(event.target.value)}
             placeholder="bfonboard1..."
+            disabled={actionBusy}
           />
         </label>
         <div className="igloo-onboard-scan-row">
-          <Button type="button" variant="secondary">
+          <Button type="button" variant="secondary" disabled={actionBusy}>
             <QrCode size={15} aria-hidden="true" />
             Scan QR
           </Button>
@@ -1520,17 +1865,30 @@ export function OnboardPackageEntry({
         <label className="igloo-onboard-field">
           <span className="igloo-create-label-with-help">
             Encryption Password
-            <HelpCircle size={14} aria-hidden="true" />
+            <HelpHint
+              ariaLabel="About encryption passwords"
+              content={HELP_TEXT.packagePassword}
+              placement="bottom"
+              iconSize={14}
+            />
           </span>
           <PasswordField
             aria-label="Encryption Password"
             data-testid={CRITICAL_E2E_TEST_IDS.onboardPasswordInput}
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
+            disabled={actionBusy}
           />
         </label>
       </section>
-      <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.onboardConnectSubmit} onClick={onConnect}>
+      <Button
+        type="button"
+        className="igloo-create-primary-action"
+        data-testid={CRITICAL_E2E_TEST_IDS.onboardConnectSubmit}
+        loading={actionBusy}
+        loadingLabel={actionLoadingLabel}
+        onClick={onConnect}
+      >
         {actionLabel}
       </Button>
     </div>
@@ -1544,6 +1902,8 @@ export function ImportProfileEntry({
   onPasswordChange,
   onNext,
   actionLabel = 'Next Step',
+  actionBusy = false,
+  actionLoadingLabel = 'Importing...',
 }: {
   profileString: string;
   password: string;
@@ -1551,6 +1911,8 @@ export function ImportProfileEntry({
   onPasswordChange: (value: string) => void;
   onNext: () => void;
   actionLabel?: string;
+  actionBusy?: boolean;
+  actionLoadingLabel?: string;
 }) {
   return (
     <div className="igloo-onboard-form">
@@ -1558,7 +1920,12 @@ export function ImportProfileEntry({
         <label className="igloo-onboard-field">
           <span className="igloo-create-label-with-help">
             Profile Backup
-            <HelpCircle size={14} aria-hidden="true" />
+            <HelpHint
+              ariaLabel="About profile backups"
+              content={HELP_TEXT.profileBackup}
+              placement="bottom"
+              iconSize={14}
+            />
           </span>
           <small>Paste the encrypted profile backup string.</small>
           <Textarea
@@ -1567,6 +1934,7 @@ export function ImportProfileEntry({
             value={profileString}
             onChange={(event) => onProfileStringChange(event.target.value)}
             placeholder="bfprofile1..."
+            disabled={actionBusy}
           />
         </label>
       </section>
@@ -1575,104 +1943,338 @@ export function ImportProfileEntry({
         <label className="igloo-onboard-field">
           <span className="igloo-create-label-with-help">
             Backup Password
-            <HelpCircle size={14} aria-hidden="true" />
+            <HelpHint
+              ariaLabel="About backup passwords"
+              content={HELP_TEXT.backupPassword}
+              placement="bottom"
+              iconSize={14}
+            />
           </span>
           <PasswordField
             aria-label="Backup Password"
             data-testid={CRITICAL_E2E_TEST_IDS.importPasswordInput}
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
+            disabled={actionBusy}
           />
         </label>
       </section>
-      <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.importNext} onClick={onNext}>
+      <Button
+        type="button"
+        className="igloo-create-primary-action"
+        data-testid={CRITICAL_E2E_TEST_IDS.importNext}
+        loading={actionBusy}
+        loadingLabel={actionLoadingLabel}
+        onClick={onNext}
+      >
         {actionLabel}
       </Button>
     </div>
   );
 }
 
-export type SharedRecoverSource = { packageText: string; packagePassword: string };
+export type SharedRecoverSource = {
+  packageText: string;
+  packagePassword: string;
+  duplicateOfLocal?: boolean;
+};
+export type RecoverDeviceShareState = 'validated' | 'locked';
+
+function recoverSourceStatus(source: SharedRecoverSource, share: number | string, hasRecoveryError = false) {
+  const shareLabel = typeof share === 'number' ? `Share #${share}` : share;
+  const hasPackage = source.packageText.trim().length > 0;
+  const hasPassword = source.packagePassword.trim().length > 0;
+
+  if (source.duplicateOfLocal && hasPackage) {
+    return {
+      state: 'error',
+      label: 'Local share',
+      detail: `${shareLabel} matches this device. Enter the profile passphrase above, or paste a different device's source package.`,
+    };
+  }
+
+  if (hasRecoveryError && hasPackage && hasPassword) {
+    return {
+      state: 'error',
+      label: 'Review required',
+      detail: `Check ${shareLabel} source package and password, then try again.`,
+    };
+  }
+
+  if (hasPackage && hasPassword) {
+    return {
+      state: 'ready',
+      label: 'Ready',
+      detail: `${shareLabel} can count toward the threshold.`,
+    };
+  }
+
+  if (hasPackage) {
+    return {
+      state: 'missing-password',
+      label: 'Password required',
+      detail: `Add the package password to count ${shareLabel}.`,
+    };
+  }
+
+  if (hasPassword) {
+    return {
+      state: 'missing-package',
+      label: 'Package required',
+      detail: `Paste the source package to count ${shareLabel}.`,
+    };
+  }
+
+  return {
+    state: 'empty',
+    label: 'Waiting',
+    detail: `Paste a source package and enter its password to count ${shareLabel}.`,
+  };
+}
 
 export function RecoverCollectSharesPanel({
   deviceShareLabel = 'Share #1 (this device)',
+  deviceShareState = 'validated',
+  localPassphrase = '',
   sources,
   threshold,
   collectedCount,
+  onLocalPassphraseChange,
+  onSubmitLocalPassphrase,
   onChangeSource,
   onAddSource,
   onRemoveSource,
   onNext,
   actionLabel = 'Next Step',
+  actionBusy = false,
+  actionLoadingLabel = 'Recovering...',
+  localPassphraseActionBusy = false,
+  localPassphraseError = null,
+  sourceControls = 'editable',
+  error = null,
 }: {
   deviceShareLabel?: string;
+  deviceShareState?: RecoverDeviceShareState;
+  localPassphrase?: string;
   sources: SharedRecoverSource[];
   threshold: number;
   collectedCount: number;
+  onLocalPassphraseChange?: (value: string) => void;
+  onSubmitLocalPassphrase?: () => void;
   onChangeSource: (index: number, field: 'packageText' | 'packagePassword', value: string) => void;
   onAddSource: () => void;
   onRemoveSource: (index: number) => void;
   onNext: () => void;
   actionLabel?: string;
+  actionBusy?: boolean;
+  actionLoadingLabel?: string;
+  localPassphraseActionBusy?: boolean;
+  localPassphraseError?: string | null;
+  sourceControls?: 'editable' | 'fixed';
+  error?: string | null;
 }) {
   const pct = threshold > 0 ? Math.min(100, Math.round((collectedCount / threshold) * 100)) : 0;
+  const readyToRecover = collectedCount >= threshold;
+  const allowSourceEdits = sourceControls === 'editable';
+  const sourceInteractionDisabled = actionBusy;
+  const hasRecoveryError = Boolean(error);
+  const displayedCollectedCount = Math.min(collectedCount, threshold);
+  const showLocalPassphrase = deviceShareState === 'locked' && Boolean(onLocalPassphraseChange);
+  const localPassphraseReady = localPassphrase.trim().length > 0;
+  const deviceShareStatus =
+    deviceShareState === 'validated'
+      ? {
+          label: 'Validated',
+          detail: 'This device share can count toward the recovery threshold.',
+        }
+      : {
+          label: 'Passphrase required',
+          detail: 'Unlock this profile or provide enough remote source packages to meet the threshold.',
+        };
+  const recoveryStatus = hasRecoveryError
+    ? 'Recovery failed. Update the highlighted source package or password, then try again.'
+    : actionBusy
+      ? 'Recovering private key from collected shares...'
+      : readyToRecover
+        ? 'Threshold met. Continue to recover the private key.'
+        : 'Add another source package and password to continue.';
   return (
     <div className="igloo-recover-collect">
-      <div className="igloo-recover-device-row">
-        <strong>{deviceShareLabel}</strong>
-        <span className="igloo-recover-validated">
-          <Check size={14} aria-hidden="true" />
-          Validated
+      <div
+        className="igloo-recover-device-row"
+        data-state={deviceShareState}
+        role="group"
+        aria-label={`${deviceShareLabel}: ${deviceShareStatus.label}`}
+      >
+        <div className="igloo-recover-device-main">
+          <strong>{deviceShareLabel}</strong>
+          <p>{deviceShareStatus.detail}</p>
+        </div>
+        <span className="igloo-recover-device-badge" data-state={deviceShareState}>
+          {deviceShareState === 'validated' ? (
+            <Check size={14} aria-hidden="true" />
+          ) : (
+            <AlertTriangle size={14} aria-hidden="true" />
+          )}
+          {deviceShareStatus.label}
         </span>
-      </div>
-      <div className="igloo-stack">
-        {sources.map((source, index) => (
-          <div key={`recover-source-${index}`} className="igloo-generated-card">
-            <header>
-              <strong>Share #{index + 2}</strong>
-            </header>
-            <label>
-              Source Package
-              <Textarea
-                className="min-h-[96px]"
-                value={source.packageText}
-                onChange={(event) => onChangeSource(index, 'packageText', event.target.value)}
-                placeholder="Paste bfprofile or bfshare from another device or backup..."
-              />
-            </label>
-            <label>
-              Package Password
+        {showLocalPassphrase ? (
+          <label className="igloo-rotate-local-passphrase">
+            <span>Profile Passphrase</span>
+            <div className="igloo-rotate-local-passphrase-row">
               <PasswordField
-                value={source.packagePassword}
-                onChange={(event) => onChangeSource(index, 'packagePassword', event.target.value)}
+                data-testid={CRITICAL_E2E_TEST_IDS.recoverLocalPassphrase}
+                value={localPassphrase}
+                disabled={actionBusy || localPassphraseActionBusy}
+                onChange={(event) => onLocalPassphraseChange?.(event.target.value)}
+                placeholder="Enter this device profile passphrase"
               />
-            </label>
-            <div className="igloo-button-row">
-              <Button type="button" size="sm" variant="secondary" onClick={() => onRemoveSource(index)}>
-                Remove
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="igloo-rotate-local-passphrase-submit"
+                data-testid={CRITICAL_E2E_TEST_IDS.recoverLocalPassphraseSubmit}
+                disabled={actionBusy || localPassphraseActionBusy || !localPassphraseReady || !onSubmitLocalPassphrase}
+                loading={localPassphraseActionBusy}
+                loadingLabel="Unlocking..."
+                onClick={onSubmitLocalPassphrase}
+              >
+                Unlock Share
               </Button>
             </div>
+            {localPassphraseError ? (
+              <p className="igloo-rotate-local-passphrase-error">{localPassphraseError}</p>
+            ) : null}
+          </label>
+        ) : null}
+      </div>
+      <div className="igloo-stack">
+        {sources.length === 0 ? (
+          <div className="igloo-recover-source-empty" role="status" aria-label="Remote recovery sources">
+            <div className="igloo-recover-source-title-row">
+              <strong>No remote source packages added yet.</strong>
+              <span className="igloo-recover-source-badge" data-state="empty">Waiting</span>
+            </div>
+            <p className="igloo-recover-source-detail">
+              Add a source package from another device or backup to meet the threshold.
+            </p>
           </div>
-        ))}
-        <div className="igloo-button-row">
-          <Button type="button" size="sm" variant="secondary" onClick={onAddSource}>
-            Add Source
-          </Button>
-        </div>
+        ) : null}
+        {sources.map((source, index) => {
+          const shareNumber = index + 2;
+          const sourceStatus = recoverSourceStatus(source, shareNumber, hasRecoveryError);
+          return (
+            <div
+              key={`recover-source-${index}`}
+              className="igloo-generated-card igloo-recover-source-card"
+              role="group"
+              aria-label={`Share #${shareNumber} recovery source: ${sourceStatus.label}`}
+            >
+              <header>
+                <div className="igloo-recover-source-title-row">
+                  <strong>Share #{shareNumber}</strong>
+                  {sourceStatus.state !== 'empty' ? (
+                    <span className="igloo-recover-source-badge" data-state={sourceStatus.state}>
+                      {sourceStatus.label}
+                    </span>
+                  ) : null}
+                </div>
+                {sourceStatus.state !== 'empty' ? (
+                  <p className="igloo-recover-source-detail" data-state={sourceStatus.state}>
+                    {sourceStatus.detail}
+                  </p>
+                ) : null}
+              </header>
+              <label>
+                Source Package
+                <Textarea
+                  className="igloo-recover-source-textarea"
+                  value={source.packageText}
+                  disabled={sourceInteractionDisabled}
+                  aria-invalid={hasRecoveryError || undefined}
+                  onChange={(event) => onChangeSource(index, 'packageText', event.target.value)}
+                  placeholder="Paste bfprofile or bfshare from another device or backup..."
+                />
+              </label>
+              <label>
+                Package Password
+                <PasswordField
+                  value={source.packagePassword}
+                  disabled={sourceInteractionDisabled}
+                  aria-invalid={hasRecoveryError || undefined}
+                  onChange={(event) => onChangeSource(index, 'packagePassword', event.target.value)}
+                  placeholder="Enter password to decrypt"
+                />
+              </label>
+              {allowSourceEdits ? (
+                <div className="igloo-button-row">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    aria-label={`Remove Share #${shareNumber} source`}
+                    disabled={sourceInteractionDisabled}
+                    onClick={() => onRemoveSource(index)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+        {allowSourceEdits ? (
+          <div className="igloo-button-row">
+            <Button type="button" size="sm" variant="secondary" disabled={sourceInteractionDisabled} onClick={onAddSource}>
+              Add Source
+            </Button>
+          </div>
+        ) : null}
       </div>
       <div className="igloo-recover-meter">
         <div className="igloo-recover-meter-head">
           <span>Shares Collected</span>
           <span>{collectedCount} of {threshold} required</span>
         </div>
-        <div className="igloo-recover-meter-track">
+        <div
+          className="igloo-recover-meter-track"
+          role="progressbar"
+          aria-label="Recovery threshold progress"
+          aria-valuemin={0}
+          aria-valuemax={threshold}
+          aria-valuenow={Math.min(collectedCount, threshold)}
+          aria-valuetext={`${collectedCount} of ${threshold} required`}
+        >
           <div className="igloo-recover-meter-fill" style={{ width: `${pct}%` }} />
         </div>
       </div>
       <p className="igloo-recover-helper">
         Old devices do not need to be online. Provide enough source packages and passwords to meet the threshold.
       </p>
-      <Button type="button" className="igloo-create-primary-action" onClick={onNext}>
+      {error ? (
+        <div role="alert" aria-label="Recovery failed" className="igloo-recover-error">
+          <AlertTriangle size={14} aria-hidden="true" />
+          <div className="igloo-recover-error-body">
+            <strong>Recovery Failed</strong>
+            <p>{error}</p>
+            <code>
+              Shares: {displayedCollectedCount}/{threshold} (need {threshold})
+            </code>
+          </div>
+        </div>
+      ) : null}
+      <p role="status" aria-live="polite" aria-label="Recovery collection status" className="igloo-recover-status">
+        {recoveryStatus}
+      </p>
+      <Button
+        type="button"
+        className="igloo-create-primary-action"
+        disabled={!readyToRecover}
+        loading={actionBusy}
+        loadingLabel={actionLoadingLabel}
+        onClick={onNext}
+      >
         {actionLabel}
       </Button>
     </div>
@@ -1839,7 +2441,7 @@ export function OnboardCompletePanel({
   const deviceRows = [
     { label: 'Share Key', value: shareLabel },
     { label: 'Relays', value: `${preview.relays.length} connected` },
-    { label: 'Peer Policies', value: `${peerPolicyCount} total` },
+    { label: 'Peer Permissions', value: `${peerPolicyCount} total` },
   ];
 
   return (
@@ -1888,7 +2490,15 @@ export function OnboardCompletePanel({
       </section>
       <section className="igloo-onboard-password-section">
         <header>
-          <h3>Profile Password <HelpCircle size={13} aria-hidden="true" /></h3>
+          <h3>
+            Profile Password
+            <HelpHint
+              ariaLabel="About profile passwords"
+              content={HELP_TEXT.profilePassword}
+              placement="right"
+              iconSize={13}
+            />
+          </h3>
           <p>This password encrypts your profile on this device. You'll need it each time you unlock it.</p>
         </header>
         <div className="igloo-create-profile-passwords">

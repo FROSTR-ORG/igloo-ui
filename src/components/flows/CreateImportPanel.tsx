@@ -61,6 +61,21 @@ type Props = {
   onSaveGeneratedProfile: (share: GeneratedShareCard) => void;
 };
 
+const HELP_TEXT = {
+  threshold:
+    'The minimum number of shares required to sign. Must be at least 2 and no more than the total number of keys.',
+  totalShares: 'Specify the total number of shares to create and the required threshold to sign.',
+  relayConfiguration:
+    'Part of your device profile. You must be connected to at least one relay to communicate with other signers. Each peer configures their own relay list.',
+  onboardingPackage:
+    'A credential used to onboard a new peer/device into a keyset. Contains share data, onboarding peer key, and relay addresses. Encoded as bfonboard1... (bech32m).',
+  profilePassword: 'Used to encrypt/decrypt a profile on this device.',
+  packagePassword:
+    'Decrypts the onboarding package so this device can adopt its share and save a managed profile.',
+  generatedReview:
+    'Review the shared group package once, then save each member card as a separate managed desktop profile.',
+};
+
 export function CreateImportPanel({
   defaultTab = 'create',
   createForm,
@@ -114,7 +129,15 @@ export function CreateImportPanel({
               </section>
               <div className="igloo-two-up">
                 <label>
-                  Threshold
+                  <span className="igloo-create-label-with-help">
+                    Threshold
+                    <HelpHint
+                      ariaLabel="About threshold"
+                      content={HELP_TEXT.threshold}
+                      placement="right"
+                      iconSize={14}
+                    />
+                  </span>
                   <input
                     type="number"
                     min={2}
@@ -123,8 +146,17 @@ export function CreateImportPanel({
                   />
                 </label>
                 <label>
-                  Member count
+                  <span className="igloo-create-label-with-help">
+                    Total shares
+                    <HelpHint
+                      ariaLabel="About total shares"
+                      content={HELP_TEXT.totalShares}
+                      placement="right"
+                      iconSize={14}
+                    />
+                  </span>
                   <input
+                    aria-label="Total shares"
                     type="number"
                     min={2}
                     value={createForm.count}
@@ -146,7 +178,7 @@ export function CreateImportPanel({
                 <CardTitle>Load Profile</CardTitle>
                 <HelpHint
                   ariaLabel="About loading a profile"
-                  content="Use this when you already have exported group and share package JSON from another FROSTR environment."
+                  content="Use a bfonboard1... package to onboard a device or replace the loaded runtime share."
                 />
               </div>
               <CardDescription>
@@ -172,7 +204,15 @@ export function CreateImportPanel({
                   <input value={importForm.label} onChange={(event) => onChangeImportForm('label', event.target.value)} />
                 </label>
                 <label>
-                  Vault passphrase
+                  <span className="igloo-create-label-with-help">
+                    Vault passphrase
+                    <HelpHint
+                      ariaLabel="About vault passphrases"
+                      content={HELP_TEXT.profilePassword}
+                      placement="bottom"
+                      iconSize={14}
+                    />
+                  </span>
                   <input
                     type="password"
                     {...passwordManagerOptOutProps}
@@ -182,7 +222,15 @@ export function CreateImportPanel({
                 </label>
               </div>
               <label>
-                Relay URLs
+                <span className="igloo-create-label-with-help">
+                  Relay URLs
+                  <HelpHint
+                    ariaLabel="About relay configuration"
+                    content={HELP_TEXT.relayConfiguration}
+                    placement="bottom"
+                    iconSize={14}
+                  />
+                </span>
                 <Textarea
                   className="min-h-[72px]"
                   placeholder="One relay URL per line"
@@ -212,7 +260,7 @@ export function CreateImportPanel({
                 <CardTitle>Onboard Device</CardTitle>
                 <HelpHint
                   ariaLabel="About device onboarding"
-                  content="Paste the compact onboarding package and password to complete invite onboarding into a managed profile."
+                  content="A credential used to onboard a new peer/device into a keyset. Contains share data, onboarding peer key, and relay addresses. Encoded as bfonboard1... (bech32m)."
                 />
               </div>
               <CardDescription>
@@ -238,7 +286,15 @@ export function CreateImportPanel({
                   <input value={onboardingForm.label} onChange={(event) => onChangeOnboardingForm('label', event.target.value)} />
                 </label>
                 <label>
-                  Vault passphrase
+                  <span className="igloo-create-label-with-help">
+                    Vault passphrase
+                    <HelpHint
+                      ariaLabel="About vault passphrases"
+                      content={HELP_TEXT.profilePassword}
+                      placement="bottom"
+                      iconSize={14}
+                    />
+                  </span>
                   <input
                     type="password"
                     {...passwordManagerOptOutProps}
@@ -248,11 +304,27 @@ export function CreateImportPanel({
                 </label>
               </div>
               <label>
-                Package password
+                <span className="igloo-create-label-with-help">
+                  Package password
+                  <HelpHint
+                    ariaLabel="About package passwords"
+                    content={HELP_TEXT.packagePassword}
+                    placement="bottom"
+                    iconSize={14}
+                  />
+                </span>
                 <input type="password" {...passwordManagerOptOutProps} value={onboardingForm.password} onChange={(event) => onChangeOnboardingForm('password', event.target.value)} />
               </label>
               <label>
-                Onboarding package
+                <span className="igloo-create-label-with-help">
+                  Onboarding package
+                  <HelpHint
+                    ariaLabel="About onboarding packages"
+                    content={HELP_TEXT.onboardingPackage}
+                    placement="bottom"
+                    iconSize={14}
+                  />
+                </span>
                 <Textarea
                   className="min-h-[116px]"
                   placeholder="Paste bfonboard1... package text"
@@ -273,7 +345,7 @@ export function CreateImportPanel({
               <CardTitle>Generated Keyset Review</CardTitle>
               <HelpHint
                 ariaLabel="About the generated keyset review"
-                content="Review the shared group package once, then save each member card as a separate managed desktop profile."
+                content={HELP_TEXT.generatedReview}
               />
             </div>
             <CardDescription>
@@ -328,7 +400,15 @@ export function CreateImportPanel({
                         />
                       </label>
                       <label>
-                        Vault passphrase
+                        <span className="igloo-create-label-with-help">
+                          Vault passphrase
+                          <HelpHint
+                            ariaLabel={`About ${share.name} vault passphrase`}
+                            content={HELP_TEXT.profilePassword}
+                            placement="bottom"
+                            iconSize={14}
+                          />
+                        </span>
                         <input
                           type="password"
                           {...passwordManagerOptOutProps}
@@ -338,7 +418,15 @@ export function CreateImportPanel({
                       </label>
                     </div>
                     <label>
-                      Relay URLs
+                      <span className="igloo-create-label-with-help">
+                        Relay URLs
+                        <HelpHint
+                          ariaLabel={`About ${share.name} relay configuration`}
+                          content={HELP_TEXT.relayConfiguration}
+                          placement="bottom"
+                          iconSize={14}
+                        />
+                      </span>
                       <Textarea
                         className="min-h-[72px]"
                         placeholder="One relay URL per line"

@@ -6,6 +6,7 @@ export type ModalProps = {
   open: boolean;
   onClose: () => void;
   title?: React.ReactNode;
+  initialFocusRef?: React.RefObject<HTMLElement>;
   className?: string;
   children: React.ReactNode;
 };
@@ -24,9 +25,15 @@ export type ModalProps = {
  * while inheriting the hardened behavior. `ModalProps` is a strict subset of
  * `DialogProps`, so this is a direct forward.
  */
-export function Modal({ open, onClose, title, className, children }: ModalProps) {
+export function Modal({ open, onClose, title, initialFocusRef, className, children }: ModalProps) {
   return (
-    <Dialog open={open} onClose={onClose} title={title} className={className}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={title}
+      initialFocusRef={initialFocusRef}
+      className={className}
+    >
       {children}
     </Dialog>
   );

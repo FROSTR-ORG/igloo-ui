@@ -36,6 +36,35 @@ export type DashboardKeyModel = {
 
 export type DashboardKeyFormat = 'npub' | 'hex';
 
+export type PermissionMethodKey = 'ping' | 'onboard' | 'sign' | 'ecdh';
+
+export type DashboardAttentionModel = {
+  tone: 'info' | 'warning' | 'danger';
+  title: string;
+  description: string;
+  details?: DashboardAttentionDetailModel[];
+  actionLabel?: string;
+};
+
+export type DashboardAttentionDetailModel = {
+  label: string;
+  title?: string;
+  description?: string;
+  badges?: DashboardAttentionBadgeModel[];
+  callout?: string;
+};
+
+export type DashboardAttentionBadgeModel = {
+  label: string;
+  tone?: 'default' | 'danger' | 'warning' | 'success' | 'info';
+};
+
+export type DashboardSigningFailureModel = {
+  id: string;
+  message: string;
+  detail: string;
+};
+
 export type SignerDashboardViewModel = {
   profileName: string;
   thresholdLabel: string;
@@ -51,8 +80,10 @@ export type SignerDashboardViewModel = {
   running?: boolean;
   readinessLabel: string;
   relaySummary: string;
+  /** Actionable dashboard-level state such as missing relay configuration. */
+  attention?: DashboardAttentionModel;
   peerRows: PeerReadinessRowModel[];
-  /** Deferred interactive-approval feature: rendered as an empty-state card today. */
+  /** Pending runtime approval prompts rendered in the Paper dashboard approvals section. */
   pendingApprovalRows?: PendingApprovalRowModel[];
   pendingOperationRows: PendingOperationRowModel[];
   eventRows: EventLogRowModel[];
@@ -72,11 +103,21 @@ export type PeerReadinessRowModel = {
   pubkey: string;
   state: 'online' | 'warning' | 'offline' | 'idle';
   statusLabel: string;
+  permissionMethods?: PermissionMethodKey[];
   /** e.g. `last seen 5/31/2026, 2:14 PM` — omitted when the peer has never been seen. */
   lastSeenLabel?: string;
+  /** Recent ping latency in milliseconds, when the runtime has measured it. */
+  latencyMs?: number;
+  /** Recent peer-held nonce inventory counts, oldest to newest. */
+  nonceInventoryHistory?: PeerNonceInventorySampleModel[];
   incomingAvailable?: number;
   outgoingAvailable?: number;
   outgoingSpent?: number;
+};
+
+export type PeerNonceInventorySampleModel = {
+  updatedAt: number;
+  heldCount: number;
 };
 
 export type PolicyDashboardViewModel = {
@@ -104,10 +145,7 @@ export type SitePolicyRowModel = {
 };
 
 export type PolicyMethodState = {
-  ping: boolean;
-  onboard: boolean;
-  sign: boolean;
-  ecdh: boolean;
+  [method in PermissionMethodKey]: boolean;
 };
 
 export type PolicyOverrideValue = 'unset' | 'allow' | 'deny';
@@ -131,7 +169,18 @@ export type PendingOperationRowModel = {
 export type EventLogRowModel = {
   id: string;
   badgeLabel: string;
-  badgeTone: 'default' | 'success' | 'warning' | 'danger' | 'info';
+  badgeTone:
+    | 'default'
+    | 'success'
+    | 'warning'
+    | 'danger'
+    | 'info'
+    | 'sync'
+    | 'ecdh'
+    | 'ping'
+    | 'onboard'
+    | 'policy'
+    | 'echo';
   message: React.ReactNode;
   timestampLabel?: string;
 };

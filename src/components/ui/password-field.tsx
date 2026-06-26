@@ -17,12 +17,30 @@ export interface PasswordFieldProps
 export const PasswordField = React.forwardRef<HTMLInputElement, PasswordFieldProps>(
   ({ className, shellClassName, ...props }, ref) => {
     const [visible, setVisible] = React.useState(false);
+    const inputRef = React.useRef<HTMLInputElement>(null);
+    const invalid = props['aria-invalid'] === true || props['aria-invalid'] === 'true';
+
+    React.useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
+
+    const focusInputFromShell = (event: React.SyntheticEvent<HTMLDivElement>) => {
+      if (props.disabled) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('button,input,textarea,select,a')) return;
+      event.preventDefault();
+      inputRef.current?.focus();
+    };
+
     return (
-      <div className={cn('igloo-password-field', shellClassName)}>
+      <div
+        className={cn('igloo-password-field', shellClassName)}
+        data-invalid={invalid ? 'true' : undefined}
+        onMouseDown={focusInputFromShell}
+        onPointerDown={focusInputFromShell}
+      >
         <input
-          ref={ref}
+          ref={inputRef}
           type={visible ? 'text' : 'password'}
-          className={className}
+          className={cn('igloo-password-field-control', className)}
           {...passwordManagerOptOutProps}
           {...props}
         />
@@ -31,6 +49,7 @@ export const PasswordField = React.forwardRef<HTMLInputElement, PasswordFieldPro
           className="igloo-password-field-toggle"
           aria-label={visible ? 'Hide password' : 'Show password'}
           aria-pressed={visible}
+          disabled={props.disabled}
           onClick={() => setVisible((value) => !value)}
         >
           {visible ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}

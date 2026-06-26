@@ -39,6 +39,9 @@ export function ExportPackageModal({
 }: Props) {
   const [password, setPassword] = React.useState('');
   const [confirm, setConfirm] = React.useState('');
+  const passwordInputRef = React.useRef<HTMLInputElement>(null);
+  const passwordId = React.useId();
+  const confirmId = React.useId();
 
   // Reset entry fields whenever the modal opens/closes so a stale password never
   // lingers between exports.
@@ -53,15 +56,21 @@ export function ExportPackageModal({
   const canExport = password.length > 0 && password === confirm && !busy;
 
   return (
-    <Modal open={open} onClose={onClose} title={title} className="max-w-xl">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      initialFocusRef={passwordInputRef}
+      className="igloo-export-modal max-w-xl"
+    >
       {result ? (
-        <div className="igloo-stack" data-testid={TID.exportComplete}>
+        <div className="igloo-stack igloo-export-stack" data-testid={TID.exportComplete}>
           <p className="text-sm font-medium text-emerald-300">Backup Ready</p>
-          <pre className="igloo-code-block" data-testid={TID.exportResult}>{result}</pre>
+          <pre className="igloo-code-block igloo-export-result" data-testid={TID.exportResult}>{result}</pre>
           <p className="igloo-message-muted">
             Store this backup somewhere safe. Anyone with this file and the password can control your share.
           </p>
-          <div className="igloo-button-row">
+          <div className="igloo-button-row igloo-export-actions">
             <Button type="button" size="sm" data-testid={TID.exportCopy} onClick={() => onCopy(result)}>
               Copy
             </Button>
@@ -75,38 +84,50 @@ export function ExportPackageModal({
         </div>
       ) : (
         <form
-          className="igloo-stack"
+          className="igloo-stack igloo-export-stack"
           onSubmit={(event) => {
             event.preventDefault();
             if (canExport) onExport(password);
           }}
         >
           <p className="igloo-message-muted">{description}</p>
-          <p className="text-xs text-slate-500">{summary}</p>
-          <label className="igloo-onboard-field">
-            <span>Export Password</span>
+          <p className="igloo-export-summary">{summary}</p>
+          <div className="igloo-onboard-field igloo-export-field">
+            <label htmlFor={passwordId}>Export Password</label>
             <PasswordField
+              ref={passwordInputRef}
+              id={passwordId}
               data-testid={TID.exportPassword}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              disabled={busy}
             />
-          </label>
-          <label className="igloo-onboard-field">
-            <span>Confirm Password</span>
+          </div>
+          <div className="igloo-onboard-field igloo-export-field">
+            <label htmlFor={confirmId}>Confirm Password</label>
             <PasswordField
+              id={confirmId}
               data-testid={TID.exportConfirm}
               value={confirm}
               onChange={(event) => setConfirm(event.target.value)}
+              disabled={busy}
             />
-          </label>
+          </div>
           {mismatch ? <span className="igloo-field-error">Passwords do not match.</span> : null}
           {error ? <span className="igloo-field-error">{error}</span> : null}
-          <div className="igloo-button-row">
-            <Button type="button" size="sm" variant="secondary" onClick={onClose}>
+          <div className="igloo-button-row igloo-export-actions">
+            <Button type="button" size="sm" variant="secondary" onClick={onClose} disabled={busy}>
               Cancel
             </Button>
-            <Button type="submit" size="sm" data-testid={TID.exportSubmit} disabled={!canExport}>
-              {busy ? 'Exporting…' : 'Export'}
+            <Button
+              type="submit"
+              size="sm"
+              data-testid={TID.exportSubmit}
+              disabled={!canExport}
+              loading={busy}
+              loadingLabel="Exporting..."
+            >
+              Export
             </Button>
           </div>
         </form>

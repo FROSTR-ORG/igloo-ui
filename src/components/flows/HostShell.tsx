@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BookOpen, Feather, Github, Globe, Info, Lock, MoreVertical } from 'lucide-react';
+import { BookOpen, Feather, Github, Globe, Lock, MoreVertical } from 'lucide-react';
 
 import { CRITICAL_E2E_TEST_IDS, type CriticalE2ETestId } from '../../lib/e2e-test-ids';
 import type { StoredProfileCardModel } from '../../models/view-models';
@@ -8,7 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { ContentCard } from '../ui/content-card';
 import { Modal } from '../ui/modal';
 import { PasswordField } from '../ui/password-field';
+import { HelpHint } from '../ui/help-hint';
 import { StepIndicator } from '../ui/step-indicator';
+
+const WELCOME_HELP_TEXT = {
+  newKeyset: 'Generate a new set of signing keys and devices.',
+};
 
 export function WelcomeEntryHero({
   logoSrc,
@@ -18,6 +23,7 @@ export function WelcomeEntryHero({
   onOnboard,
   resumeDevices,
   onResumeDevice,
+  onForgetDevice,
 }: {
   logoSrc?: string;
   logoAlt?: string;
@@ -26,6 +32,7 @@ export function WelcomeEntryHero({
   onOnboard: () => void;
   resumeDevices?: WelcomeResumableDeviceModel[];
   onResumeDevice?: (deviceId: string) => void;
+  onForgetDevice?: (deviceId: string) => void;
 }) {
   return (
     <section className="igloo-welcome-entry" aria-labelledby="igloo-welcome-entry-title">
@@ -42,7 +49,13 @@ export function WelcomeEntryHero({
           <div className="igloo-welcome-entry-panel-heading">
             <div className="igloo-welcome-entry-title-row">
               <h3>Generate New Keyset</h3>
-              <Info size={14} aria-hidden="true" />
+              <HelpHint
+                ariaLabel="About generating a new keyset"
+                content={WELCOME_HELP_TEXT.newKeyset}
+                placement="right"
+                icon="info"
+                iconSize={14}
+              />
             </div>
           </div>
           <p>Generate a new threshold keyset and set up its first device profile.</p>
@@ -64,7 +77,7 @@ export function WelcomeEntryHero({
       </div>
 
       {resumeDevices?.length && onResumeDevice ? (
-        <WelcomeResumeDeviceList devices={resumeDevices} onResume={onResumeDevice} />
+        <WelcomeResumeDeviceList devices={resumeDevices} onResume={onResumeDevice} onForget={onForgetDevice} />
       ) : null}
 
       <PublicFocusFooter />
@@ -96,9 +109,11 @@ export type WelcomeResumableDeviceModel = {
 function WelcomeResumeDeviceList({
   devices,
   onResume,
+  onForget,
 }: {
   devices: WelcomeResumableDeviceModel[];
   onResume: (deviceId: string) => void;
+  onForget?: (deviceId: string) => void;
 }) {
   return (
     <div className="igloo-welcome-profile-list" data-testid={CRITICAL_E2E_TEST_IDS.welcomeResumeDevices}>
@@ -126,6 +141,18 @@ function WelcomeResumeDeviceList({
             >
               Resume
             </Button>
+            {onForget ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="igloo-welcome-resume-forget"
+                aria-label={`Forget ${device.label}`}
+                data-testid={CRITICAL_E2E_TEST_IDS.welcomeResumeDeviceForget}
+                onClick={() => onForget(device.id)}
+              >
+                Forget
+              </Button>
+            ) : null}
           </div>
         </div>
       ))}
@@ -133,9 +160,16 @@ function WelcomeResumeDeviceList({
   );
 }
 
-export function PublicFocusFooter() {
+export function PublicFocusFooter({
+  className,
+  variant = 'default',
+}: {
+  className?: string;
+  variant?: 'default' | 'dashboard';
+} = {}) {
+  const dashboardClass = variant === 'dashboard' ? ' igloo-dashboard-footer' : '';
   return (
-    <div className="igloo-welcome-entry-footer" aria-hidden="true">
+    <div className={`igloo-welcome-entry-footer${dashboardClass}${className ? ` ${className}` : ''}`} aria-hidden="true">
       <Globe size={16} />
       <BookOpen size={16} />
       <Github size={16} />
@@ -177,6 +211,7 @@ export function WelcomeReturningHero({
   onOnboard,
   resumeDevices,
   onResumeDevice,
+  onForgetDevice,
 }: {
   logoSrc?: string;
   logoAlt?: string;
@@ -191,6 +226,7 @@ export function WelcomeReturningHero({
   onOnboard: () => void;
   resumeDevices?: WelcomeResumableDeviceModel[];
   onResumeDevice?: (deviceId: string) => void;
+  onForgetDevice?: (deviceId: string) => void;
 }) {
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
   return (
@@ -288,7 +324,7 @@ export function WelcomeReturningHero({
         </div>
 
         {resumeDevices?.length && onResumeDevice ? (
-          <WelcomeResumeDeviceList devices={resumeDevices} onResume={onResumeDevice} />
+          <WelcomeResumeDeviceList devices={resumeDevices} onResume={onResumeDevice} onForget={onForgetDevice} />
         ) : null}
 
         <div className="igloo-welcome-entry-secondary">

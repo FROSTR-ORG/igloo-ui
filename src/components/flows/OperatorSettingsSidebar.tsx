@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { Copy, Download, Lock, PackagePlus, Pencil, QrCode, RotateCcw, ShieldAlert, Trash2, X } from 'lucide-react';
+import { Check, Copy, Download, Lock, PackagePlus, Pencil, QrCode, RotateCcw, ShieldAlert, Trash2, X } from 'lucide-react';
 
 import type { CriticalE2ETestId } from '../../lib/e2e-test-ids';
 import { CRITICAL_E2E_TEST_IDS as TID } from '../../lib/e2e-test-ids';
 import { cn } from '../../lib/utils';
 import { useFocusTrap } from '../../lib/use-focus-trap';
 import { Button } from '../ui/button';
-import { Dialog } from '../ui/dialog';
+import { ConfirmDialog, Dialog } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { PasswordField } from '../ui/password-field';
 import { Textarea } from '../ui/textarea';
@@ -79,16 +79,24 @@ export type OnboardDeviceSponsorResult = {
   label: string;
   memberLabel?: string;
   packageText: string;
+  sharePublicKeyLabel?: string;
   sharePublicKey?: string;
 };
+
+export type OnboardDeviceSponsorErrorField = keyof OnboardDeviceSponsorDraft;
 
 export type OnboardDeviceSponsorDialogProps = {
   open: boolean;
   draft: OnboardDeviceSponsorDraft;
   result?: OnboardDeviceSponsorResult | null;
   error?: string | null;
+  errorFields?: OnboardDeviceSponsorErrorField[];
   busy?: boolean;
   signerActive?: boolean;
+  handoffStatus?: string | null;
+  handoffStatusTone?: 'info' | 'success' | 'warning';
+  handoffAction?: 'copy' | 'save' | 'qr' | null;
+  cancelRequiresConfirmation?: boolean;
   onDraftChange: (field: keyof OnboardDeviceSponsorDraft, value: string) => void;
   onCreatePackage: (event: React.FormEvent<HTMLFormElement>) => void;
   onCopyPackage?: () => void;
@@ -205,10 +213,17 @@ export function OperatorSettingsSidebar({
 }: OperatorSettingsSidebarProps) {
   const panelRef = React.useRef<HTMLElement>(null);
   const titleId = React.useId();
-  const hasAdvancedSettings = showAdvancedSettings && Boolean(signerSettings || browserPreferences || permissions);
+  const profileNameId = React.useId();
+  const newRelayId = React.useId();
+  const onCloseRef = React.useRef(onClose);
+  const hasAdvancedSettings = showAdvancedSettings && Boolean(signerSettings || permissions);
   const profileSecurityAction = lockProfileAction ?? logoutAction;
 
   useFocusTrap(panelRef, open);
+
+  React.useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -219,7 +234,7 @@ export function OperatorSettingsSidebar({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.stopPropagation();
-        onClose();
+        onCloseRef.current();
       }
     };
 
@@ -227,6 +242,10 @@ export function OperatorSettingsSidebar({
     const frame = window.requestAnimationFrame(() => {
       const panel = panelRef.current;
       if (!panel) return;
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement && panel.contains(activeElement)) {
+        return;
+      }
       panel.focus();
     });
 
@@ -238,12 +257,12 @@ export function OperatorSettingsSidebar({
         previouslyFocused.focus();
       }
     };
-  }, [onClose, open]);
+  }, [open]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40">
+    <div className="fixed inset-0 z-[60]">
       <button
         type="button"
         aria-label="Close settings"
@@ -257,7 +276,7 @@ export function OperatorSettingsSidebar({
         aria-labelledby={titleId}
         tabIndex={-1}
         data-testid={TID.dashboardSettingsSidebar}
-        className="absolute right-0 top-0 flex h-full w-full max-w-[420px] flex-col overflow-hidden border-l border-blue-900/20 bg-[#111827] px-7 pb-8 pt-4 shadow-[-32px_0_90px_rgba(2,6,23,0.48)] outline-none"
+        className="absolute right-0 top-0 flex h-full w-full max-w-[420px] flex-col overflow-hidden border-l border-blue-900/20 bg-[#111827] px-4 pb-5 pt-4 shadow-[-32px_0_90px_rgba(2,6,23,0.48)] outline-none sm:px-7 sm:pb-8"
       >
         <div className="flex shrink-0 items-center justify-between">
           <h2 id={titleId} className="font-sharetech text-xl leading-6 text-blue-300">
@@ -268,7 +287,7 @@ export function OperatorSettingsSidebar({
             aria-label="Close settings"
             data-testid={TID.dashboardSettingsSidebarClose}
             onClick={onClose}
-            className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-blue-950/40 hover:text-blue-200 active:scale-[0.96] focus:outline-none focus:ring-2 focus:ring-blue-500/60"
+            className="grid h-10 w-10 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-blue-950/40 hover:text-blue-200 active:scale-[0.96] focus:outline-none focus:ring-2 focus:ring-blue-500/60"
           >
             <X className="h-4 w-4" />
           </button>
@@ -276,7 +295,7 @@ export function OperatorSettingsSidebar({
 
         <div
           data-testid={TID.dashboardSettingsSidebarBody}
-          className="-mx-7 mt-8 min-h-0 flex-1 overflow-y-auto px-7 pb-2"
+          className="-mx-4 mt-6 min-h-0 flex-1 overflow-y-auto px-4 pb-2 sm:-mx-7 sm:mt-8 sm:px-7"
         >
           {!hasProfile ? (
             <div className="rounded-lg border border-dashed border-blue-900/40 px-4 py-6 text-sm text-slate-400">
@@ -286,17 +305,25 @@ export function OperatorSettingsSidebar({
             <div className="space-y-8">
               <SidebarSection title="Device Profile">
                 <div className="overflow-hidden rounded-lg border border-blue-900/30 bg-slate-950/20">
-                  <label className="grid grid-cols-[minmax(0,0.72fr)_minmax(0,1fr)_auto] items-center gap-2 border-b border-blue-900/15 px-3.5 py-2.5">
-                    <span className="text-xs leading-4 text-slate-400">Profile Name</span>
-                    <Input
-                      value={signerName}
-                      onChange={(event) => onSignerNameChange(event.target.value)}
-                      placeholder="Unnamed signer"
-                      aria-label="Profile Name"
-                      className="h-7 border-0 bg-transparent px-0 py-0 text-right text-xs text-slate-100 shadow-none focus-visible:ring-0"
-                    />
-                    <Pencil className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
-                  </label>
+                  <div className="grid gap-2 border-b border-blue-900/15 px-3.5 py-3 sm:grid-cols-[minmax(0,0.55fr)_minmax(0,1fr)] sm:items-center">
+                    <label htmlFor={profileNameId} className="text-xs leading-4 text-slate-400">
+                      Profile Name
+                    </label>
+                    <div className="relative min-w-0">
+                      <Input
+                        id={profileNameId}
+                        value={signerName}
+                        onChange={(event) => onSignerNameChange(event.target.value)}
+                        placeholder="Unnamed signer"
+                        aria-label="Profile Name"
+                        spellCheck={false}
+                        autoCorrect="off"
+                        autoCapitalize="none"
+                        className="h-10 rounded-md border-blue-900/30 bg-slate-950/55 pl-3 pr-9 text-left text-sm text-slate-100 shadow-none hover:border-blue-500/40 focus-visible:border-blue-400/80 focus-visible:bg-slate-950/70 focus-visible:ring-2 focus-visible:ring-blue-500/25"
+                      />
+                      <Pencil className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" aria-hidden="true" />
+                    </div>
+                  </div>
 
                   {profilePasswordAction ? (
                     <div className="grid grid-cols-[minmax(0,0.72fr)_minmax(0,1fr)_auto] items-center gap-2 border-b border-blue-900/15 px-3.5 py-2.5">
@@ -316,17 +343,17 @@ export function OperatorSettingsSidebar({
                     </div>
                   ) : null}
 
-                  <div className="space-y-1.5 px-3 py-1.5">
+                  <div className="space-y-2 px-3 py-3">
                     {relays.map((relay) => (
-                      <div key={relay} className="grid grid-cols-[minmax(0,1fr)_2rem] items-center gap-2">
-                        <div className="min-w-0 rounded-md border border-blue-900/30 bg-slate-950/60 px-3 py-2 font-sharetech text-[13px] leading-4 text-slate-300">
+                      <div key={relay} className="grid grid-cols-[minmax(0,1fr)_2.5rem] items-center gap-2">
+                        <div className="min-w-0 rounded-md border border-blue-900/30 bg-slate-950/60 px-3 py-2.5 font-sharetech text-[13px] leading-4 text-slate-300">
                           <span className="block truncate">{relay}</span>
                         </div>
                         <button
                           type="button"
                           aria-label={`Remove ${relay}`}
                           onClick={() => onRemoveRelay(relay)}
-                          className="grid h-8 w-8 place-items-center rounded-md text-red-500 transition-colors hover:bg-red-500/10 hover:text-red-300 active:scale-[0.96] focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                          className="grid h-10 w-10 place-items-center rounded-md text-red-500 transition-colors hover:bg-red-500/10 hover:text-red-300 active:scale-[0.96] focus:outline-none focus:ring-2 focus:ring-red-500/50"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -334,13 +361,24 @@ export function OperatorSettingsSidebar({
                     ))}
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                       <Input
+                        id={newRelayId}
                         value={newRelayUrl}
                         onChange={(event) => onNewRelayUrlChange(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            onAddRelay();
+                          }
+                        }}
                         placeholder="wss://..."
                         aria-label="New relay URL"
-                        className="h-9 border-blue-900/30 bg-slate-950/60 font-sharetech text-[13px] text-slate-300 placeholder:text-slate-600"
+                        inputMode="url"
+                        spellCheck={false}
+                        autoCorrect="off"
+                        autoCapitalize="none"
+                        className="h-11 border-blue-900/30 bg-slate-950/60 font-sharetech text-[13px] text-slate-300 placeholder:text-slate-600 hover:border-blue-500/40 focus-visible:border-blue-400/80 focus-visible:bg-slate-950/75 focus-visible:ring-2 focus-visible:ring-blue-500/25"
                       />
-                      <Button type="button" size="sm" onClick={onAddRelay} className="active:scale-[0.96]">
+                      <Button type="button" size="sm" onClick={onAddRelay} className="min-h-11 px-4 active:scale-[0.96]">
                         Add
                       </Button>
                     </div>
@@ -356,10 +394,12 @@ export function OperatorSettingsSidebar({
                       type="button"
                       size="sm"
                       onClick={onSave}
+                      loading={saving}
+                      loadingLabel="Saving..."
                       disabled={saving || saveDisabled}
                       className="shrink-0 active:scale-[0.96]"
                     >
-                      {saving ? 'Saving...' : 'Save Changes'}
+                      Save Changes
                     </Button>
                   </div>
                 ) : null}
@@ -400,6 +440,12 @@ export function OperatorSettingsSidebar({
                     {exportProfileAction ? <ActionRow action={exportProfileAction} /> : null}
                     {exportShareAction ? <ActionRow action={exportShareAction} /> : null}
                   </div>
+                </SidebarSection>
+              ) : null}
+
+              {browserPreferences ? (
+                <SidebarSection title="Browser Settings">
+                  <div className="igloo-settings-sidebar-browser-preferences">{browserPreferences}</div>
                 </SidebarSection>
               ) : null}
 
@@ -451,10 +497,6 @@ export function OperatorSettingsSidebar({
                           />
                         </div>
                       </SidebarSection>
-                    ) : null}
-
-                    {browserPreferences ? (
-                      <SidebarSection title="Browser Settings">{browserPreferences}</SidebarSection>
                     ) : null}
 
                     {permissions ? <SidebarSection title="Peer Permissions">{permissions}</SidebarSection> : null}
@@ -643,6 +685,16 @@ function BoundaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function missingOnboardSponsorInputs(draft: OnboardDeviceSponsorDraft) {
+  const missing: string[] = [];
+  if (!draft.label.trim()) missing.push('device label');
+  if (!draft.sourcePackageText.trim()) missing.push('source bfshare');
+  if (!draft.sourcePackagePassword) missing.push('source password');
+  if (!draft.packagePassword) missing.push('package password');
+  if (!draft.confirmPackagePassword) missing.push('confirm package password');
+  return missing;
+}
+
 export function OnboardDeviceSponsorshipDialog({
   open,
   title = 'Onboard a Device',
@@ -663,7 +715,13 @@ export function OnboardDeviceSponsorDialog({
   draft,
   result = null,
   error = null,
+  errorFields = [],
   busy = false,
+  signerActive = true,
+  handoffStatus = null,
+  handoffStatusTone = 'success',
+  handoffAction = null,
+  cancelRequiresConfirmation = false,
   onDraftChange,
   onCreatePackage,
   onCopyPackage,
@@ -672,175 +730,319 @@ export function OnboardDeviceSponsorDialog({
   onCreateAnother,
   onClose,
 }: OnboardDeviceSponsorDialogProps) {
+  const [cancelConfirmOpen, setCancelConfirmOpen] = React.useState(false);
+  const passwordMismatchId = React.useId();
+  const creationErrorId = React.useId();
   const passwordsMismatch =
     draft.confirmPackagePassword.length > 0 && draft.packagePassword !== draft.confirmPackagePassword;
+  const missingInputs = missingOnboardSponsorInputs(draft);
   const createDisabled =
     busy ||
-    !draft.label.trim() ||
-    !draft.sourcePackageText.trim() ||
-    !draft.sourcePackagePassword ||
-    !draft.packagePassword ||
+    !signerActive ||
+    missingInputs.length > 0 ||
     draft.packagePassword !== draft.confirmPackagePassword;
+  const handoffBusy = Boolean(handoffAction);
+  const handoffStatusRole: 'alert' | 'status' = handoffStatusTone === 'warning' ? 'alert' : 'status';
+  const errorDescribesField = React.useCallback(
+    (field: OnboardDeviceSponsorErrorField) => Boolean(error && errorFields.includes(field)),
+    [error, errorFields],
+  );
+  const errorDescriptionForField = React.useCallback(
+    (field: OnboardDeviceSponsorErrorField) => (errorDescribesField(field) ? creationErrorId : undefined),
+    [creationErrorId, errorDescribesField],
+  );
+  const shouldConfirmCancel =
+    cancelRequiresConfirmation && !result && !busy && !handoffBusy;
+
+  React.useEffect(() => {
+    if (!open) setCancelConfirmOpen(false);
+  }, [open]);
+
+  const requestClose = React.useCallback(() => {
+    if (shouldConfirmCancel) {
+      setCancelConfirmOpen(true);
+      return;
+    }
+    onClose();
+  }, [onClose, shouldConfirmCancel]);
 
   return (
-    <Dialog open={open} onClose={onClose} title={title} className={cn('max-w-2xl', className)}>
-      {result ? (
-        <div className="space-y-5" data-testid={TID.settingsOnboardResult}>
-          <div className="rounded-lg border border-green-400/25 bg-green-400/[0.06] px-4 py-4">
-            <div className="flex items-start gap-3">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-green-400/15 text-green-200">
-                <PackagePlus className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-sharetech text-base leading-5 text-green-100">Package Handoff</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-300">
-                  {result.label} is ready as an encrypted bfonboard package.
-                </p>
+    <>
+      <Dialog
+        open={open}
+        onClose={requestClose}
+        title={title}
+        className={cn('max-w-2xl', className)}
+        preventDismissOnBackdrop={(busy && !result) || handoffBusy}
+        preventDismissOnEscape={(busy && !result) || handoffBusy}
+      >
+        {result ? (
+          <div className="space-y-5" data-testid={TID.settingsOnboardResult}>
+            <div className="rounded-lg border border-green-400/25 bg-green-400/[0.06] px-4 py-4">
+              <div className="flex items-start gap-3">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-green-400/15 text-green-200">
+                  <Check className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-sharetech text-base leading-5 text-green-100">Package Handoff</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    {result.label} is ready as an encrypted bfonboard package.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="overflow-hidden rounded-lg border border-blue-900/25 bg-slate-950/25">
-            <BoundaryRow label="Device" value={result.label} />
-            {result.memberLabel ? <BoundaryRow label="Member" value={result.memberLabel} /> : null}
-            {result.sharePublicKey ? <BoundaryRow label="Share pubkey" value={result.sharePublicKey} /> : null}
-          </div>
+            <div className="overflow-hidden rounded-lg border border-blue-900/25 bg-slate-950/25">
+              <BoundaryRow label="Device" value={result.label} />
+              {result.memberLabel ? <BoundaryRow label="Member" value={result.memberLabel} /> : null}
+              {result.sharePublicKeyLabel && result.sharePublicKey ? (
+                <>
+                  <BoundaryRow label="Share npub" value={result.sharePublicKeyLabel} />
+                  <BoundaryRow label="Share hex" value={result.sharePublicKey} />
+                </>
+              ) : result.sharePublicKeyLabel || result.sharePublicKey ? (
+                <BoundaryRow label="Share pubkey" value={result.sharePublicKeyLabel ?? result.sharePublicKey ?? ''} />
+              ) : null}
+            </div>
 
-          <div>
-            <label className="text-xs uppercase tracking-[0.08em] text-blue-300/80" htmlFor="settings-onboard-result-package">
-              bfonboard package
-            </label>
-            <Textarea
-              id="settings-onboard-result-package"
-              readOnly
-              rows={4}
-              value={result.packageText}
-              className="mt-2 border-blue-900/35 bg-slate-950/50 font-sharetech text-xs leading-5 text-blue-100"
+            <div>
+              <label className="text-xs uppercase tracking-[0.08em] text-blue-300/80" htmlFor="settings-onboard-result-package">
+                bfonboard package
+              </label>
+              <Textarea
+                id="settings-onboard-result-package"
+                readOnly
+                rows={4}
+                value={result.packageText}
+                className="mt-2 border-blue-900/35 bg-slate-950/50 font-sharetech text-xs leading-5 text-blue-100"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              {onCreateAnother ? (
+                <Button type="button" variant="outline" onClick={onCreateAnother} disabled={handoffBusy} className="gap-2">
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                  Create Another
+                </Button>
+              ) : (
+                <span aria-hidden="true" />
+              )}
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onCopyPackage}
+                  disabled={!onCopyPackage || (handoffBusy && handoffAction !== 'copy')}
+                  loading={handoffAction === 'copy'}
+                  loadingLabel="Copying..."
+                  className="gap-2"
+                  data-testid={TID.settingsOnboardCopy}
+                >
+                  <Copy className="h-4 w-4" aria-hidden="true" />
+                  Copy
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onSavePackage}
+                  disabled={!onSavePackage || (handoffBusy && handoffAction !== 'save')}
+                  loading={handoffAction === 'save'}
+                  loadingLabel="Saving..."
+                  className="gap-2"
+                  data-testid={TID.settingsOnboardSave}
+                >
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onShowQrPackage}
+                  disabled={!onShowQrPackage || (handoffBusy && handoffAction !== 'qr')}
+                  loading={handoffAction === 'qr'}
+                  loadingLabel="Opening..."
+                  className="gap-2"
+                  data-testid={TID.settingsOnboardQr}
+                >
+                  <QrCode className="h-4 w-4" aria-hidden="true" />
+                  QR code
+                </Button>
+                <Button type="button" onClick={onClose} disabled={handoffBusy}>
+                  Done
+                </Button>
+              </div>
+            </div>
+            {handoffStatus ? (
+              <p
+                role={handoffStatusRole}
+                aria-label="Onboard package handoff status"
+                aria-live={handoffStatusTone === 'warning' ? 'assertive' : 'polite'}
+                data-tone={handoffStatusTone}
+                className={cn(
+                  'text-sm leading-5',
+                  handoffStatusTone === 'warning'
+                    ? 'text-amber-200'
+                    : handoffStatusTone === 'info'
+                      ? 'text-blue-200'
+                      : 'text-green-200',
+                )}
+              >
+                {handoffStatus}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <form className="space-y-5" onSubmit={onCreatePackage}>
+            <div className="rounded-lg border border-blue-900/30 bg-slate-950/30 px-4 py-4">
+              <div className="flex items-start gap-3">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-blue-500/15 text-blue-300">
+                  <PackagePlus className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-sharetech text-base leading-5 text-blue-200">Configure Device</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    Convert a protected remote-member bfshare into an encrypted bfonboard handoff for this signer.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <OnboardTextField
+              label="Device Label"
+              value={draft.label}
+              onChange={(value) => onDraftChange('label', value)}
+              placeholder="Remote Device"
+              disabled={busy}
+              testId={TID.settingsOnboardDeviceLabel}
             />
-          </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <Button type="button" variant="outline" onClick={onCreateAnother} className="gap-2">
-              <RotateCcw className="h-4 w-4" aria-hidden="true" />
-              Create Another
-            </Button>
+            <div>
+              <label className="text-xs uppercase tracking-[0.08em] text-blue-300/80" htmlFor="settings-onboard-source-package">
+                Source bfshare
+              </label>
+              <Textarea
+                id="settings-onboard-source-package"
+                rows={5}
+                value={draft.sourcePackageText}
+                disabled={busy}
+                aria-invalid={errorDescribesField('sourcePackageText') || undefined}
+                aria-describedby={errorDescriptionForField('sourcePackageText')}
+                onChange={(event) => {
+                  if (!busy) onDraftChange('sourcePackageText', event.target.value);
+                }}
+                placeholder="bfshare1..."
+                data-testid={TID.settingsOnboardSourcePackage}
+                className="mt-2 border-blue-900/35 bg-slate-950/50 font-sharetech text-xs leading-5 text-blue-100 placeholder:text-slate-600"
+              />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <OnboardPasswordField
+                label="Source Password"
+                value={draft.sourcePackagePassword}
+                onChange={(value) => onDraftChange('sourcePackagePassword', value)}
+                disabled={busy}
+                invalid={errorDescribesField('sourcePackagePassword')}
+                describedBy={errorDescriptionForField('sourcePackagePassword')}
+                testId={TID.settingsOnboardSourcePassword}
+              />
+              <OnboardPasswordField
+                label="Package Password"
+                value={draft.packagePassword}
+                onChange={(value) => onDraftChange('packagePassword', value)}
+                disabled={busy}
+                invalid={errorDescribesField('packagePassword')}
+                describedBy={errorDescriptionForField('packagePassword')}
+                testId={TID.settingsOnboardPackagePassword}
+              />
+              <OnboardPasswordField
+                label="Confirm Package Password"
+                value={draft.confirmPackagePassword}
+                onChange={(value) => onDraftChange('confirmPackagePassword', value)}
+                disabled={busy}
+                invalid={passwordsMismatch || errorDescribesField('confirmPackagePassword')}
+                describedBy={
+                  passwordsMismatch
+                    ? passwordMismatchId
+                    : errorDescriptionForField('confirmPackagePassword')
+                }
+                testId={TID.settingsOnboardPackageConfirm}
+                className="sm:col-span-2"
+              />
+            </div>
+
+            {passwordsMismatch ? (
+              <p
+                id={passwordMismatchId}
+                role="alert"
+                aria-label="Package password mismatch"
+                className="text-sm leading-5 text-red-300"
+              >
+                Package passwords do not match.
+              </p>
+            ) : null}
+            {missingInputs.length > 0 ? (
+              <p role="status" aria-live="polite" className="text-sm leading-5 text-blue-200">
+                Missing: {missingInputs.join(', ')}.
+              </p>
+            ) : null}
+            {!signerActive ? (
+              <p
+                role="status"
+                aria-label="Settings Onboard signer status"
+                aria-live="polite"
+                className="text-sm leading-5 text-amber-200"
+              >
+                Start the signer before creating the package.
+              </p>
+            ) : null}
+            {busy ? (
+              <p role="status" aria-live="polite" className="text-sm leading-5 text-blue-200">
+                Creating onboarding package...
+              </p>
+            ) : null}
+            {error ? (
+              <p
+                id={creationErrorId}
+                role="alert"
+                aria-label="Onboard package creation failed"
+                className="text-sm leading-5 text-red-300"
+              >
+                {error}
+              </p>
+            ) : null}
+
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCopyPackage}
-                disabled={!onCopyPackage}
-                className="gap-2"
-                data-testid={TID.settingsOnboardCopy}
-              >
-                <Copy className="h-4 w-4" aria-hidden="true" />
-                Copy
+              <Button type="button" variant="outline" onClick={requestClose} disabled={busy}>
+                Cancel
               </Button>
               <Button
-                type="button"
-                variant="outline"
-                onClick={onSavePackage}
-                disabled={!onSavePackage}
-                className="gap-2"
-                data-testid={TID.settingsOnboardSave}
+                type="submit"
+                disabled={createDisabled}
+                loading={busy}
+                loadingLabel="Creating..."
+                data-testid={TID.settingsOnboardCreate}
               >
-                <Download className="h-4 w-4" aria-hidden="true" />
-                Save
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onShowQrPackage}
-                disabled={!onShowQrPackage}
-                className="gap-2"
-                data-testid={TID.settingsOnboardQr}
-              >
-                <QrCode className="h-4 w-4" aria-hidden="true" />
-                QR code
-              </Button>
-              <Button type="button" onClick={onClose}>
-                Done
+                Create Package
               </Button>
             </div>
-          </div>
-        </div>
-      ) : (
-        <form className="space-y-5" onSubmit={onCreatePackage}>
-          <div className="rounded-lg border border-blue-900/30 bg-slate-950/30 px-4 py-4">
-            <div className="flex items-start gap-3">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-blue-500/15 text-blue-300">
-                <PackagePlus className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-sharetech text-base leading-5 text-blue-200">Configure Device</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Convert a protected remote-member bfshare into an encrypted bfonboard handoff for this signer.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <OnboardTextField
-            label="Device Label"
-            value={draft.label}
-            onChange={(value) => onDraftChange('label', value)}
-            placeholder="Remote Device"
-            testId={TID.settingsOnboardDeviceLabel}
-          />
-
-          <div>
-            <label className="text-xs uppercase tracking-[0.08em] text-blue-300/80" htmlFor="settings-onboard-source-package">
-              Source bfshare
-            </label>
-            <Textarea
-              id="settings-onboard-source-package"
-              rows={5}
-              value={draft.sourcePackageText}
-              onChange={(event) => onDraftChange('sourcePackageText', event.target.value)}
-              placeholder="bfshare1..."
-              data-testid={TID.settingsOnboardSourcePackage}
-              className="mt-2 border-blue-900/35 bg-slate-950/50 font-sharetech text-xs leading-5 text-blue-100 placeholder:text-slate-600"
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <OnboardPasswordField
-              label="Source Password"
-              value={draft.sourcePackagePassword}
-              onChange={(value) => onDraftChange('sourcePackagePassword', value)}
-              testId={TID.settingsOnboardSourcePassword}
-            />
-            <OnboardPasswordField
-              label="Package Password"
-              value={draft.packagePassword}
-              onChange={(value) => onDraftChange('packagePassword', value)}
-              testId={TID.settingsOnboardPackagePassword}
-            />
-            <OnboardPasswordField
-              label="Confirm Package Password"
-              value={draft.confirmPackagePassword}
-              onChange={(value) => onDraftChange('confirmPackagePassword', value)}
-              testId={TID.settingsOnboardPackageConfirm}
-              className="sm:col-span-2"
-            />
-          </div>
-
-          {passwordsMismatch ? (
-            <p className="text-sm leading-5 text-red-300">Package passwords do not match.</p>
-          ) : null}
-          {error ? <p className="text-sm leading-5 text-red-300">{error}</p> : null}
-
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={createDisabled} data-testid={TID.settingsOnboardCreate}>
-              {busy ? 'Creating...' : 'Create Package'}
-            </Button>
-          </div>
-        </form>
-      )}
-    </Dialog>
+          </form>
+        )}
+      </Dialog>
+      <ConfirmDialog
+        open={cancelConfirmOpen}
+        title="Cancel onboarding setup?"
+        message="Discard this onboarding package draft?"
+        confirmLabel="Discard Setup"
+        cancelLabel="Keep Editing"
+        variant="warning"
+        onCancel={() => setCancelConfirmOpen(false)}
+        onConfirm={() => {
+          setCancelConfirmOpen(false);
+          onClose();
+        }}
+      />
+    </>
   );
 }
 
@@ -849,12 +1051,14 @@ function OnboardTextField({
   value,
   onChange,
   placeholder,
+  disabled = false,
   testId,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  disabled?: boolean;
   testId?: CriticalE2ETestId;
 }) {
   const id = React.useId();
@@ -866,7 +1070,10 @@ function OnboardTextField({
       <Input
         id={id}
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        disabled={disabled}
+        onChange={(event) => {
+          if (!disabled) onChange(event.target.value);
+        }}
         placeholder={placeholder}
         data-testid={testId}
         className="mt-2 border-blue-900/35 bg-slate-950/50 font-sharetech text-sm text-blue-100 placeholder:text-slate-600"
@@ -879,12 +1086,18 @@ function OnboardPasswordField({
   label,
   value,
   onChange,
+  disabled = false,
+  invalid = false,
+  describedBy,
   testId,
   className,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
+  invalid?: boolean;
+  describedBy?: string;
   testId?: CriticalE2ETestId;
   className?: string;
 }) {
@@ -897,7 +1110,12 @@ function OnboardPasswordField({
       <PasswordField
         id={id}
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        disabled={disabled}
+        onChange={(event) => {
+          if (!disabled) onChange(event.target.value);
+        }}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
         data-testid={testId}
         shellClassName="mt-2"
         className="border-blue-900/35 bg-slate-950/50 font-sharetech text-sm text-blue-100 placeholder:text-slate-600"
@@ -928,7 +1146,7 @@ export function ClearCredentialsDialog({
           type="button"
           aria-label="Close"
           onClick={onCancel}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-blue-950/40 hover:text-blue-200 active:scale-[0.96] focus:outline-none focus:ring-2 focus:ring-blue-500/60"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-blue-950/40 hover:text-blue-200 active:scale-[0.96] focus:outline-none focus:ring-2 focus:ring-blue-500/60"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -971,8 +1189,15 @@ export function ProfilePasswordChangeDialog({
   testIds,
 }: ProfilePasswordChangeDialogProps) {
   const titleId = React.useId();
+  const currentPasswordRef = React.useRef<HTMLInputElement>(null);
   return (
-    <Dialog open={open} onClose={onCancel} className="max-w-md p-7" ariaLabelledBy={titleId}>
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      className="max-w-md p-7"
+      ariaLabelledBy={titleId}
+      initialFocusRef={currentPasswordRef}
+    >
       <div className="flex items-start justify-between gap-4 pb-5">
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-blue-500/15 text-blue-300">
@@ -992,7 +1217,7 @@ export function ProfilePasswordChangeDialog({
           aria-label="Close"
           onClick={onCancel}
           disabled={busy}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-blue-950/40 hover:text-blue-200 active:scale-[0.96] focus:outline-none focus:ring-2 focus:ring-blue-500/60 disabled:pointer-events-none disabled:opacity-50"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-blue-950/40 hover:text-blue-200 active:scale-[0.96] focus:outline-none focus:ring-2 focus:ring-blue-500/60 disabled:pointer-events-none disabled:opacity-50"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -1007,6 +1232,7 @@ export function ProfilePasswordChangeDialog({
           <label className="block space-y-1.5">
             <span className="text-[13px] font-medium leading-4 text-slate-200">Current Password</span>
             <PasswordField
+              ref={currentPasswordRef}
               data-testid={testIds?.current}
               value={currentPassword}
               onChange={(event) => onCurrentPasswordChange(event.target.value)}
@@ -1044,8 +1270,14 @@ export function ProfilePasswordChangeDialog({
           <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
             Cancel
           </Button>
-          <Button type="submit" data-testid={testIds?.submit} disabled={busy}>
-            {busy ? 'Saving...' : 'Change Password'}
+          <Button
+            type="submit"
+            data-testid={testIds?.submit}
+            disabled={busy}
+            loading={busy}
+            loadingLabel="Saving..."
+          >
+            Change Password
           </Button>
         </div>
       </form>
@@ -1074,7 +1306,7 @@ export function SettingsUnsavedChangesDialog({
           type="button"
           aria-label="Close"
           onClick={onKeepEditing}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-blue-950/40 hover:text-blue-200 active:scale-[0.96] focus:outline-none focus:ring-2 focus:ring-blue-500/60"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-blue-950/40 hover:text-blue-200 active:scale-[0.96] focus:outline-none focus:ring-2 focus:ring-blue-500/60"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -1148,7 +1380,7 @@ function ActionRow({ action, emphasis = false }: { action: OperatorSettingsSideb
     <div
       className={cn(
         'grid gap-3',
-        emphasis ? 'grid-cols-1' : 'grid-cols-[minmax(0,1fr)_auto] items-center gap-4',
+        'grid-cols-[minmax(0,1fr)_auto] items-center gap-4',
       )}
     >
       <div className="min-w-0">
@@ -1163,8 +1395,8 @@ function ActionRow({ action, emphasis = false }: { action: OperatorSettingsSideb
         onClick={action.onAction}
         disabled={action.disabled}
         className={cn(
-          'min-w-[68px] justify-self-end active:scale-[0.96]',
-          emphasis && 'w-full justify-self-stretch',
+          'min-h-10 min-w-[68px] justify-self-end px-4 text-sm active:scale-[0.96]',
+          emphasis && 'min-w-[9rem] shadow-[0_10px_24px_rgba(59,130,246,0.2)]',
           quietBlue && 'border-blue-500/50 bg-blue-500/5 text-blue-300 hover:bg-blue-500/10 hover:text-blue-200',
           destructive && 'border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/15 hover:text-red-200',
         )}

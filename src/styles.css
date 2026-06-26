@@ -83,6 +83,8 @@
       radial-gradient(circle at 18% 18%, rgba(59, 130, 246, 0.2), transparent 30%),
       radial-gradient(circle at 82% 12%, rgba(56, 189, 248, 0.12), transparent 28%),
       radial-gradient(circle at 24% 78%, rgba(37, 99, 235, 0.1), transparent 32%);
+    background-attachment: fixed;
+    background-size: 100vw 100vh;
   }
 }
 
@@ -394,6 +396,169 @@
     color: #93c5fd;
   }
 
+  .igloo-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+  }
+
+  .igloo-tooltip[data-tooltip-open='true'] {
+    z-index: 70;
+  }
+
+  .igloo-tooltip-content {
+    position: absolute;
+    z-index: 70;
+    width: max-content;
+    max-width: min(20rem, calc(100vw - 2rem));
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    border: 1px solid #334155;
+    border-radius: 0.5rem;
+    background: #1e293b;
+    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.35);
+    color: #cbd5e1;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.125rem;
+    overflow-wrap: anywhere;
+    padding: 0.625rem 0.875rem;
+    text-align: left;
+    white-space: normal;
+    transition-property: opacity, visibility;
+    transition-duration: 140ms;
+    transition-timing-function: ease-out;
+  }
+
+  .igloo-tooltip:not([data-tooltip-open='true']) > .igloo-tooltip-content {
+    width: 0;
+    max-width: 0;
+    height: 0;
+    overflow: hidden;
+    border-width: 0;
+    padding: 0;
+  }
+
+  .igloo-tooltip[data-tooltip-open='true'] > .igloo-tooltip-content {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .igloo-tooltip[data-tooltip-placement='bottom'] > .igloo-tooltip-content {
+    top: 100%;
+    left: 50%;
+    margin-top: 0.5rem;
+    transform: translateX(-50%);
+  }
+
+  .igloo-tooltip[data-tooltip-placement='top'] > .igloo-tooltip-content {
+    bottom: 100%;
+    left: 50%;
+    margin-bottom: 0.5rem;
+    transform: translateX(-50%);
+  }
+
+  .igloo-tooltip[data-tooltip-placement='right'] > .igloo-tooltip-content {
+    top: 50%;
+    left: 100%;
+    margin-left: 0.5rem;
+    transform: translateY(-50%);
+  }
+
+  .igloo-tooltip[data-tooltip-placement='left'] > .igloo-tooltip-content {
+    top: 50%;
+    right: 100%;
+    margin-right: 0.5rem;
+    transform: translateY(-50%);
+  }
+
+  .igloo-tooltip[data-tooltip-placement='bottom-left'] > .igloo-tooltip-content {
+    top: 100%;
+    left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .igloo-tooltip-arrow {
+    position: absolute;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-color: #334155;
+    background: #1e293b;
+    transform: rotate(45deg);
+  }
+
+  .igloo-tooltip[data-tooltip-placement='bottom'] .igloo-tooltip-arrow {
+    top: -0.25rem;
+    left: 50%;
+    margin-left: -0.25rem;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+
+  .igloo-tooltip[data-tooltip-placement='top'] .igloo-tooltip-arrow {
+    bottom: -0.25rem;
+    left: 50%;
+    margin-left: -0.25rem;
+    border-right: 1px solid;
+    border-bottom: 1px solid;
+  }
+
+  .igloo-tooltip[data-tooltip-placement='right'] .igloo-tooltip-arrow {
+    top: 50%;
+    left: -0.25rem;
+    margin-top: -0.25rem;
+    border-left: 1px solid;
+    border-bottom: 1px solid;
+  }
+
+  .igloo-tooltip[data-tooltip-placement='left'] .igloo-tooltip-arrow {
+    top: 50%;
+    right: -0.25rem;
+    margin-top: -0.25rem;
+    border-top: 1px solid;
+    border-right: 1px solid;
+  }
+
+  .igloo-tooltip[data-tooltip-placement='bottom-left'] .igloo-tooltip-arrow {
+    top: -0.25rem;
+    left: 1rem;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+
+  .igloo-help-hint-trigger {
+    display: inline-flex;
+    min-width: 1.25rem;
+    min-height: 1.25rem;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #60a5fa;
+    padding: 0;
+    outline: none;
+    transition-property: color, box-shadow, transform;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+
+  .igloo-help-hint-trigger:hover {
+    color: #93c5fd;
+  }
+
+  .igloo-help-hint-trigger:active {
+    transform: scale(0.96);
+  }
+
+  .igloo-help-hint-trigger:focus-visible {
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.6);
+  }
+
   .igloo-flow-root {
     color: var(--igloo-shell-text);
   }
@@ -510,7 +675,7 @@
     display: grid;
     width: 30rem;
     height: 15.5rem;
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid rgba(30, 58, 138, 0.3);
     border-radius: 0.75rem;
     background: rgba(15, 23, 42, 0.6);
@@ -596,6 +761,22 @@
     gap: 1.25rem;
     border-top: 1px solid rgba(30, 58, 138, 0.2);
     color: #64748b;
+  }
+
+  .igloo-public-task-screen + .igloo-welcome-entry-footer {
+    position: static;
+    margin-top: -2.25rem;
+    background: transparent;
+  }
+
+  .igloo-dashboard-footer {
+    position: static;
+    left: auto;
+    bottom: auto;
+    height: 0;
+    margin-top: auto;
+    padding-block: 1.25rem;
+    background: transparent;
   }
 
   .igloo-welcome-returning-stack {
@@ -710,6 +891,17 @@
     justify-content: center;
   }
 
+  .igloo-welcome-resume-forget {
+    border-color: rgba(248, 113, 113, 0.28);
+    color: #fca5a5;
+  }
+
+  .igloo-welcome-resume-forget:hover:not(:disabled) {
+    border-color: rgba(248, 113, 113, 0.4);
+    background: rgba(127, 29, 29, 0.22);
+    color: #fecaca;
+  }
+
   .igloo-welcome-profile-dropdown {
     position: absolute;
     top: calc(100% + 0.375rem);
@@ -817,25 +1009,266 @@
     gap: 1rem;
   }
 
+  .igloo-recover-back {
+    width: fit-content;
+    border: 0;
+    background: transparent;
+    color: #94a3b8;
+    padding: 0;
+    font: inherit;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    cursor: pointer;
+  }
+
+  .igloo-recover-back:hover,
+  .igloo-recover-back:focus-visible {
+    color: #bfdbfe;
+  }
+
+  .igloo-recover-back:disabled {
+    color: #475569;
+    cursor: not-allowed;
+  }
+
+  .igloo-rotate-collect-heading {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .igloo-rotate-collect-heading h3 {
+    margin: 0;
+    color: #e2e8f0;
+    font-size: 1rem;
+    line-height: 1.35rem;
+  }
+
+  .igloo-rotate-collect-heading p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.875rem;
+    line-height: 1.35rem;
+  }
+
+  .igloo-rotate-source-select {
+    display: grid;
+    gap: 0.45rem;
+    color: #93c5fd;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-rotate-source-select > span {
+    color: #93c5fd;
+  }
+
+  .igloo-rotate-source-select select {
+    min-height: 2.75rem;
+    width: 100%;
+    border: 1px solid rgba(37, 99, 235, 0.35);
+    border-radius: 0.625rem;
+    background: rgba(15, 23, 42, 0.62);
+    color: #dbeafe;
+    padding: 0 0.875rem;
+    font: inherit;
+    outline: none;
+    appearance: none;
+  }
+
+  .igloo-rotate-source-select select:focus-visible {
+    border-color: rgba(96, 165, 250, 0.72);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.22);
+  }
+
+  .igloo-rotate-source-textarea {
+    min-height: 4.75rem;
+  }
+
   .igloo-recover-device-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 0.75rem;
     border: 1px solid rgba(34, 197, 94, 0.35);
     border-radius: 0.625rem;
     background: rgba(15, 23, 42, 0.6);
-    padding: 0.875rem 1rem;
+    min-height: 3.25rem;
+    padding: 0.65rem 1rem;
     color: #cbd5e1;
   }
 
-  .igloo-recover-validated {
+  .igloo-recover-device-row[data-state='locked'] {
+    border-color: rgba(245, 158, 11, 0.28);
+    background: rgba(15, 23, 42, 0.58);
+  }
+
+  .igloo-recover-device-main {
+    display: grid;
+    flex: 1 1 18rem;
+    min-width: 0;
+    gap: 0.25rem;
+  }
+
+  .igloo-recover-device-main strong {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    line-height: 1.2rem;
+  }
+
+  .igloo-recover-device-main p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    line-height: 1.2rem;
+  }
+
+  .igloo-recover-device-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    flex: none;
     color: #4ade80;
     font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .igloo-recover-device-badge[data-state='locked'] {
+    color: #fbbf24;
+  }
+
+  .igloo-rotate-local-passphrase {
+    display: grid;
+    flex: 1 1 100%;
+    gap: 0.35rem;
+    margin-top: 0.15rem;
+    color: #dbeafe;
+    font-size: 0.82rem;
+    line-height: 1.15rem;
+  }
+
+  .igloo-rotate-local-passphrase-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .igloo-rotate-local-passphrase-row .igloo-password-field {
+    min-width: 0;
+  }
+
+  .igloo-rotate-local-passphrase-submit {
+    min-height: 2.5rem;
+    padding-inline: 0.95rem;
+  }
+
+  .igloo-rotate-local-passphrase-error {
+    margin: 0;
+    color: #fca5a5;
+    font-size: 0.78rem;
+    line-height: 1.1rem;
+  }
+
+  @media (max-width: 560px) {
+    .igloo-rotate-local-passphrase-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .igloo-recover-source-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .igloo-recover-source-empty {
+    display: grid;
+    gap: 0.35rem;
+    border: 1px dashed rgba(96, 165, 250, 0.28);
+    border-radius: 0.625rem;
+    background: rgba(15, 23, 42, 0.45);
+    padding: 0.875rem 1rem;
+  }
+
+  .igloo-recover-source-card {
+    gap: 0.75rem;
+    border-color: rgba(30, 58, 138, 0.34);
+    background: rgba(15, 23, 42, 0.56);
+    padding: 0.9rem 1rem;
+  }
+
+  .igloo-recover-source-card header {
+    gap: 0.25rem;
+  }
+
+  .igloo-recover-source-card header strong {
+    color: #dbeafe;
+    font-size: 0.95rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-recover-source-card label {
+    gap: 0.35rem;
+    color: #dbeafe;
+    font-size: 0.82rem;
+    line-height: 1.15rem;
+  }
+
+  .igloo-recover-collect .igloo-button-row {
+    gap: 0.5rem;
+  }
+
+  .igloo-recover-collect .igloo-button-row button {
+    min-height: 2.25rem;
+    width: fit-content;
     font-size: 0.8125rem;
+  }
+
+  .igloo-recover-source-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    min-height: 1.35rem;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    border-radius: 999px;
+    background: rgba(30, 58, 138, 0.18);
+    padding: 0.12rem 0.55rem;
+    color: #93c5fd;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    line-height: 1rem;
+  }
+
+  .igloo-recover-source-badge[data-state='ready'] {
+    border-color: rgba(34, 197, 94, 0.36);
+    background: rgba(22, 101, 52, 0.2);
+    color: #86efac;
+  }
+
+  .igloo-recover-source-badge[data-state='error'] {
+    border-color: rgba(248, 113, 113, 0.36);
+    background: rgba(127, 29, 29, 0.22);
+    color: #fca5a5;
+  }
+
+  .igloo-recover-source-detail {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.2rem;
+  }
+
+  .igloo-recover-source-detail[data-state='ready'] {
+    color: #94a3b8;
+  }
+
+  .igloo-recover-source-detail[data-state='error'] {
+    color: #fca5a5;
   }
 
   .igloo-recover-meter {
@@ -868,6 +1301,60 @@
   .igloo-recover-helper {
     margin: 0;
     color: #64748b;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-recover-error {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin: -0.2rem 0 0;
+    border: 1px solid rgba(239, 68, 68, 0.42);
+    border-radius: 0.625rem;
+    background: rgba(239, 68, 68, 0.14);
+    padding: 0.65rem 0.75rem;
+    color: #fecaca;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-recover-error-body {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .igloo-recover-error-body strong {
+    color: #f87171;
+    font-size: 0.8125rem;
+    line-height: 1rem;
+  }
+
+  .igloo-recover-error-body p {
+    margin: 0;
+    color: #fca5a5;
+  }
+
+  .igloo-recover-error-body code {
+    width: fit-content;
+    border-radius: 0.25rem;
+    background: rgba(31, 41, 55, 0.3);
+    padding: 0.35rem 0.55rem;
+    color: #94a3b8;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .igloo-recover-error svg {
+    flex: none;
+    margin-top: 0.15rem;
+    color: #f87171;
+  }
+
+  .igloo-recover-status {
+    margin: -0.35rem 0 0;
+    color: #93c5fd;
     font-size: 0.8125rem;
     line-height: 1.25rem;
   }
@@ -1039,6 +1526,28 @@
     border-radius: 0.5rem;
     background: rgba(15, 23, 42, 0.6);
     padding: 0.625rem 0.875rem;
+    transition-property: background-color, border-color, box-shadow, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+
+  .igloo-create-input-shell:hover,
+  .igloo-password-field:hover {
+    border-color: rgba(96, 165, 250, 0.42);
+  }
+
+  .igloo-create-input-shell:focus-within,
+  .igloo-password-field:focus-within {
+    border-color: rgba(96, 165, 250, 0.72);
+    background: rgba(15, 23, 42, 0.78);
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.16);
+  }
+
+  .igloo-create-input-shell-error,
+  .igloo-create-input-shell-error:hover,
+  .igloo-create-input-shell-error:focus-within {
+    border-color: rgba(244, 63, 94, 0.78);
+    box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.12);
   }
 
   .igloo-create-input-shell svg {
@@ -1065,15 +1574,38 @@
     border-radius: 0.5rem;
     background: rgba(15, 23, 42, 0.6);
     padding: 0.625rem 0.875rem;
+    transition-property: background-color, border-color, box-shadow, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+
+  .igloo-password-field[data-invalid='true'] {
+    border-color: rgba(244, 63, 94, 0.55);
+  }
+
+  .igloo-password-field[data-invalid='true']:focus-within {
+    box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.18);
   }
 
   .igloo-password-field input {
+    height: auto;
     min-width: 0;
     flex: 1 1 auto;
     border: 0;
+    border-radius: 0;
     background: transparent;
+    box-shadow: none;
     color: #cbd5e1;
     padding: 0;
+    outline: none;
+  }
+
+  .igloo-password-field .igloo-password-field-control:hover,
+  .igloo-password-field .igloo-password-field-control:focus,
+  .igloo-password-field .igloo-password-field-control:focus-visible {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
     outline: none;
   }
 
@@ -1087,10 +1619,23 @@
     padding: 0;
     color: #475569;
     cursor: pointer;
+    transition-property: color, opacity, transform;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
   }
 
   .igloo-password-field-toggle:hover {
     color: #93c5fd;
+  }
+
+  .igloo-password-field-toggle:active {
+    transform: scale(0.96);
+  }
+
+  .igloo-password-field-toggle:focus-visible {
+    border-radius: 0.375rem;
+    outline: 2px solid rgba(96, 165, 250, 0.72);
+    outline-offset: 3px;
   }
 
   .igloo-create-private-row {
@@ -1172,11 +1717,13 @@
 
   .igloo-create-action-row {
     display: flex;
+    min-width: 0;
     align-items: stretch;
     gap: 0.75rem;
   }
 
   .igloo-create-action-row .igloo-create-primary-action {
+    min-width: 0;
     flex: 1 1 auto;
   }
 
@@ -1188,12 +1735,18 @@
 
   .igloo-create-profile-form {
     display: grid;
+    min-width: 0;
     gap: 1.25rem;
+  }
+
+  .igloo-create-profile-form > * {
+    min-width: 0;
   }
 
   .igloo-create-profile-panel,
   .igloo-create-profile-section {
     display: grid;
+    min-width: 0;
     gap: 0.75rem;
   }
 
@@ -1294,6 +1847,10 @@
     line-height: 0.875rem;
   }
 
+  .igloo-create-share-copy small {
+    overflow-wrap: anywhere;
+  }
+
   .igloo-create-share-option.is-selected .igloo-create-share-state {
     border: 1px solid rgba(37, 99, 235, 0.4);
     border-radius: 999px;
@@ -1304,13 +1861,16 @@
   }
 
   .igloo-create-profile-summary {
-    display: flex;
-    gap: 2rem;
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 0.75rem 1rem;
     padding-top: 0.25rem;
   }
 
   .igloo-create-profile-summary div {
     display: grid;
+    min-width: 0;
     gap: 0.25rem;
   }
 
@@ -1328,6 +1888,7 @@
     font-size: 0.875rem;
     font-weight: 400;
     line-height: 1.125rem;
+    overflow-wrap: anywhere;
   }
 
   .igloo-create-profile-field {
@@ -1774,6 +2335,7 @@
 
   .igloo-create-relay-add {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.625rem 0.875rem;
   }
@@ -1791,6 +2353,14 @@
     outline: none;
   }
 
+  .igloo-create-relay-error {
+    flex: 1 0 100%;
+    margin: 0;
+    color: #f87171;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
   .igloo-spin {
     animation: igloo-spin 0.8s linear infinite;
   }
@@ -1798,6 +2368,1720 @@
   @keyframes igloo-spin {
     to {
       transform: rotate(360deg);
+    }
+  }
+
+  .igloo-dashboard-signer {
+    display: flex;
+    width: min(100%, 62.5rem);
+    margin-inline: auto;
+    padding: 0.5rem 0 1.25rem;
+    flex-direction: column;
+    gap: 1.125rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .igloo-dashboard-runtime-card,
+  .igloo-dashboard-section {
+    border: 1px solid rgba(30, 58, 138, 0.2);
+    background: rgba(17, 24, 39, 0.4);
+    box-shadow: inset 0 1px 0 rgba(96, 165, 250, 0.03);
+  }
+
+  .igloo-dashboard-runtime-card {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    border-color: rgba(59, 130, 246, 0.16);
+    border-radius: 0.875rem;
+    background: rgba(15, 23, 42, 0.55);
+    padding: 1.125rem 1.25rem;
+  }
+
+  .igloo-dashboard-runtime-main {
+    display: flex;
+    min-width: 0;
+    width: min(100%, 45rem);
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .igloo-dashboard-runtime-head,
+  .igloo-dashboard-section-header,
+  .igloo-dashboard-section-meta,
+  .igloo-dashboard-log-actions,
+  .igloo-dashboard-filter-control {
+    display: flex;
+    align-items: center;
+  }
+
+  .igloo-dashboard-runtime-head {
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+  }
+
+  .igloo-dashboard-runtime-head h2,
+  .igloo-dashboard-section-header h2 {
+    margin: 0;
+    color: #e2e8f0;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+  }
+
+  .igloo-dashboard-runtime-head h2 {
+    color: #dcfce7;
+    font-size: 1rem;
+  }
+
+  .igloo-dashboard-runtime-card[data-state='warning'] .igloo-dashboard-runtime-head h2 {
+    color: #fde68a;
+  }
+
+  .igloo-dashboard-runtime-card[data-state='stopped'] .igloo-dashboard-runtime-head h2 {
+    color: #fecaca;
+  }
+
+  .igloo-dashboard-runtime-dot,
+  .igloo-dashboard-status-dot {
+    display: inline-flex;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: #22c55e;
+  }
+
+  .igloo-dashboard-runtime-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+  }
+
+  .igloo-dashboard-status-dot {
+    width: 0.375rem;
+    height: 0.375rem;
+  }
+
+  .igloo-dashboard-runtime-card[data-state='warning'] .igloo-dashboard-runtime-dot,
+  .igloo-dashboard-status-dot[data-state='pending'] {
+    background: #f59e0b;
+  }
+
+  .igloo-dashboard-runtime-card[data-state='stopped'] .igloo-dashboard-runtime-dot {
+    background: #ef4444;
+  }
+
+  .igloo-dashboard-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.25rem;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.08);
+    padding: 0.125rem 0.625rem;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+    white-space: nowrap;
+  }
+
+  .igloo-dashboard-pill[data-tone='success'] {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+  }
+
+  .igloo-dashboard-pill[data-tone='blue'] {
+    background: rgba(96, 165, 250, 0.14);
+    color: #60a5fa;
+  }
+
+  .igloo-dashboard-pill[data-tone='warning'] {
+    background: rgba(245, 158, 11, 0.14);
+    color: #f59e0b;
+  }
+
+  .igloo-dashboard-pill[data-tone='outline'] {
+    border: 1px solid rgba(30, 58, 138, 0.25);
+    background: transparent;
+    color: rgba(147, 197, 253, 0.6);
+    font-family: var(--igloo-font-share-tech-mono);
+    font-weight: 400;
+  }
+
+  .igloo-dashboard-key-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding-top: 0.25rem;
+  }
+
+  .igloo-dashboard-key-row {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .igloo-dashboard-key-field {
+    display: grid;
+    gap: 0.375rem;
+  }
+
+  .igloo-dashboard-key-input-row {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .igloo-dashboard-key-label {
+    width: 8.125rem;
+    flex: 0 0 8.125rem;
+    color: #64748b;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    line-height: 1rem;
+    text-transform: uppercase;
+  }
+
+  .igloo-dashboard-key-value {
+    min-width: 0;
+    color: #cbd5e1;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.875rem;
+    line-height: 1.125rem;
+  }
+
+  .igloo-dashboard-stopped-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.125rem;
+  }
+
+  .igloo-dashboard-stopped-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.875rem;
+    border: 1px solid rgba(59, 130, 246, 0.16);
+    border-radius: 0.875rem;
+    background: rgba(15, 23, 42, 0.5);
+    padding: 1.125rem 1.25rem;
+    box-shadow: inset 0 1px 0 rgba(96, 165, 250, 0.03);
+  }
+
+  .igloo-dashboard-stopped-card h2 {
+    margin: 0;
+    color: #94a3b8;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    line-height: 0.875rem;
+    text-transform: uppercase;
+  }
+
+  .igloo-dashboard-stopped-readiness {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .igloo-dashboard-stopped-orbit {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #374151;
+  }
+
+  .igloo-dashboard-stopped-orbit span {
+    display: block;
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 999px;
+    background: #6b7280;
+    box-shadow: 0 0 0 0.375rem rgba(2, 6, 23, 0.92);
+  }
+
+  .igloo-dashboard-stopped-copy,
+  .igloo-dashboard-stopped-list,
+  .igloo-dashboard-state-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  .igloo-dashboard-stopped-copy,
+  .igloo-dashboard-state-copy {
+    gap: 0.375rem;
+  }
+
+  .igloo-dashboard-stopped-copy strong,
+  .igloo-dashboard-state-copy strong {
+    color: #e2e8f0;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+  }
+
+  .igloo-dashboard-stopped-copy span,
+  .igloo-dashboard-state-copy span,
+  .igloo-dashboard-stopped-callout {
+    color: #94a3b8;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-dashboard-stopped-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+  }
+
+  .igloo-dashboard-stopped-pills span {
+    display: inline-flex;
+    min-height: 1.75rem;
+    align-items: center;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.12);
+    padding: 0.375rem 0.625rem;
+    color: #cbd5e1;
+    font-size: 0.8125rem;
+    line-height: 1rem;
+  }
+
+  .igloo-dashboard-stopped-pills span[data-tone='danger'] {
+    background: rgba(239, 68, 68, 0.14);
+    color: #fca5a5;
+  }
+
+  .igloo-dashboard-stopped-pills span[data-tone='warning'] {
+    background: rgba(245, 158, 11, 0.14);
+    color: #fde68a;
+  }
+
+  .igloo-dashboard-stopped-list {
+    gap: 0.625rem;
+    color: #e2e8f0;
+    font-size: 0.9375rem;
+    line-height: 1.375rem;
+  }
+
+  .igloo-dashboard-stopped-callout {
+    border: 1px solid rgba(59, 130, 246, 0.12);
+    border-radius: 0.75rem;
+    background: rgba(30, 41, 59, 0.65);
+    padding: 0.75rem 0.875rem;
+  }
+
+  .igloo-dashboard-state-action {
+    width: max-content;
+    min-width: 10rem;
+    margin-top: auto;
+  }
+
+  .igloo-dashboard-copy-control {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    overflow: visible;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 0.5rem;
+    background: rgba(15, 23, 42, 0.6);
+  }
+
+  .igloo-dashboard-copy-main,
+  .igloo-dashboard-copy-format {
+    display: inline-flex;
+    align-items: center;
+    border: 0;
+    background: transparent;
+    color: #93c5fd;
+    cursor: pointer;
+    transition: color 140ms ease, background-color 140ms ease;
+  }
+
+  .igloo-dashboard-copy-main {
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+  }
+
+  .igloo-dashboard-copy-format {
+    border-left: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 0.25rem 0.5rem;
+    color: #64748b;
+  }
+
+  .igloo-dashboard-copy-main:hover,
+  .igloo-dashboard-copy-format:hover {
+    background: rgba(96, 165, 250, 0.08);
+    color: #bfdbfe;
+  }
+
+  .igloo-dashboard-copy-menu {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    right: 0;
+    z-index: 20;
+    display: grid;
+    width: 7rem;
+    gap: 0.125rem;
+    border: 1px solid rgba(59, 130, 246, 0.28);
+    border-radius: 0.5rem;
+    background: #0f172a;
+    padding: 0.25rem;
+    box-shadow: 0 12px 28px rgba(2, 6, 23, 0.55);
+  }
+
+  .igloo-dashboard-copy-menu button {
+    border: 0;
+    border-radius: 0.375rem;
+    background: transparent;
+    padding: 0.375rem 0.5rem;
+    color: #bfdbfe;
+    font-size: 0.75rem;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .igloo-dashboard-copy-menu button:hover {
+    background: rgba(59, 130, 246, 0.16);
+  }
+
+  .igloo-dashboard-relay-line {
+    color: #94a3b8;
+    font-size: 0.9375rem;
+    line-height: 1.375rem;
+  }
+
+  .igloo-dashboard-runtime-action {
+    min-width: 7.5rem;
+    height: 2.625rem;
+    border: 1px solid rgba(248, 113, 113, 0.35) !important;
+    border-color: rgba(248, 113, 113, 0.35) !important;
+    border-radius: 0.75rem !important;
+    background: transparent !important;
+    color: #fca5a5 !important;
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+  }
+
+  .igloo-dashboard-runtime-action:hover:not(:disabled) {
+    border-color: rgba(252, 165, 165, 0.55) !important;
+    background: rgba(248, 113, 113, 0.08) !important;
+    color: #fecaca !important;
+  }
+
+  .igloo-dashboard-runtime-action:focus-visible {
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.18) !important;
+  }
+
+  .igloo-dashboard-loading-shell {
+    display: flex;
+    min-height: min(46rem, calc(100vh - 9rem));
+    flex-direction: column;
+    gap: 1.125rem;
+  }
+
+  .igloo-dashboard-loading-profile {
+    display: flex;
+    min-height: 1.875rem;
+    min-width: 0;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid rgba(21, 42, 70, 0.96);
+    border-radius: 0.625rem;
+    background: #0d1628;
+    padding: 0.375rem 1.375rem;
+    color: #9db4d7;
+    font-size: 0.8125rem;
+    line-height: 1rem;
+  }
+
+  .igloo-dashboard-loading-profile span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .igloo-dashboard-loading-profile span:first-child {
+    color: #bfd7ff;
+  }
+
+  .igloo-dashboard-loading-separator {
+    flex: 0 0 auto;
+    color: #4e668b;
+  }
+
+  .igloo-dashboard-loading-card {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 24rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.125rem;
+    padding: 2.125rem 2rem;
+    text-align: center;
+  }
+
+  .igloo-dashboard-loading-spinner {
+    width: 2.625rem;
+    height: 2.625rem;
+    border: 3px solid #1e3a5f;
+    border-top-color: #2f73ff;
+    border-radius: 999px;
+    animation: igloo-spin 0.9s linear infinite;
+  }
+
+  .igloo-dashboard-loading-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .igloo-dashboard-loading-copy h2 {
+    margin: 0;
+    color: #f4f8ff;
+    font-size: 1.25rem;
+    font-weight: 650;
+    line-height: 1.625rem;
+  }
+
+  .igloo-dashboard-loading-copy p {
+    margin: 0;
+    color: #a9b7cf;
+    font-size: 0.9375rem;
+    line-height: 1.375rem;
+  }
+
+  .igloo-dashboard-signing-failed-dialog {
+    max-width: 27.5rem !important;
+    border-color: rgba(30, 58, 138, 0.3) !important;
+    background: #0f172a !important;
+    padding: 1.75rem !important;
+    box-shadow:
+      0 26px 80px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+  }
+
+  .igloo-dashboard-signing-failed-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .igloo-dashboard-signing-failed-title-row {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.875rem;
+  }
+
+  .igloo-dashboard-signing-failed-icon {
+    display: grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 0.75rem;
+    background: rgba(239, 68, 68, 0.14);
+    color: #f87171;
+    box-shadow: 0 0 24px rgba(239, 68, 68, 0.12);
+  }
+
+  .igloo-dashboard-signing-failed-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .igloo-dashboard-signing-failed-title-row h3 {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 1.125rem;
+    font-weight: 650;
+    line-height: 1.5rem;
+  }
+
+  .igloo-dashboard-signing-failed-close {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 0.625rem;
+    color: #64748b;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease,
+      transform 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+  .igloo-dashboard-signing-failed-close svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .igloo-dashboard-signing-failed-close:hover:not(:disabled) {
+    background: rgba(30, 58, 138, 0.28);
+    color: #bfdbfe;
+  }
+
+  .igloo-dashboard-signing-failed-close:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  .igloo-dashboard-signing-failed-close:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.55);
+  }
+
+  .igloo-dashboard-signing-failed-close:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .igloo-dashboard-signing-failed-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .igloo-dashboard-signing-failed-body p {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: 0.9375rem;
+    line-height: 1.5rem;
+  }
+
+  .igloo-dashboard-signing-failed-detail {
+    overflow-wrap: anywhere;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 0.75rem;
+    background: rgba(127, 29, 29, 0.12);
+    padding: 0.75rem 0.875rem;
+    color: #fca5a5;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-dashboard-signing-failed-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.625rem;
+  }
+
+  .igloo-dashboard-status-banner {
+    border: 1px solid rgba(96, 165, 250, 0.24);
+    border-radius: 0.625rem;
+    background: rgba(15, 23, 42, 0.5);
+    padding: 0.75rem 1rem;
+    color: #bfdbfe;
+    font-size: 0.8125rem;
+  }
+
+  .igloo-dashboard-attention {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border: 1px solid rgba(96, 165, 250, 0.24);
+    border-radius: 0.625rem;
+    background: rgba(15, 23, 42, 0.56);
+    padding: 0.875rem 1rem;
+    color: #bfdbfe;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .igloo-dashboard-attention[data-detail='true'] {
+    border-radius: 0.875rem;
+    padding: 1rem 1.125rem;
+  }
+
+  .igloo-dashboard-attention svg {
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.125rem;
+    flex: 0 0 auto;
+  }
+
+  .igloo-dashboard-attention-body {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  .igloo-dashboard-attention-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .igloo-dashboard-attention strong {
+    color: #e0f2fe;
+    font-size: 0.875rem;
+    font-weight: 650;
+    line-height: 1.25rem;
+  }
+
+  .igloo-dashboard-attention span {
+    color: #94a3b8;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-dashboard-attention[data-tone='warning'] {
+    border-color: rgba(245, 158, 11, 0.32);
+    background: rgba(120, 53, 15, 0.14);
+    color: #fbbf24;
+  }
+
+  .igloo-dashboard-attention[data-tone='warning'] strong {
+    color: #fde68a;
+  }
+
+  .igloo-dashboard-attention[data-tone='danger'] {
+    border-color: rgba(248, 113, 113, 0.34);
+    background: rgba(127, 29, 29, 0.16);
+    color: #f87171;
+  }
+
+  .igloo-dashboard-attention[data-tone='danger'] strong {
+    color: #fecaca;
+  }
+
+  .igloo-dashboard-attention-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .igloo-dashboard-attention-detail {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.625rem;
+    border: 1px solid rgba(96, 165, 250, 0.14);
+    border-radius: 0.75rem;
+    background: rgba(15, 23, 42, 0.52);
+    padding: 0.875rem;
+  }
+
+  .igloo-dashboard-attention-detail-label {
+    color: rgba(148, 163, 184, 0.95);
+    font-family: var(--igloo-font-mono, 'Share Tech Mono', monospace);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .igloo-dashboard-attention-detail-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1875rem;
+  }
+
+  .igloo-dashboard-attention-detail-copy strong {
+    color: #e2e8f0;
+    font-size: 0.9375rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-dashboard-attention-detail-copy span {
+    color: #94a3b8;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-dashboard-attention-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .igloo-dashboard-attention-badge {
+    border-radius: 999px;
+    background: rgba(96, 165, 250, 0.12);
+    padding: 0.3125rem 0.625rem;
+    color: #bfdbfe;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .igloo-dashboard-attention-badge[data-tone='danger'] {
+    background: rgba(239, 68, 68, 0.14);
+    color: #fca5a5;
+  }
+
+  .igloo-dashboard-attention-badge[data-tone='warning'] {
+    background: rgba(245, 158, 11, 0.14);
+    color: #fde68a;
+  }
+
+  .igloo-dashboard-attention-badge[data-tone='success'] {
+    background: rgba(34, 197, 94, 0.14);
+    color: #86efac;
+  }
+
+  .igloo-dashboard-attention-callout {
+    border: 1px solid rgba(96, 165, 250, 0.12);
+    border-radius: 0.625rem;
+    background: rgba(30, 41, 59, 0.52);
+    padding: 0.625rem 0.75rem;
+    color: #94a3b8;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-dashboard-attention-action {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4375rem;
+    min-height: 2.25rem;
+    border: 1px solid rgba(59, 130, 246, 0.45);
+    border-radius: 0.75rem;
+    background: #2563eb;
+    padding: 0.5rem 0.875rem;
+    color: #f8fafc;
+    font-size: 0.875rem;
+    font-weight: 650;
+    line-height: 1rem;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      transform 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+  .igloo-dashboard-attention-action svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-top: 0;
+  }
+
+  .igloo-dashboard-attention-action:hover:not(:disabled) {
+    border-color: rgba(147, 197, 253, 0.65);
+    background: #3b82f6;
+    box-shadow: 0 0 22px rgba(37, 99, 235, 0.26);
+  }
+
+  .igloo-dashboard-attention-action:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .igloo-dashboard-attention-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .igloo-dashboard-attention-action[data-loading='true'] svg {
+    animation: igloo-spin 0.8s linear infinite;
+  }
+
+  .igloo-dashboard-section {
+    display: flex;
+    flex-direction: column;
+    overflow: clip;
+    border-radius: 0.625rem;
+  }
+
+  .igloo-dashboard-section-header {
+    gap: 0.75rem;
+    min-height: 3.3125rem;
+    border-bottom: 1px solid rgba(30, 58, 138, 0.13);
+    padding: 0.875rem 1.25rem;
+  }
+
+  .igloo-dashboard-section-chevron {
+    width: 0.75rem;
+    height: 0.75rem;
+    color: #93c5fd;
+    transition: transform 150ms ease, color 150ms ease;
+  }
+
+  .igloo-dashboard-section-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.375rem;
+    height: 1.375rem;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    color: #93c5fd;
+    transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+  }
+
+  .igloo-dashboard-section-toggle:hover {
+    background: rgba(96, 165, 250, 0.14);
+    color: #bfdbfe;
+  }
+
+  .igloo-dashboard-section-toggle:focus-visible {
+    outline: 2px solid rgba(96, 165, 250, 0.65);
+    outline-offset: 2px;
+  }
+
+  .igloo-dashboard-section-toggle[aria-expanded='false'] .igloo-dashboard-section-chevron {
+    transform: rotate(-90deg);
+  }
+
+  .igloo-dashboard-section-meta {
+    flex-wrap: wrap;
+    gap: 0.625rem;
+  }
+
+  .igloo-dashboard-section-spacer {
+    flex: 1 1 auto;
+    min-width: 0.5rem;
+  }
+
+  .igloo-dashboard-icon-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(147, 197, 253, 0.5);
+    cursor: pointer;
+  }
+
+  .igloo-dashboard-icon-action svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .igloo-dashboard-icon-action:hover:not(:disabled) {
+    background: rgba(96, 165, 250, 0.1);
+    color: #bfdbfe;
+  }
+
+  .igloo-dashboard-icon-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .igloo-dashboard-icon-action[data-loading='true'] svg {
+    animation: igloo-spin 0.8s linear infinite;
+  }
+
+  .igloo-dashboard-refresh-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    width: auto;
+    min-width: 5.5rem;
+    height: 1.875rem;
+    border: 1px solid rgba(96, 165, 250, 0.24);
+    border-radius: 0.5rem !important;
+    background: rgba(15, 23, 42, 0.42);
+    padding: 0 0.75rem;
+    color: #93c5fd;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1rem;
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease,
+      transform 150ms ease;
+  }
+
+  .igloo-dashboard-refresh-action svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .igloo-dashboard-refresh-action:hover:not(:disabled) {
+    border-color: rgba(96, 165, 250, 0.45);
+    background: rgba(96, 165, 250, 0.13);
+    color: #dbeafe;
+  }
+
+  .igloo-dashboard-refresh-action:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .igloo-dashboard-refresh-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .igloo-dashboard-refresh-action[data-loading='true'] svg {
+    animation: igloo-spin 0.8s linear infinite;
+  }
+
+  .igloo-dashboard-empty {
+    border: 1px dashed rgba(30, 58, 138, 0.3);
+    border-radius: 0.5rem;
+    margin: 1rem;
+    padding: 1rem;
+    color: #64748b;
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 720px) {
+    .igloo-dashboard-attention-details {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .igloo-dashboard-peer-list,
+  .igloo-dashboard-approval-list,
+  .igloo-dashboard-log-list {
+    display: flex;
+    flex-direction: column;
+    max-height: 19.6875rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .igloo-dashboard-peer-row,
+  .igloo-dashboard-approval-row,
+  .igloo-dashboard-log-row {
+    border-bottom: 1px solid rgba(30, 58, 138, 0.08);
+  }
+
+  .igloo-dashboard-peer-row {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr) 7.125rem 4.25rem;
+    align-items: center;
+    gap: 1rem;
+    min-height: 3.5625rem;
+    padding: 0.75rem 1.25rem;
+  }
+
+  .igloo-dashboard-peer-row[data-has-actions='true'] {
+    grid-template-columns: 2rem minmax(0, 1fr) 7.125rem 4.25rem 6.75rem;
+  }
+
+  .igloo-dashboard-peer-row:last-child,
+  .igloo-dashboard-approval-row:last-child,
+  .igloo-dashboard-log-row:last-child {
+    border-bottom: 0;
+  }
+
+  .igloo-dashboard-peer-presence {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: conic-gradient(#60a5fa 0 68%, rgba(55, 65, 81, 0.55) 68% 100%);
+  }
+
+  .igloo-dashboard-peer-row[data-state='warning'] .igloo-dashboard-peer-presence {
+    background: conic-gradient(#f59e0b 0 48%, rgba(55, 65, 81, 0.55) 48% 100%);
+  }
+
+  .igloo-dashboard-peer-row[data-state='offline'] .igloo-dashboard-peer-presence {
+    background: rgba(51, 65, 85, 0.75);
+  }
+
+  .igloo-dashboard-peer-presence span {
+    width: 1.375rem;
+    height: 1.375rem;
+    border: 0.375rem solid rgba(17, 24, 39, 0.9);
+    border-radius: 999px;
+    background: #22c55e;
+  }
+
+  .igloo-dashboard-peer-row[data-state='warning'] .igloo-dashboard-peer-presence span {
+    background: #f59e0b;
+  }
+
+  .igloo-dashboard-peer-row[data-state='offline'] .igloo-dashboard-peer-presence span {
+    background: #be123c;
+  }
+
+  .igloo-dashboard-peer-identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .igloo-dashboard-peer-alias {
+    flex: 0 0 auto;
+    color: #e2e8f0;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.875rem;
+    line-height: 1.125rem;
+  }
+
+  .igloo-dashboard-peer-key {
+    min-width: 0;
+    overflow: hidden;
+    color: rgba(147, 197, 253, 0.6);
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .igloo-dashboard-peer-methods {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .igloo-dashboard-peer-capacity {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .igloo-dashboard-peer-capacity[data-empty='true'] {
+    justify-content: flex-end;
+  }
+
+  .igloo-dashboard-peer-capacity[data-empty='true'] span {
+    width: 5rem;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: rgba(55, 65, 81, 0.55);
+  }
+
+  .igloo-dashboard-peer-capacity-bars {
+    display: flex;
+    width: 5rem;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .igloo-dashboard-peer-capacity-bars span {
+    height: 0.1875rem;
+    border-radius: 999px;
+    background: #60a5fa;
+  }
+
+  .igloo-dashboard-peer-capacity-bars span + span {
+    background: rgba(96, 165, 250, 0.5);
+  }
+
+  .igloo-dashboard-peer-capacity[data-tone='warning'] .igloo-dashboard-peer-capacity-bars span {
+    background: #f59e0b;
+  }
+
+  .igloo-dashboard-peer-capacity[data-tone='warning'] .igloo-dashboard-peer-capacity-bars span + span {
+    background: rgba(245, 158, 11, 0.5);
+  }
+
+  .igloo-dashboard-peer-capacity-counts {
+    display: flex;
+    width: 1.5rem;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.0625rem;
+    color: #60a5fa;
+    font-size: 0.75rem;
+    line-height: 0.95rem;
+  }
+
+  .igloo-dashboard-peer-capacity-counts span + span {
+    color: rgba(96, 165, 250, 0.5);
+    font-size: 0.6875rem;
+  }
+
+  .igloo-dashboard-peer-capacity[data-tone='warning'] .igloo-dashboard-peer-capacity-counts {
+    color: #f59e0b;
+  }
+
+  .igloo-dashboard-peer-capacity[data-tone='warning'] .igloo-dashboard-peer-capacity-counts span + span {
+    color: rgba(245, 158, 11, 0.5);
+  }
+
+  .igloo-dashboard-peer-last-seen {
+    color: #22c55e;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    text-align: right;
+  }
+
+  .igloo-dashboard-peer-telemetry {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.375rem;
+    white-space: nowrap;
+  }
+
+  .igloo-dashboard-peer-state-label {
+    color: inherit;
+  }
+
+  .igloo-dashboard-peer-latency-label {
+    border-left: 1px solid rgba(96, 165, 250, 0.24);
+    padding-left: 0.375rem;
+    color: #93c5fd;
+  }
+
+  .igloo-dashboard-peer-row[data-state='offline'] .igloo-dashboard-peer-last-seen {
+    color: #64748b;
+  }
+
+  .igloo-dashboard-peer-row[data-state='offline'] .igloo-dashboard-peer-latency-label {
+    color: #64748b;
+  }
+
+  .igloo-dashboard-peer-ping {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: end;
+    gap: 0.3125rem;
+    width: auto;
+    min-width: 6.25rem;
+    min-height: 2rem;
+    border: 1px solid rgba(96, 165, 250, 0.24);
+    border-radius: 0.5rem !important;
+    background: rgba(15, 23, 42, 0.5);
+    padding: 0 0.625rem;
+    color: #93c5fd;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0;
+    line-height: 1rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      color 150ms ease,
+      transform 150ms ease;
+  }
+
+  .igloo-dashboard-peer-ping svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .igloo-dashboard-peer-ping:hover:not(:disabled) {
+    border-color: rgba(96, 165, 250, 0.5);
+    background: rgba(96, 165, 250, 0.14);
+    color: #dbeafe;
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.1);
+  }
+
+  .igloo-dashboard-peer-ping:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .igloo-dashboard-peer-ping:disabled {
+    cursor: not-allowed;
+    opacity: 1 !important;
+  }
+
+  .igloo-dashboard-peer-ping[data-unavailable] {
+    border-color: rgba(96, 165, 250, 0.14);
+    background: rgba(15, 23, 42, 0.28);
+    color: rgba(147, 197, 253, 0.48);
+    box-shadow: none;
+  }
+
+  .igloo-dashboard-peer-ping[data-unavailable='local'] {
+    border-color: rgba(96, 165, 250, 0.18);
+    color: rgba(147, 197, 253, 0.64);
+  }
+
+  .igloo-dashboard-peer-ping[data-unavailable='missing'],
+  .igloo-dashboard-peer-ping[data-unavailable='invalid'] {
+    border-color: rgba(100, 116, 139, 0.18);
+    color: rgba(148, 163, 184, 0.62);
+  }
+
+  .igloo-dashboard-peer-ping[data-unavailable] svg {
+    opacity: 0.68;
+  }
+
+  .igloo-dashboard-peer-ping[data-state='success'] {
+    border-color: rgba(34, 197, 94, 0.38);
+    background: rgba(34, 197, 94, 0.12);
+    color: #86efac;
+  }
+
+  .igloo-dashboard-peer-ping[data-state='offline'] {
+    border-color: rgba(100, 116, 139, 0.28);
+    background: rgba(15, 23, 42, 0.34);
+    color: #94a3b8;
+  }
+
+  .igloo-dashboard-peer-ping[data-state='error'] {
+    border-color: rgba(248, 113, 113, 0.34);
+    background: rgba(248, 113, 113, 0.11);
+    color: #fca5a5;
+  }
+
+  .igloo-dashboard-peer-ping[data-loading='true'] svg {
+    animation: igloo-spin 0.8s linear infinite;
+  }
+
+  .igloo-dashboard-approval-row {
+    display: grid;
+    grid-template-columns: 0.625rem max-content max-content minmax(0, 1fr) max-content 7.5rem;
+    align-items: center;
+    gap: 1rem;
+    min-height: 3.25rem;
+    padding: 0.75rem 1.25rem;
+  }
+
+  .igloo-dashboard-approval-peer {
+    color: #e2e8f0;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1rem;
+    white-space: nowrap;
+  }
+
+  .igloo-dashboard-approval-detail,
+  .igloo-dashboard-log-message {
+    min-width: 0;
+    overflow: hidden;
+    color: #94a3b8;
+    font-size: 0.8125rem;
+    line-height: 1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .igloo-dashboard-approval-time,
+  .igloo-dashboard-nearest {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    white-space: nowrap;
+  }
+
+  .igloo-dashboard-approval-time svg,
+  .igloo-dashboard-nearest svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .igloo-dashboard-open-action {
+    width: 7.5rem;
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+  }
+
+  .igloo-dashboard-log-actions {
+    gap: 0.75rem;
+  }
+
+  .igloo-dashboard-clear-action {
+    height: auto !important;
+    min-height: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    color: #64748b !important;
+    font-size: 0.8125rem !important;
+    font-weight: 400 !important;
+  }
+
+  .igloo-dashboard-clear-action:hover {
+    color: #94a3b8 !important;
+  }
+
+  .igloo-dashboard-filter-control {
+    appearance: none;
+    height: 2.125rem;
+    gap: 0.5rem;
+    border: 1px solid rgba(96, 165, 250, 0.44);
+    border-radius: 0.5625rem;
+    background: rgba(15, 23, 42, 0.44);
+    padding: 0.375rem 0.625rem;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    cursor: pointer;
+  }
+
+  .igloo-dashboard-filter-control:hover {
+    border-color: rgba(147, 197, 253, 0.56);
+    background: rgba(15, 23, 42, 0.62);
+    color: #bfdbfe;
+  }
+
+  .igloo-dashboard-filter-control:disabled {
+    cursor: wait;
+    opacity: 0.55;
+  }
+
+  .igloo-dashboard-filter-control:focus-visible {
+    outline: 2px solid rgba(96, 165, 250, 0.7);
+    outline-offset: 2px;
+  }
+
+  .igloo-dashboard-filter-control svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .igloo-dashboard-filter-caret {
+    color: #bfdbfe;
+    transition: transform 150ms ease-out;
+  }
+
+  .igloo-dashboard-filter-control[aria-expanded='true'] .igloo-dashboard-filter-caret {
+    transform: rotate(180deg);
+  }
+
+  .igloo-dashboard-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    border-bottom: 1px solid rgba(30, 58, 138, 0.08);
+    padding: 0.75rem 1.25rem;
+  }
+
+  .igloo-dashboard-filter-chip {
+    border: 1px solid rgba(30, 58, 138, 0.3);
+    border-radius: 999px;
+    background: rgba(30, 58, 138, 0.18);
+    padding: 0.125rem 0.625rem;
+    color: #93c5fd;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    cursor: pointer;
+  }
+
+  .igloo-dashboard-filter-chip[data-active='true'] {
+    border-color: rgba(96, 165, 250, 0.5);
+    background: rgba(96, 165, 250, 0.18);
+    color: #dbeafe;
+  }
+
+  .igloo-dashboard-filter-chip:disabled {
+    cursor: wait;
+    opacity: 0.55;
+  }
+
+  .igloo-dashboard-log-row {
+    display: grid;
+    grid-template-columns: 4.375rem max-content minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+    min-height: 2.8125rem;
+    padding: 0.5rem 1.25rem;
+  }
+
+  .igloo-dashboard-log-time {
+    color: #4b5563;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+  }
+
+  .igloo-dashboard-domain-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.12);
+    padding: 0.25rem 0.625rem;
+    color: #93c5fd;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    line-height: 1.125rem;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .igloo-dashboard-domain-badge[data-tone='success'] {
+    border-color: rgba(34, 197, 94, 0.3);
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+  }
+
+  .igloo-dashboard-domain-badge[data-tone='warning'] {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.14);
+    color: #f59e0b;
+  }
+
+  .igloo-dashboard-domain-badge[data-tone='danger'] {
+    border-color: rgba(248, 113, 113, 0.3);
+    background: rgba(248, 113, 113, 0.14);
+    color: #f87171;
+  }
+
+  .igloo-dashboard-domain-badge[data-tone='sync'] {
+    border-color: rgba(45, 212, 191, 0.3);
+    background: rgba(45, 212, 191, 0.15);
+    color: #2dd4bf;
+  }
+
+  .igloo-dashboard-domain-badge[data-tone='ecdh'] {
+    border-color: rgba(34, 211, 238, 0.3);
+    background: rgba(34, 211, 238, 0.15);
+    color: #22d3ee;
+  }
+
+  .igloo-dashboard-domain-badge[data-tone='ping'] {
+    border-color: rgba(168, 85, 247, 0.3);
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+  }
+
+  .igloo-dashboard-domain-badge[data-tone='onboard'] {
+    border-color: rgba(245, 158, 11, 0.34);
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+  }
+
+  .igloo-dashboard-domain-badge[data-tone='policy'] {
+    border-color: rgba(129, 140, 248, 0.3);
+    background: rgba(129, 140, 248, 0.15);
+    color: #818cf8;
+  }
+
+  .igloo-dashboard-domain-badge[data-tone='echo'] {
+    border-color: rgba(244, 114, 182, 0.3);
+    background: rgba(244, 114, 182, 0.15);
+    color: #f472b6;
+  }
+
+  @media (max-width: 860px) {
+    .igloo-dashboard-runtime-card {
+      flex-direction: column;
+    }
+
+    .igloo-dashboard-stopped-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .igloo-dashboard-runtime-main,
+    .igloo-dashboard-runtime-action {
+      width: 100%;
+    }
+
+    .igloo-dashboard-section-header,
+    .igloo-dashboard-section-meta,
+    .igloo-dashboard-log-actions {
+      flex-wrap: wrap;
+    }
+
+    .igloo-dashboard-section-spacer {
+      flex-basis: 100%;
+    }
+
+    .igloo-dashboard-key-row,
+    .igloo-dashboard-approval-row,
+    .igloo-dashboard-log-row {
+      grid-template-columns: 1fr;
+    }
+
+    .igloo-dashboard-peer-row,
+    .igloo-dashboard-peer-row[data-has-actions='true'] {
+      grid-template-columns: 2rem minmax(0, 1fr) minmax(5.75rem, max-content);
+      align-items: center;
+      gap: 0.625rem 0.875rem;
+    }
+
+    .igloo-dashboard-peer-presence {
+      grid-column: 1;
+      grid-row: 1 / span 3;
+      align-self: start;
+    }
+
+    .igloo-dashboard-peer-identity {
+      grid-column: 2 / 4;
+      flex-wrap: wrap;
+      row-gap: 0.375rem;
+    }
+
+    .igloo-dashboard-peer-capacity {
+      grid-column: 2;
+      width: auto;
+      justify-content: flex-start;
+    }
+
+    .igloo-dashboard-peer-last-seen {
+      grid-column: 2;
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    .igloo-dashboard-peer-ping {
+      grid-column: 3;
+      grid-row: 2 / span 2;
+      align-self: center;
+      width: auto;
+      min-width: 5.75rem;
+    }
+
+    .igloo-dashboard-key-row {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .igloo-dashboard-key-label {
+      width: auto;
+      flex-basis: auto;
+    }
+
+    .igloo-dashboard-peer-identity,
+    .igloo-dashboard-peer-capacity,
+    .igloo-dashboard-peer-last-seen,
+    .igloo-dashboard-peer-ping {
+      max-width: 100%;
+    }
+
+    .igloo-dashboard-peer-last-seen {
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    .igloo-dashboard-approval-row {
+      justify-items: start;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .igloo-dashboard-signer {
+      gap: 0.875rem;
+      padding-bottom: 1rem;
+    }
+
+    .igloo-dashboard-runtime-card,
+    .igloo-dashboard-section,
+    .igloo-dashboard-stopped-card {
+      border-radius: 0.75rem;
+    }
+
+    .igloo-dashboard-runtime-card,
+    .igloo-dashboard-stopped-card {
+      padding: 1rem;
+    }
+
+    .igloo-dashboard-section-header {
+      position: relative;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.875rem 3rem 0.875rem 1rem;
+    }
+
+    .igloo-dashboard-section-header > .igloo-dashboard-icon-action {
+      position: absolute;
+      top: 0.6875rem;
+      right: 0.875rem;
+    }
+
+    .igloo-dashboard-section-meta {
+      gap: 0.5rem;
+    }
+
+    .igloo-dashboard-log-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .igloo-dashboard-filter-control {
+      max-width: 100%;
+    }
+
+    .igloo-dashboard-empty {
+      margin: 0.875rem;
+    }
+
+    .igloo-dashboard-key-input-row {
+      align-items: stretch;
+    }
+
+    .igloo-dashboard-copy-control {
+      align-self: flex-start;
+    }
+
+    .igloo-dashboard-peer-row {
+      grid-template-columns: 2rem minmax(0, 1fr);
+      gap: 0.625rem 0.875rem;
+      padding: 0.875rem 1rem;
+    }
+
+    .igloo-dashboard-peer-presence {
+      grid-column: 1;
+      grid-row: 1;
+      align-self: center;
+    }
+
+    .igloo-dashboard-peer-identity {
+      grid-column: 2;
+      flex-wrap: wrap;
+      row-gap: 0.375rem;
+    }
+
+    .igloo-dashboard-peer-methods {
+      flex-wrap: wrap;
+    }
+
+    .igloo-dashboard-peer-capacity,
+    .igloo-dashboard-peer-last-seen {
+      grid-column: 2;
+      width: auto;
+    }
+
+    .igloo-dashboard-peer-ping {
+      grid-column: 2;
+      grid-row: auto;
+      width: auto;
+      justify-self: flex-start;
+    }
+
+    .igloo-dashboard-peer-capacity,
+    .igloo-dashboard-peer-capacity[data-empty='true'] {
+      justify-content: flex-start;
+    }
+
+    .igloo-dashboard-peer-capacity-bars {
+      width: min(8rem, 100%);
+    }
+
+    .igloo-dashboard-approval-row {
+      padding: 0.875rem 1rem;
+    }
+
+    .igloo-dashboard-log-row {
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
     }
   }
 
@@ -2491,7 +4775,8 @@
     line-height: 1.25rem;
   }
 
-  .igloo-onboard-field > span {
+  .igloo-onboard-field > span,
+  .igloo-onboard-field > label {
     color: rgba(147, 197, 253, 0.8);
     font-size: 0.6875rem;
     font-weight: 500;
@@ -2515,6 +4800,25 @@
   .igloo-onboard-field textarea {
     min-height: 4.5rem;
     resize: vertical;
+  }
+
+  .igloo-onboard-field .igloo-password-field .igloo-password-field-control {
+    min-height: 0;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .igloo-onboard-field .igloo-password-field .igloo-password-field-control:hover,
+  .igloo-onboard-field .igloo-password-field .igloo-password-field-control:focus,
+  .igloo-onboard-field .igloo-password-field .igloo-password-field-control:focus-visible {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
   }
 
   .igloo-onboard-handshake {
@@ -2801,6 +5105,33 @@
     gap: 10px;
   }
 
+  .igloo-export-stack {
+    gap: 0.875rem;
+  }
+
+  .igloo-export-summary {
+    margin: 0;
+    width: fit-content;
+    max-width: 100%;
+    border: 1px solid rgba(96, 165, 250, 0.14);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.58);
+    color: #64748b;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    padding: 0.25rem 0.625rem;
+    overflow-wrap: anywhere;
+  }
+
+  .igloo-export-actions {
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .igloo-export-result {
+    max-height: min(18rem, 45dvh);
+  }
+
   .igloo-banner-grid {
     display: grid;
     gap: 10px;
@@ -2940,6 +5271,24 @@
     font: inherit;
   }
 
+  .igloo-flow-root button,
+  .igloo-shell-nav-item {
+    transition-property: background-color, border-color, box-shadow, color, opacity, transform;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+
+  .igloo-flow-root button:not(:disabled):active,
+  .igloo-shell-nav-item:not(:disabled):active {
+    transform: scale(0.96);
+  }
+
+  .igloo-flow-root button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
+  }
+
   .igloo-flow-root input,
   .igloo-flow-root textarea {
     width: 100%;
@@ -2948,6 +5297,28 @@
     border: 1px solid rgba(96, 165, 250, 0.2);
     background: var(--igloo-shell-panel-strong);
     color: var(--igloo-shell-text);
+    transition-property: background-color, border-color, box-shadow, color, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+
+  .igloo-flow-root input:hover,
+  .igloo-flow-root textarea:hover {
+    border-color: rgba(96, 165, 250, 0.42);
+  }
+
+  .igloo-flow-root input:focus,
+  .igloo-flow-root textarea:focus {
+    border-color: rgba(96, 165, 250, 0.72);
+    background: rgba(15, 23, 42, 0.78);
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.16);
+    outline: none;
+  }
+
+  .igloo-flow-root input:disabled,
+  .igloo-flow-root textarea:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
 
   .igloo-flow-root input::placeholder,
@@ -2980,12 +5351,53 @@
     padding: 0.625rem 0.875rem;
   }
 
+  .igloo-flow-root .igloo-create-profile-field input:hover,
+  .igloo-flow-root .igloo-create-profile-passwords input:hover,
+  .igloo-flow-root .igloo-create-distribution-label input:hover,
+  .igloo-flow-root .igloo-create-package-password input:hover,
+  .igloo-flow-root .igloo-onboard-field input:hover,
+  .igloo-flow-root .igloo-onboard-field textarea:hover {
+    border-color: rgba(96, 165, 250, 0.42);
+  }
+
+  .igloo-flow-root .igloo-create-profile-field input:focus,
+  .igloo-flow-root .igloo-create-profile-passwords input:focus,
+  .igloo-flow-root .igloo-create-distribution-label input:focus,
+  .igloo-flow-root .igloo-create-package-password input:focus,
+  .igloo-flow-root .igloo-onboard-field input:focus,
+  .igloo-flow-root .igloo-onboard-field textarea:focus {
+    border-color: rgba(96, 165, 250, 0.72);
+    background: rgba(15, 23, 42, 0.78);
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.16);
+    outline: none;
+  }
+
+  .igloo-flow-root .igloo-create-profile-field input[aria-invalid='true'],
+  .igloo-flow-root .igloo-create-profile-passwords input[aria-invalid='true'],
+  .igloo-flow-root .igloo-create-distribution-label input[aria-invalid='true'],
+  .igloo-flow-root .igloo-create-package-password input[aria-invalid='true'],
+  .igloo-flow-root .igloo-onboard-field input[aria-invalid='true'],
+  .igloo-flow-root .igloo-onboard-field textarea[aria-invalid='true'] {
+    border-color: rgba(244, 63, 94, 0.55);
+  }
+
   .igloo-flow-root .igloo-create-input-shell input,
-  .igloo-flow-root .igloo-create-counter input {
+  .igloo-flow-root .igloo-create-counter input,
+  .igloo-flow-root .igloo-password-field .igloo-password-field-control {
+    min-height: 0;
     border: 0;
     border-radius: 0;
     background: transparent;
+    box-shadow: none;
     padding: 0;
+  }
+
+  .igloo-flow-root .igloo-password-field .igloo-password-field-control:hover,
+  .igloo-flow-root .igloo-password-field .igloo-password-field-control:focus {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
   }
 
   .igloo-flow-root .igloo-create-counter button {
@@ -3103,6 +5515,11 @@
   .igloo-flow-root textarea {
     min-height: 104px;
     resize: vertical;
+  }
+
+  .igloo-flow-root .igloo-recover-source-textarea,
+  .igloo-flow-root .igloo-rotate-source-textarea {
+    min-height: 4rem;
   }
 
   .igloo-flow-root button {
@@ -3444,6 +5861,115 @@
     gap: 10px;
   }
 
+  .igloo-settings-sidebar-browser-preferences {
+    min-width: 0;
+  }
+
+  .igloo-settings-sidebar-browser-preferences .igloo-settings-grid {
+    gap: 0.5rem;
+  }
+
+  .igloo-settings-sidebar-browser-preferences .igloo-toggle-row {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.625rem;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 0.625rem;
+    background: rgba(15, 23, 42, 0.42);
+    padding: 0.75rem;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+  .igloo-settings-sidebar-browser-preferences .igloo-toggle-row:hover {
+    border-color: rgba(96, 165, 250, 0.34);
+    background: rgba(15, 23, 42, 0.56);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.035),
+      0 0 0 1px rgba(96, 165, 250, 0.04);
+  }
+
+  .igloo-settings-sidebar-browser-preferences .igloo-toggle-row:focus-within {
+    border-color: rgba(96, 165, 250, 0.55);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.035),
+      0 0 0 2px rgba(59, 130, 246, 0.18);
+  }
+
+  .igloo-settings-sidebar-browser-preferences .igloo-toggle-row input {
+    appearance: none;
+    position: relative;
+    inline-size: 1rem;
+    block-size: 1rem;
+    margin: 0.125rem 0 0;
+    border: 1px solid rgba(96, 165, 250, 0.42);
+    border-radius: 0.375rem;
+    background: rgba(2, 6, 23, 0.45);
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+  .igloo-settings-sidebar-browser-preferences .igloo-toggle-row input:checked {
+    border-color: rgba(147, 197, 253, 0.78);
+    background: #2563eb;
+    box-shadow: 0 0 14px rgba(37, 99, 235, 0.28);
+  }
+
+  .igloo-settings-sidebar-browser-preferences .igloo-toggle-row input:checked::after {
+    content: "";
+    position: absolute;
+    left: 0.3rem;
+    top: 0.1rem;
+    width: 0.3rem;
+    height: 0.56rem;
+    border: solid #eff6ff;
+    border-width: 0 0.125rem 0.125rem 0;
+    transform: rotate(45deg);
+  }
+
+  .igloo-settings-sidebar-browser-preferences .igloo-toggle-row input:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px rgba(17, 24, 39, 0.9),
+      0 0 0 4px rgba(96, 165, 250, 0.55);
+  }
+
+  .igloo-settings-sidebar-browser-preferences .igloo-toggle-row span {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .igloo-settings-sidebar-browser-preferences .igloo-toggle-row strong {
+    display: block;
+    color: #dbeafe;
+    font-size: 0.8125rem;
+    font-weight: 650;
+    letter-spacing: 0;
+    line-height: 1.125rem;
+    text-wrap: balance;
+  }
+
+  .igloo-settings-sidebar-browser-preferences .igloo-toggle-row small {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
+    white-space: normal;
+  }
+
   @media (max-width: 720px) {
     .igloo-confirm-grid {
       grid-template-columns: 1fr;
@@ -3528,5 +6054,307 @@
 
   .igloo-entry-tile {
     min-height: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .igloo-public-task-screen {
+    width: 100%;
+    min-height: calc(100dvh - 5rem);
+    gap: 1rem;
+    padding: 0.5rem 0.75rem 2rem;
+  }
+
+  .igloo-host-flow-bare {
+    padding-block: 0.75rem 2rem;
+  }
+
+  .igloo-host-flow-heading,
+  .igloo-public-task-title {
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .igloo-host-flow-heading h2,
+  .igloo-public-task-title h2 {
+    font-size: 1.35rem;
+    line-height: 1.75rem;
+  }
+
+  .igloo-welcome-entry {
+    min-height: calc(100dvh - 5rem);
+    justify-content: flex-start;
+    gap: 1.5rem;
+    padding: 1rem 0.75rem 2.5rem;
+  }
+
+  .igloo-welcome-entry-logo {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .igloo-welcome-entry-copy h2 {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+
+  .igloo-welcome-entry-panel,
+  .igloo-welcome-returning-stack,
+  .igloo-welcome-profile-list {
+    width: 100%;
+    max-width: 30rem;
+  }
+
+  .igloo-welcome-entry-panel {
+    height: auto;
+    min-height: 0;
+  }
+
+  .igloo-welcome-entry-panel-body {
+    padding: 1.25rem;
+  }
+
+  .igloo-welcome-entry-primary {
+    padding: 0 1.25rem 1rem;
+  }
+
+  .igloo-welcome-entry-secondary {
+    flex-wrap: wrap;
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  .igloo-welcome-entry-secondary > span {
+    width: 100%;
+    text-align: center;
+  }
+
+  .igloo-welcome-entry-secondary button {
+    flex: 1 1 12rem;
+    min-height: 2.5rem;
+    height: auto;
+  }
+
+  .igloo-welcome-returning-stack.is-many .igloo-welcome-profile-list {
+    min-height: 0;
+  }
+
+  .igloo-welcome-profile-row {
+    width: 100%;
+    height: auto;
+    min-height: 5.5rem;
+    gap: 0.75rem;
+    padding: 0.875rem;
+  }
+
+  .igloo-welcome-profile-meta {
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+  }
+
+  .igloo-welcome-profile-actions > button,
+  .igloo-welcome-profile-menu > button {
+    height: 2.5rem;
+  }
+
+  .igloo-welcome-profile-menu > button {
+    width: 2.5rem;
+  }
+
+  .igloo-welcome-profile-dropdown {
+    right: 0;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .igloo-welcome-unlock-modal,
+  .igloo-welcome-delete-modal {
+    width: 100%;
+    max-width: 28rem;
+    padding: 1.25rem;
+  }
+
+  .igloo-step-progress {
+    justify-content: flex-start;
+    max-width: 100%;
+    margin-inline: -0.75rem;
+    overflow-x: auto;
+    padding: 0 0.75rem 0.5rem;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .igloo-step-progress::-webkit-scrollbar {
+    display: none;
+  }
+
+  .igloo-step-chip {
+    width: clamp(4.25rem, 19vw, 10rem);
+    flex: 0 0 auto;
+    font-size: 0.625rem;
+  }
+
+  .igloo-step-chip span {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .igloo-step-chip strong {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    line-height: 0.875rem;
+    text-align: center;
+  }
+
+  .igloo-step-connector {
+    width: clamp(0.75rem, 3vw, 4rem);
+    flex: 0 0 auto;
+    margin-top: 0.95rem;
+  }
+
+  .igloo-create-threshold-row,
+  .igloo-create-private-row,
+  .igloo-create-package-password {
+    grid-template-columns: 1fr;
+  }
+
+  .igloo-create-threshold-divider {
+    display: none;
+  }
+
+  .igloo-create-action-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+  }
+
+  .igloo-create-back-action,
+  .igloo-create-package-action {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .igloo-create-profile-panel,
+  .igloo-create-profile-section,
+  .igloo-create-review-panel,
+  .igloo-create-distribution-card,
+  .igloo-create-local-share-card,
+  .igloo-create-completion-status,
+  .igloo-create-completion-callout,
+  .igloo-onboard-panel {
+    padding: 1rem;
+  }
+
+  .igloo-create-share-option {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .igloo-create-share-state {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .igloo-create-peer-permission-row,
+  .igloo-create-client-card,
+  .igloo-create-distribution-card header,
+  .igloo-create-local-share-card header,
+  .igloo-create-review-row,
+  .igloo-create-completion-row,
+  .igloo-flow-summary,
+  .igloo-onboard-complete-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .igloo-create-peer-permission-row div:last-child,
+  .igloo-create-distribution-actions,
+  .igloo-onboard-action-row {
+    justify-content: flex-start;
+  }
+
+  .igloo-create-distribution-actions button,
+  .igloo-onboard-action-row button {
+    flex: 1 1 11rem;
+  }
+
+  .igloo-create-review-row strong {
+    text-align: left;
+  }
+
+  .igloo-create-package-preview code,
+  .igloo-create-local-share-card code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .igloo-export-stack {
+    gap: 0.75rem;
+  }
+
+  .igloo-export-field {
+    gap: 0.375rem;
+  }
+
+  .igloo-export-field .igloo-password-field {
+    min-height: 2.75rem;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .igloo-export-summary {
+    width: 100%;
+    border-radius: 0.5rem;
+    font-size: 0.72rem;
+    line-height: 1.1rem;
+  }
+
+  .igloo-export-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+  }
+
+  .igloo-export-actions button {
+    width: 100%;
+    min-height: 2.5rem;
+  }
+
+  .igloo-export-result {
+    max-height: 16rem;
+    font-size: 0.72rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-flow-card {
+    grid-template-columns: 1fr;
+  }
+
+  .igloo-flow-card-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .igloo-qr-grid {
+    grid-template-columns: repeat(21, minmax(6px, 1fr));
+    grid-template-rows: repeat(21, minmax(6px, 1fr));
+    width: min(100%, 18rem);
+    gap: 1px;
+    padding: 10px;
+  }
+
+  .igloo-qr-grid span {
+    inline-size: auto;
+    block-size: auto;
+    aspect-ratio: 1;
+  }
+}
+
+@media (max-width: 380px) {
+  .igloo-welcome-profile-row {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+  }
+
+  .igloo-welcome-profile-actions {
+    grid-column: 2;
+    justify-content: flex-start;
   }
 }

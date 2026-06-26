@@ -31,6 +31,9 @@ export type {
   FlowStepModel,
   DashboardKeyModel,
   DashboardKeyFormat,
+  DashboardAttentionModel,
+  DashboardSigningFailureModel,
+  PermissionMethodKey,
   SignerDashboardViewModel,
   PendingApprovalRowModel,
   PeerReadinessRowModel,
@@ -55,7 +58,13 @@ export type { ObservabilityEventInput } from './adapters/runtime-view-models';
 /* ------------------------------------------------------------------ */
 export { Alert } from './components/ui/alert';
 export type { AlertProps } from './components/ui/alert';
-export { AppHeader } from './components/ui/app-header';
+export { AppHeader, DashboardHeaderActions } from './components/ui/app-header';
+export type {
+  AppHeaderBrandAction,
+  AppHeaderProps,
+  DashboardHeaderAction,
+  DashboardHeaderActionsProps,
+} from './components/ui/app-header';
 export { Badge } from './components/ui/badge';
 export type { BadgeProps } from './components/ui/badge';
 export { Button, buttonVariants } from './components/ui/button';
@@ -112,6 +121,8 @@ export type {
 export { PeerList } from './components/ui/peer-list';
 export type { PeerPolicy } from './components/ui/peer-list';
 export { RelayInput } from './components/ui/relay-input';
+export { RelayList } from './components/ui/relay-list';
+export type { RelayListProps, RelayNormalizeFn, RelayPingFn } from './components/ui/relay-list';
 export { SensitiveField } from './components/ui/sensitive-field';
 export type { SensitiveFieldProps } from './components/ui/sensitive-field';
 export { SensitiveTextarea } from './components/ui/sensitive-textarea';
@@ -171,7 +182,6 @@ export type {
   SharedOnboardProfilePreview,
   SharedPeerPermissionRow,
   SharedDistributionPermission,
-  RelayPingFn,
   SharedRecoverSource,
   OnboardTimelineStepKey,
 } from './components/flows/CreateFlow';
@@ -226,6 +236,7 @@ export type {
   ClearCredentialsDialogProps,
   OnboardDeviceSponsorDialogProps,
   OnboardDeviceSponsorDraft,
+  OnboardDeviceSponsorErrorField,
   OnboardDeviceSponsorResult,
   OnboardDeviceSponsorshipDialogProps,
   OnboardDeviceSponsorshipPanelProps,
@@ -243,7 +254,16 @@ export type {
   OperatorMaintenanceAction,
   OperatorSettingsSection,
 } from './components/flows/OperatorSettingsPanel';
-export { OperatorSignerPanel } from './components/flows/OperatorSignerPanel';
+export {
+  DashboardLoadingState,
+  DashboardSigningFailedDialog,
+  OperatorSignerPanel,
+} from './components/flows/OperatorSignerPanel';
+export type {
+  DashboardLoadingProfileModel,
+  DashboardLoadingStateProps,
+  DashboardSigningFailedDialogProps,
+} from './components/flows/OperatorSignerPanel';
 export { ProfileConfirmationCard } from './components/flows/ProfileConfirmationCard';
 export { QrPayloadModal } from './components/flows/QrPayloadModal';
 export { RecoveryWorkspace } from './components/flows/RecoveryWorkspace';
