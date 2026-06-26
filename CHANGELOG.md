@@ -7,6 +7,7 @@ The format is based on Keep a Changelog, adapted for this repository.
 ## [Unreleased]
 
 ### Added
+- `shareLabel` prop on `OnboardHandshakePanel` so hosts can show the real share index instead of a hardcoded placeholder.
 - Shared host-shell flow components for landing, onboarding, and create-flow composition.
 - Shared create-flow sections for generation, local-save, review, and distribution steps.
 - Direct Vitest coverage for the new shared create-flow contract.
