@@ -63,6 +63,7 @@ export function OnboardHandshakePanel({
   packageText = '',
   keysetName = 'My Signing Key',
   thresholdLabel = '2/3',
+  shareLabel = 'Share #0',
   activeStep = 'negotiate',
   onCancel,
   title = 'Onboard Device',
@@ -70,6 +71,7 @@ export function OnboardHandshakePanel({
   packageText?: string;
   keysetName?: string;
   thresholdLabel?: string;
+  shareLabel?: string;
   activeStep?: OnboardTimelineStepKey;
   onCancel?: () => void;
   title?: string;
@@ -83,7 +85,7 @@ export function OnboardHandshakePanel({
       </header>
       <OnboardTimeline steps={buildOnboardSteps(keysetName, thresholdLabel)} activeStep={activeStep} />
       <div className="igloo-onboard-package-summary">
-        Onboarding package: {compactPackage} · Share #0
+        Onboarding package: {compactPackage} · {shareLabel}
       </div>
       <Button type="button" variant="secondary" onClick={onCancel}>
         Cancel Onboarding
