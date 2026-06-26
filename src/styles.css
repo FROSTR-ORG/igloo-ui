@@ -835,6 +835,159 @@
     gap: 0.35rem;
     color: #4ade80;
     font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .igloo-recover-device-badge[data-state='locked'] {
+    color: #fbbf24;
+  }
+
+  .igloo-rotate-local-passphrase {
+    display: grid;
+    flex: 1 1 100%;
+    gap: 0.35rem;
+    margin-top: 0.15rem;
+    color: #dbeafe;
+    font-size: 0.82rem;
+    line-height: 1.15rem;
+  }
+
+  .igloo-rotate-local-passphrase-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .igloo-rotate-local-passphrase-row .igloo-password-field {
+    min-width: 0;
+  }
+
+  .igloo-rotate-local-passphrase-submit {
+    min-height: 2.5rem;
+    padding-inline: 0.95rem;
+  }
+
+  .igloo-rotate-local-passphrase-error {
+    margin: 0;
+    color: #fca5a5;
+    font-size: 0.78rem;
+    line-height: 1.1rem;
+  }
+
+  .igloo-rotate-new-config {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .igloo-rotate-new-config h4 {
+    margin: 0;
+    color: #93c5fd;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.875rem;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    line-height: 1.25rem;
+    text-transform: uppercase;
+  }
+
+  .igloo-rotate-new-config .igloo-onboard-divider {
+    margin: 0;
+  }
+
+  .igloo-create-threshold-help[data-state='invalid'] {
+    color: #fca5a5;
+  }
+
+  .igloo-rotate-same-key-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border: 1px solid rgba(37, 99, 235, 0.28);
+    border-radius: 0.625rem;
+    background: rgba(37, 99, 235, 0.1);
+    padding: 0.875rem 1rem;
+    color: #bfdbfe;
+  }
+
+  .igloo-rotate-same-key-note svg {
+    flex: none;
+    margin-top: 0.15rem;
+    color: #60a5fa;
+  }
+
+  .igloo-rotate-same-key-note strong {
+    display: block;
+    color: #dbeafe;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-rotate-same-key-note p {
+    margin: 0.2rem 0 0;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    line-height: 1.2rem;
+  }
+
+  @media (max-width: 560px) {
+    .igloo-rotate-local-passphrase-row {
+      grid-template-columns: 1fr;
+    }
+
+    .igloo-rotate-same-key-note {
+      padding: 0.8125rem;
+    }
+  }
+
+  .igloo-recover-source-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .igloo-recover-source-empty {
+    display: grid;
+    gap: 0.35rem;
+    border: 1px dashed rgba(96, 165, 250, 0.28);
+    border-radius: 0.625rem;
+    background: rgba(15, 23, 42, 0.45);
+    padding: 0.875rem 1rem;
+  }
+
+  .igloo-recover-source-card {
+    gap: 0.75rem;
+    border-color: rgba(30, 58, 138, 0.34);
+    background: rgba(15, 23, 42, 0.56);
+    padding: 0.9rem 1rem;
+  }
+
+  .igloo-recover-source-card header {
+    gap: 0.25rem;
+  }
+
+  .igloo-recover-source-card header strong {
+    color: #dbeafe;
+    font-size: 0.95rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-recover-source-card label {
+    gap: 0.35rem;
+    color: #dbeafe;
+    font-size: 0.82rem;
+    line-height: 1.15rem;
+  }
+
+  .igloo-recover-collect .igloo-button-row {
+    gap: 0.5rem;
+  }
+
+  .igloo-recover-collect .igloo-button-row button {
+    min-height: 2.25rem;
+    width: fit-content;
     font-size: 0.8125rem;
   }
 

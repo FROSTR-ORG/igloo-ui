@@ -196,6 +196,7 @@ export type {
   SharedDistributionPermission,
   RelayPingFn,
   SharedRecoverSource,
+  RecoverDeviceShareState,
   OnboardTimelineStepKey,
 } from './components/flows/create';
 export { ExportPackageModal } from './components/flows/ExportPackageModal';

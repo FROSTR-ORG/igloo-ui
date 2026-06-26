@@ -58,7 +58,10 @@ function CreatePermissionToggles({
               type="button"
               key={permission}
               className={`${methodToneClass(permission)} ${isEnabled ? 'is-enabled' : 'is-disabled'}`}
+              aria-label={`${share.name} ${permission} permission: ${isEnabled ? 'enabled' : 'disabled'}`}
               aria-pressed={isEnabled}
+              data-method={permission}
+              data-state={isEnabled ? 'active' : 'inactive'}
               onClick={() => onTogglePermission?.(share.member_idx, permission, !isEnabled)}
             >
               {permission.toUpperCase()}

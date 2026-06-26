@@ -1,26 +1,45 @@
 import type * as React from 'react';
-import { AlertTriangle, Check, HelpCircle } from 'lucide-react';
+import { AlertTriangle, Check, HelpCircle, RotateCcw } from 'lucide-react';
 
 import { Button } from '../../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { PasswordField } from '../../ui/password-field';
 import { Textarea } from '../../ui/textarea';
 import { CRITICAL_E2E_TEST_IDS } from '../../../lib/e2e-test-ids';
-import { passwordManagerOptOutProps } from '../../../lib/password-manager';
-import type { SharedRotationSource } from './types';
+import type { RecoverDeviceShareState, SharedRotationSource } from './types';
+
+const ROTATE_HELP_TEXT = {
+  threshold:
+    'The minimum number of shares required to sign. Must be at least 2 and no more than the total number of shares.',
+  totalShares: 'Specify the total number of shares to create and the required threshold to sign.',
+};
 
 export function RotateKeysetPanel({
   sourceProfileId,
   availableProfiles,
+  localSourceLabel,
+  localSourceState,
+  localPassphrase,
   rotationSources,
+  threshold = 2,
+  newThreshold,
+  newCount,
+  collectedCount,
   onChangeSourceProfile,
+  onLocalPassphraseChange,
+  onSubmitLocalPassphrase,
   onChangeRotationSource,
+  onChangeNewConfiguration,
   onAddRotationSource,
   onRemoveRotationSource,
   onRotate,
-  title = 'Rotate Keyset',
-  description = 'Select the source profile and add recovery shares for the existing keyset.',
-  actionLabel = 'Rotate Keyset',
+  onBack,
+  title,
+  description,
+  actionLabel = 'Next Step',
+  actionBusy = false,
+  actionLoadingLabel = 'Rotating...',
+  localPassphraseActionBusy = false,
+  localPassphraseError = null,
   deviceShareLabel = 'Share #1 (this device)',
   devicePassphrase,
   onChangeDevicePassphrase,
@@ -29,15 +48,30 @@ export function RotateKeysetPanel({
 }: {
   sourceProfileId: string;
   availableProfiles: Array<{ id: string; label: string }>;
+  localSourceLabel?: string;
+  localSourceState?: RecoverDeviceShareState;
+  localPassphrase?: string;
   rotationSources: SharedRotationSource[];
+  threshold?: number;
+  newThreshold?: string;
+  newCount?: string;
+  collectedCount?: number;
   onChangeSourceProfile: (profileId: string) => void;
+  onLocalPassphraseChange?: (value: string) => void;
+  onSubmitLocalPassphrase?: () => void;
   onChangeRotationSource: (index: number, field: 'packageText' | 'packagePassword', value: string) => void;
+  onChangeNewConfiguration?: (field: 'threshold' | 'count', value: string) => void;
   onAddRotationSource: () => void;
   onRemoveRotationSource: (index: number) => void;
   onRotate: () => void;
+  onBack?: () => void;
   title?: string;
   description?: string;
   actionLabel?: string;
+  actionBusy?: boolean;
+  actionLoadingLabel?: string;
+  localPassphraseActionBusy?: boolean;
+  localPassphraseError?: string | null;
   deviceShareLabel?: string;
   /**
    * When `onChangeDevicePassphrase` is provided, the rotating device's own share
@@ -51,21 +85,97 @@ export function RotateKeysetPanel({
   /** Verify the entered device passphrase actually unlocks the device share. */
   onVerifyDevicePassphrase?: () => void;
 }) {
-  const includeDeviceShare = Boolean(onChangeDevicePassphrase);
-  // Pasted shares are numbered after the auto-included device share when present.
-  const sourceNumberOffset = includeDeviceShare ? 2 : 1;
+  const selectedProfileLabel = availableProfiles.find((profile) => profile.id === sourceProfileId)?.label;
+  const shouldShowProfileSelector = availableProfiles.length > 1 || !sourceProfileId;
+  const changeLocalPassphrase = onLocalPassphraseChange ?? onChangeDevicePassphrase;
+  const submitLocalPassphrase = onSubmitLocalPassphrase ?? onVerifyDevicePassphrase;
+  const resolvedLocalPassphrase = localPassphrase ?? devicePassphrase ?? '';
+  const resolvedLocalSourceLabel = localSourceLabel ?? deviceShareLabel ?? selectedProfileLabel ?? 'This Device Share';
+  const effectiveLocalSourceState: RecoverDeviceShareState =
+    localSourceState ?? (onChangeDevicePassphrase ? (deviceShareValidated ? 'validated' : 'locked') : 'validated');
+  const localReadyCount = effectiveLocalSourceState === 'validated' ? 1 : 0;
+  const readyRemoteCount = rotationSources.reduce((count, source, index) => {
+    const sourceStatus = rotationSourceStatus(source, `Remote Source #${index + 1}`);
+    return sourceStatus.state === 'ready' ? count + 1 : count;
+  }, 0);
+  const normalizedThreshold = Math.max(1, Math.trunc(threshold));
+  const normalizedCollectedCount = Math.max(
+    0,
+    Math.trunc(collectedCount ?? localReadyCount + readyRemoteCount),
+  );
+  const resolvedNewThreshold = newThreshold ?? String(normalizedThreshold);
+  const resolvedNewCount = newCount ?? String(Math.max(normalizedThreshold, 2));
+  const parsedNewThreshold = Number.parseInt(resolvedNewThreshold, 10);
+  const parsedNewCount = Number.parseInt(resolvedNewCount, 10);
+  const normalizedNewThreshold = Number.isFinite(parsedNewThreshold) ? parsedNewThreshold : 0;
+  const normalizedNewCount = Number.isFinite(parsedNewCount) ? parsedNewCount : 0;
+  const newShapeValid = normalizedNewThreshold >= 2 && normalizedNewCount >= normalizedNewThreshold;
+  const displayedCollectedCount = Math.min(normalizedCollectedCount, normalizedThreshold);
+  const progress = Math.min(100, Math.round((displayedCollectedCount / normalizedThreshold) * 100));
+  const readyToRotate = normalizedCollectedCount >= normalizedThreshold;
+  const canEditNewConfiguration = Boolean(onChangeNewConfiguration) && !actionBusy;
+  const newConfigurationSummary = newShapeValid
+    ? `Any ${normalizedNewThreshold} of ${normalizedNewCount} shares can sign - total shares must be at least the threshold.`
+    : 'Choose at least 2 threshold shares, with total shares greater than or equal to the threshold.';
+  const showLocalPassphrase = Boolean(
+    resolvedLocalSourceLabel && effectiveLocalSourceState === 'locked' && changeLocalPassphrase,
+  );
+  const localSourceStatus =
+    effectiveLocalSourceState === 'validated'
+      ? {
+          label: 'Ready',
+          detail: 'This device share is unlocked and counts toward the rotation threshold.',
+        }
+      : {
+          label: 'Passphrase required',
+          detail:
+            'This device share is available but not counted yet. Enter its profile passphrase, or provide enough remote source packages without it.',
+        };
+  const requiredRemoteSources = Math.max(1, normalizedThreshold - localReadyCount);
+  const canAddSource = rotationSources.length < requiredRemoteSources;
+  const localPassphraseReady = resolvedLocalPassphrase.trim().length > 0;
+  const adjustNewConfiguration = (field: 'threshold' | 'count', direction: -1 | 1) => {
+    const currentValue = field === 'threshold' ? normalizedNewThreshold : normalizedNewCount;
+    const fallbackValue = field === 'threshold' ? 2 : Math.max(normalizedNewThreshold || 2, 2);
+    const nextValue = Math.max(2, (currentValue || fallbackValue) + direction);
+    onChangeNewConfiguration?.(field, String(nextValue));
+  };
+  const collectionStatus = actionBusy
+    ? 'Rotating keyset from collected shares...'
+    : readyToRotate
+      ? newShapeValid
+        ? 'Threshold met. Continue to select the local share for this device.'
+        : 'Choose a valid rotated keyset configuration to continue.'
+      : showLocalPassphrase
+        ? 'Enter this device passphrase or add enough remote source packages to continue.'
+        : 'Add another source package and password to continue.';
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="igloo-stack">
-        <label>
-          Source Profile
+    <div className="igloo-recover-collect igloo-rotate-collect">
+      {onBack ? (
+        <button
+          type="button"
+          className="igloo-recover-back"
+          data-testid={CRITICAL_E2E_TEST_IDS.createBack}
+          disabled={actionBusy}
+          onClick={onBack}
+        >
+          ‹ Back
+        </button>
+      ) : null}
+      {title || description ? (
+        <header className="igloo-rotate-collect-heading">
+          {title ? <h3>{title}</h3> : null}
+          {description ? <p>{description}</p> : null}
+        </header>
+      ) : null}
+      {shouldShowProfileSelector ? (
+        <label className="igloo-rotate-source-select">
+          <span>Source Profile</span>
           <select
             data-testid={CRITICAL_E2E_TEST_IDS.rotateSourceProfile}
             value={sourceProfileId}
+            disabled={actionBusy}
             onChange={(event) => onChangeSourceProfile(event.target.value)}
           >
             <option value="">Select a local profile</option>
@@ -76,77 +186,295 @@ export function RotateKeysetPanel({
             ))}
           </select>
         </label>
-        {includeDeviceShare ? (
-          <div className="igloo-generated-card">
-            <header className="igloo-recover-device-header">
-              <strong>{deviceShareLabel}</strong>
-              <span
-                className={
-                  deviceShareValidated
-                    ? 'igloo-recover-share-status igloo-recover-share-status-valid'
-                    : 'igloo-recover-share-status'
-                }
-              >
-                {deviceShareValidated ? 'Validated' : 'Locked'}
-              </span>
-            </header>
-            <label>
-              Device Passphrase
+      ) : null}
+      <div
+        className="igloo-recover-device-row"
+        data-state={effectiveLocalSourceState}
+        role="group"
+        aria-label={`${resolvedLocalSourceLabel}: ${localSourceStatus.label}`}
+      >
+        <div className="igloo-recover-device-main">
+          <strong>{resolvedLocalSourceLabel}</strong>
+          <p>{localSourceStatus.detail}</p>
+        </div>
+        <span className="igloo-recover-device-badge" data-state={effectiveLocalSourceState}>
+          {effectiveLocalSourceState === 'validated' ? (
+            <Check size={14} aria-hidden="true" />
+          ) : (
+            <AlertTriangle size={14} aria-hidden="true" />
+          )}
+          {localSourceStatus.label}
+        </span>
+        {showLocalPassphrase ? (
+          <label className="igloo-rotate-local-passphrase">
+            <span>Profile Passphrase</span>
+            <div className="igloo-rotate-local-passphrase-row">
               <PasswordField
-                value={devicePassphrase ?? ''}
-                onChange={(event) => onChangeDevicePassphrase?.(event.target.value)}
-                onBlur={onVerifyDevicePassphrase ? () => onVerifyDevicePassphrase() : undefined}
-                placeholder="Unlock this device's share to auto-include it in the rotation"
+                data-testid={CRITICAL_E2E_TEST_IDS.rotateLocalPassphrase}
+                value={resolvedLocalPassphrase}
+                disabled={actionBusy || localPassphraseActionBusy}
+                onChange={(event) => changeLocalPassphrase?.(event.target.value)}
+                placeholder="Enter this device profile passphrase"
               />
-            </label>
-          </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="igloo-rotate-local-passphrase-submit"
+                data-testid={CRITICAL_E2E_TEST_IDS.rotateLocalPassphraseSubmit}
+                disabled={actionBusy || localPassphraseActionBusy || !localPassphraseReady || !submitLocalPassphrase}
+                loading={localPassphraseActionBusy}
+                loadingLabel="Unlocking..."
+                onClick={submitLocalPassphrase}
+              >
+                Unlock Share
+              </Button>
+            </div>
+            {localPassphraseError ? (
+              <p className="igloo-rotate-local-passphrase-error">{localPassphraseError}</p>
+            ) : null}
+          </label>
         ) : null}
-        <div className="igloo-stack">
-          {rotationSources.map((source, index) => (
-            <div key={`rotation-source-${index}`} className="igloo-generated-card">
+      </div>
+      <div className="igloo-stack">
+        {rotationSources.map((source, index) => {
+          const sourceLabel = `Remote Source #${index + 1}`;
+          const sourceStatus = rotationSourceStatus(source, sourceLabel);
+          return (
+            <div
+              key={`rotation-source-${index}`}
+              className="igloo-generated-card igloo-recover-source-card"
+              role="group"
+              aria-label={`${sourceLabel}: ${sourceStatus.label}`}
+            >
               <header>
-                <strong>Recovery Share {index + sourceNumberOffset}</strong>
-                <span>Add threshold bfshare packages to reconstruct the current keyset.</span>
+                <div className="igloo-recover-source-title-row">
+                  <strong>{sourceLabel}</strong>
+                  {sourceStatus.state !== 'empty' ? (
+                    <span className="igloo-recover-source-badge" data-state={sourceStatus.state}>
+                      {sourceStatus.label}
+                    </span>
+                  ) : null}
+                </div>
+                {sourceStatus.state !== 'empty' ? (
+                  <p className="igloo-recover-source-detail" data-state={sourceStatus.state}>
+                    {sourceStatus.detail}
+                  </p>
+                ) : null}
               </header>
               <label>
-                bfshare
+                Source Package
                 <Textarea
-                  className="min-h-[96px]"
+                  className="igloo-rotate-source-textarea"
                   value={source.packageText}
+                  disabled={actionBusy}
                   onChange={(event) => onChangeRotationSource(index, 'packageText', event.target.value)}
-                  placeholder="Paste bfshare1..."
+                  placeholder="Paste bfprofile or bfshare from another device or backup..."
                 />
               </label>
               <label>
                 Package Password
-                <input
-                  type="password"
-                  {...passwordManagerOptOutProps}
+                <PasswordField
                   value={source.packagePassword}
+                  disabled={actionBusy}
                   onChange={(event) => onChangeRotationSource(index, 'packagePassword', event.target.value)}
+                  placeholder="Enter password to decrypt"
                 />
               </label>
               <div className="igloo-button-row">
-                <Button type="button" size="sm" variant="secondary" onClick={() => onRemoveRotationSource(index)}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  aria-label={`Remove ${sourceLabel}`}
+                  disabled={actionBusy}
+                  onClick={() => onRemoveRotationSource(index)}
+                >
                   Remove
                 </Button>
               </div>
             </div>
-          ))}
+          );
+        })}
+        {canAddSource ? (
           <div className="igloo-button-row">
-            <Button type="button" size="sm" variant="secondary" data-testid={CRITICAL_E2E_TEST_IDS.rotateAddSource} onClick={onAddRotationSource}>
-              Add bfshare Source
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              data-testid={CRITICAL_E2E_TEST_IDS.rotateAddSource}
+              disabled={actionBusy}
+              onClick={onAddRotationSource}
+            >
+              Add Source
             </Button>
           </div>
+        ) : null}
+      </div>
+      <div className="igloo-recover-meter">
+        <div className="igloo-recover-meter-head">
+          <span>Shares Collected</span>
+          <span>
+            {displayedCollectedCount} of {normalizedThreshold} required
+          </span>
         </div>
-        <div className="igloo-button-row">
-          <Button type="button" size="sm" data-testid={CRITICAL_E2E_TEST_IDS.rotateSubmit} onClick={onRotate}>
-            {actionLabel}
-          </Button>
+        <div
+          className="igloo-recover-meter-track"
+          role="progressbar"
+          aria-label="Rotation threshold progress"
+          aria-valuemin={0}
+          aria-valuemax={normalizedThreshold}
+          aria-valuenow={displayedCollectedCount}
+          aria-valuetext={`${displayedCollectedCount} of ${normalizedThreshold} required`}
+        >
+          <div className="igloo-recover-meter-fill" style={{ width: `${progress}%` }} />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      <p className="igloo-recover-helper">
+        Old devices do not need to be online. Provide enough source packages and passwords to meet the threshold.
+      </p>
+      <div className="igloo-rotate-new-config" aria-label="New rotation configuration">
+        <div className="igloo-onboard-divider" />
+        <h4>New Configuration</h4>
+        <div className="igloo-create-threshold-row">
+          <RotateCounterControl
+            label="Threshold"
+            value={resolvedNewThreshold}
+            helpContent={ROTATE_HELP_TEXT.threshold}
+            disabled={!canEditNewConfiguration}
+            onDecrease={() => adjustNewConfiguration('threshold', -1)}
+            onIncrease={() => adjustNewConfiguration('threshold', 1)}
+            onChange={(value) => onChangeNewConfiguration?.('threshold', value)}
+          />
+          <span className="igloo-create-threshold-divider">/</span>
+          <RotateCounterControl
+            label="Total Shares"
+            value={resolvedNewCount}
+            helpContent={ROTATE_HELP_TEXT.totalShares}
+            disabled={!canEditNewConfiguration}
+            onDecrease={() => adjustNewConfiguration('count', -1)}
+            onIncrease={() => adjustNewConfiguration('count', 1)}
+            onChange={(value) => onChangeNewConfiguration?.('count', value)}
+          />
+        </div>
+        <p className="igloo-create-threshold-help" data-state={newShapeValid ? 'valid' : 'invalid'}>
+          {newConfigurationSummary}
+        </p>
+      </div>
+      <p role="status" aria-live="polite" aria-label="Rotation collection status" className="igloo-recover-status">
+        {collectionStatus}
+      </p>
+      <Button
+        type="button"
+        className="igloo-create-primary-action"
+        data-testid={CRITICAL_E2E_TEST_IDS.rotateSubmit}
+        disabled={!readyToRotate || !newShapeValid || actionBusy}
+        loading={actionBusy}
+        loadingLabel={actionLoadingLabel}
+        onClick={onRotate}
+      >
+        {actionLabel}
+      </Button>
+      <div className="igloo-rotate-same-key-note">
+        <RotateCcw size={16} aria-hidden="true" />
+        <div>
+          <strong>All shares change, group key stays the same</strong>
+          <p>
+            Rotation replaces all device shares for the same group public key. Next, create this device's local profile
+            by setting its name, password, relays, and peer permissions before adoption.
+          </p>
+        </div>
+      </div>
+    </div>
   );
+}
+
+function RotateCounterControl({
+  label,
+  value,
+  helpContent,
+  disabled = false,
+  onDecrease,
+  onIncrease,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  helpContent: React.ReactNode;
+  disabled?: boolean;
+  onDecrease: () => void;
+  onIncrease: () => void;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="igloo-create-field">
+      <span className="igloo-create-label-with-help">
+        {label}
+        <HelpCircle size={14} aria-hidden="true">
+          <title>{String(helpContent)}</title>
+        </HelpCircle>
+      </span>
+      <div className="igloo-create-counter">
+        <button type="button" aria-label={`Decrease ${label}`} disabled={disabled} onClick={onDecrease}>
+          -
+        </button>
+        <input
+          aria-label={label}
+          type="number"
+          min={2}
+          value={value}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.value)}
+        />
+        <button type="button" aria-label={`Increase ${label}`} disabled={disabled} onClick={onIncrease}>
+          +
+        </button>
+      </div>
+    </label>
+  );
+}
+
+function rotationSourceStatus(source: SharedRotationSource, sourceLabel: string) {
+  const hasPackage = source.packageText.trim().length > 0;
+  const hasPassword = source.packagePassword.trim().length > 0;
+
+  if (source.duplicateOfLocal && hasPackage) {
+    return {
+      state: 'error',
+      label: 'Local share',
+      detail: `${sourceLabel} matches this device. Enter the profile passphrase above, or paste a different device's source package.`,
+    };
+  }
+
+  if (hasPackage && hasPassword) {
+    return {
+      state: 'ready',
+      label: 'Ready',
+      detail: `${sourceLabel} can count toward the threshold.`,
+    };
+  }
+
+  if (hasPackage) {
+    return {
+      state: 'missing-password',
+      label: 'Password required',
+      detail: `Add the package password to count ${sourceLabel}.`,
+    };
+  }
+
+  if (hasPassword) {
+    return {
+      state: 'missing-package',
+      label: 'Package required',
+      detail: `Paste the source package to count ${sourceLabel}.`,
+    };
+  }
+
+  return {
+    state: 'empty',
+    label: 'Waiting',
+    detail: `Paste a source package and enter its password to count ${sourceLabel}.`,
+  };
 }
 
 export function ReplaceSharePackageEntry({

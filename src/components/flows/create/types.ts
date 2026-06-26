@@ -8,6 +8,7 @@ export type SharedCreateFormState = {
 export type SharedRotationSource = {
   packageText: string;
   packagePassword: string;
+  duplicateOfLocal?: boolean;
 };
 
 export type SharedGeneratedShare = {
@@ -56,6 +57,7 @@ export type RelayPingFn = (url: string) => Promise<{ latencyMs?: number; error?:
 
 export type SharedDistributionPermission = 'sign' | 'ecdh' | 'ping' | 'onboard';
 
-export type SharedRecoverSource = { packageText: string; packagePassword: string };
+export type SharedRecoverSource = { packageText: string; packagePassword: string; duplicateOfLocal?: boolean };
+export type RecoverDeviceShareState = 'validated' | 'locked';
 
 export type OnboardTimelineStepKey = 'connect' | 'negotiate' | 'finish';

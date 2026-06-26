@@ -403,41 +403,212 @@ describe('shared host flow components', () => {
   });
 
   it('renders rotate-keyset source and recovery share inputs separately', () => {
-    const onChangeSourceProfile = vi.fn();
     const onChangeRotationSource = vi.fn();
-    const onAddRotationSource = vi.fn();
-    const onRemoveRotationSource = vi.fn();
     const onRotate = vi.fn();
 
     render(
       <RotateKeysetPanel
         sourceProfileId="profile-1"
         availableProfiles={[{ id: 'profile-1', label: 'Primary Browser Device' }]}
-        rotationSources={[{ packageText: '', packagePassword: '' }]}
-        onChangeSourceProfile={onChangeSourceProfile}
+        threshold={2}
+        collectedCount={2}
+        rotationSources={[{ packageText: 'bfprofile1source', packagePassword: 'source-pass' }]}
+        onChangeSourceProfile={vi.fn()}
         onChangeRotationSource={onChangeRotationSource}
-        onAddRotationSource={onAddRotationSource}
-        onRemoveRotationSource={onRemoveRotationSource}
+        onAddRotationSource={vi.fn()}
+        onRemoveRotationSource={vi.fn()}
         onRotate={onRotate}
       />,
     );
 
-    expect(screen.getByRole('heading', { name: 'Rotate Keyset' })).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Source Profile'), {
-      target: { value: 'profile-1' },
+    expect(screen.getByRole('group', { name: 'Share #1 (this device): Ready' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Source Profile')).not.toBeInTheDocument();
+    expect(screen.getByText('Remote Source #1')).toBeInTheDocument();
+    expect(screen.getByText('Shares Collected')).toBeInTheDocument();
+    expect(screen.getByText('2 of 2 required')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Source Package'), {
+      target: { value: 'bfprofile1...' },
     });
-    expect(onChangeSourceProfile).toHaveBeenCalledWith('profile-1');
+    expect(onChangeRotationSource).toHaveBeenCalledWith(0, 'packageText', 'bfprofile1...');
 
-    fireEvent.change(screen.getByLabelText('bfshare'), {
-      target: { value: 'bfshare1...' },
-    });
-    expect(onChangeRotationSource).toHaveBeenCalledWith(0, 'packageText', 'bfshare1...');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add bfshare Source' }));
-    expect(onAddRotationSource).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Rotate Keyset' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next Step' }));
     expect(onRotate).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders rotate-keyset new configuration separately from source collection', () => {
+    const onChangeNewConfiguration = vi.fn();
+    const rotatePanel = (
+      <RotateKeysetPanel
+        sourceProfileId="profile-1"
+        availableProfiles={[{ id: 'profile-1', label: 'Primary Browser Device' }]}
+        localSourceLabel="Share #1 (this device)"
+        threshold={2}
+        newThreshold="2"
+        newCount="3"
+        collectedCount={2}
+        rotationSources={[{ packageText: 'bfshare1source', packagePassword: 'source-pass' }]}
+        onChangeSourceProfile={vi.fn()}
+        onChangeRotationSource={vi.fn()}
+        onChangeNewConfiguration={onChangeNewConfiguration}
+        onAddRotationSource={vi.fn()}
+        onRemoveRotationSource={vi.fn()}
+        onRotate={vi.fn()}
+      />
+    );
+    const { rerender } = render(rotatePanel);
+
+    expect(screen.getByText('New Configuration')).toBeInTheDocument();
+    expect(screen.getByText('2 of 2 required')).toBeInTheDocument();
+    expect(screen.getByLabelText('Threshold')).toHaveValue(2);
+    expect(screen.getByLabelText('Total Shares')).toHaveValue(3);
+    expect(screen.getByText('All shares change, group key stays the same')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease Total Shares' }));
+    expect(onChangeNewConfiguration).toHaveBeenCalledWith('count', '2');
+
+    rerender(
+      <RotateKeysetPanel
+        sourceProfileId="profile-1"
+        availableProfiles={[{ id: 'profile-1', label: 'Primary Browser Device' }]}
+        localSourceLabel="Share #1 (this device)"
+        threshold={2}
+        newThreshold="3"
+        newCount="2"
+        collectedCount={2}
+        rotationSources={[{ packageText: 'bfshare1source', packagePassword: 'source-pass' }]}
+        onChangeSourceProfile={vi.fn()}
+        onChangeRotationSource={vi.fn()}
+        onChangeNewConfiguration={onChangeNewConfiguration}
+        onAddRotationSource={vi.fn()}
+        onRemoveRotationSource={vi.fn()}
+        onRotate={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/Choose at least 2 threshold shares/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next Step' })).toBeDisabled();
+  });
+
+  it('asks for this device passphrase and flags duplicate local packages during rotate collection', () => {
+    const onLocalPassphraseChange = vi.fn();
+    const onSubmitLocalPassphrase = vi.fn();
+
+    const { rerender } = render(
+      <RotateKeysetPanel
+        sourceProfileId="profile-1"
+        availableProfiles={[{ id: 'profile-1', label: 'Primary Browser Device' }]}
+        localSourceLabel="Share #2 (this device)"
+        localSourceState="locked"
+        localPassphrase=""
+        threshold={2}
+        collectedCount={0}
+        rotationSources={[
+          { packageText: 'bfprofile1local', packagePassword: 'local-pass', duplicateOfLocal: true },
+        ]}
+        onChangeSourceProfile={vi.fn()}
+        onLocalPassphraseChange={onLocalPassphraseChange}
+        onSubmitLocalPassphrase={onSubmitLocalPassphrase}
+        onChangeRotationSource={vi.fn()}
+        onAddRotationSource={vi.fn()}
+        onRemoveRotationSource={vi.fn()}
+        onRotate={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('group', { name: 'Share #2 (this device): Passphrase required' })).toBeInTheDocument();
+    expect(screen.getByText(/This device share is available but not counted yet/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unlock Share' })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Profile Passphrase'), {
+      target: { value: 'device-passphrase' },
+    });
+    expect(onLocalPassphraseChange).toHaveBeenCalledWith('device-passphrase');
+    expect(onSubmitLocalPassphrase).not.toHaveBeenCalled();
+
+    rerender(
+      <RotateKeysetPanel
+        sourceProfileId="profile-1"
+        availableProfiles={[{ id: 'profile-1', label: 'Primary Browser Device' }]}
+        localSourceLabel="Share #2 (this device)"
+        localSourceState="locked"
+        localPassphrase="device-passphrase"
+        threshold={2}
+        collectedCount={0}
+        rotationSources={[
+          { packageText: 'bfprofile1local', packagePassword: 'local-pass', duplicateOfLocal: true },
+        ]}
+        onChangeSourceProfile={vi.fn()}
+        onLocalPassphraseChange={onLocalPassphraseChange}
+        onSubmitLocalPassphrase={onSubmitLocalPassphrase}
+        onChangeRotationSource={vi.fn()}
+        onAddRotationSource={vi.fn()}
+        onRemoveRotationSource={vi.fn()}
+        onRotate={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock Share' }));
+    expect(onSubmitLocalPassphrase).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Remote Source #1')).toBeInTheDocument();
+    expect(screen.getByText('Local share')).toBeInTheDocument();
+    expect(screen.getByText(/matches this device/i)).toBeInTheDocument();
+    expect(screen.getByText('0 of 2 required')).toBeInTheDocument();
+  });
+
+  it('shows rotate source profile and add controls only when needed', () => {
+    const onChangeSourceProfile = vi.fn();
+    const onAddRotationSource = vi.fn();
+
+    render(
+      <RotateKeysetPanel
+        sourceProfileId="profile-1"
+        availableProfiles={[
+          { id: 'profile-1', label: 'Primary Browser Device' },
+          { id: 'profile-2', label: 'Laptop Device' },
+        ]}
+        localSourceLabel="Share #1 (this device)"
+        threshold={3}
+        collectedCount={1}
+        rotationSources={[{ packageText: '', packagePassword: '' }]}
+        onChangeSourceProfile={onChangeSourceProfile}
+        onChangeRotationSource={vi.fn()}
+        onAddRotationSource={onAddRotationSource}
+        onRemoveRotationSource={vi.fn()}
+        onRotate={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText('Source Profile'), {
+      target: { value: 'profile-2' },
+    });
+    expect(onChangeSourceProfile).toHaveBeenCalledWith('profile-2');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Source' }));
+    expect(onAddRotationSource).toHaveBeenCalledTimes(1);
+  });
+
+  it('locks rotate source inputs while rotation is in flight', () => {
+    render(
+      <RotateKeysetPanel
+        sourceProfileId="profile-1"
+        availableProfiles={[{ id: 'profile-1', label: 'Primary Browser Device' }]}
+        localSourceLabel="Share #1 (this device)"
+        threshold={3}
+        collectedCount={2}
+        rotationSources={[{ packageText: 'bfshare1source', packagePassword: 'source-pass' }]}
+        onChangeSourceProfile={vi.fn()}
+        onChangeRotationSource={vi.fn()}
+        onAddRotationSource={vi.fn()}
+        onRemoveRotationSource={vi.fn()}
+        onRotate={vi.fn()}
+        actionBusy
+      />,
+    );
+
+    expect(screen.getByLabelText('Source Package')).toBeDisabled();
+    expect(screen.getByLabelText('Package Password')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Remove Remote Source #1' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add Source' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Rotating...' })).toBeDisabled();
   });
 
   it('renders the Paper replace-share package entry section', () => {

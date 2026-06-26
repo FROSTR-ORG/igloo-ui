@@ -12,6 +12,7 @@ export type {
   SharedDistributionPermission,
   RelayPingFn,
   SharedRecoverSource,
+  RecoverDeviceShareState,
   OnboardTimelineStepKey,
 } from './types';
 

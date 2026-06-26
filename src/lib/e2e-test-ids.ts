@@ -29,6 +29,8 @@ export const CRITICAL_E2E_TEST_IDS = {
   createModeRotate: 'create-mode-rotate',
   createGenerateNext: 'create-generate-next',
   rotateSourceProfile: 'rotate-source-profile',
+  rotateLocalPassphrase: 'rotate-local-passphrase',
+  rotateLocalPassphraseSubmit: 'rotate-local-passphrase-submit',
   rotateAddSource: 'rotate-add-source',
   rotateSubmit: 'rotate-submit',
   selectShareOption: 'select-share-option',
