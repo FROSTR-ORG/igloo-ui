@@ -49,28 +49,51 @@ export function CreateFlowGenerateCard({
   threshold,
   count,
   privateKey = '',
+  privateKeyError = null,
   onChangeForm,
   onGenerate,
   onBack,
+  actionBusy = false,
+  actionLoadingLabel = 'Generating...',
 }: {
   groupName: string;
   threshold: string;
   count: string;
   privateKey?: string;
+  privateKeyError?: string | null;
   onChangeForm: (
     field: 'groupName' | 'threshold' | 'count' | 'privateKey',
     value: string,
   ) => void;
   onGenerate: () => void;
   onBack?: () => void;
+  actionBusy?: boolean;
+  actionLoadingLabel?: string;
 }) {
+  const privateKeyErrorId = React.useId();
   const thresholdValue = Number.parseInt(threshold, 10) || 2;
   const countValue = Number.parseInt(count, 10) || 3;
   const thresholdSummary = `Any ${thresholdValue} of ${countValue} shares can sign - min threshold is 2, min shares is 3`;
 
   const adjustNumber = (field: 'threshold' | 'count', direction: -1 | 1) => {
     const currentValue = field === 'threshold' ? thresholdValue : countValue;
-    const nextValue = Math.max(2, currentValue + direction);
+    const nextValue =
+      field === 'threshold'
+        ? Math.min(countValue, Math.max(2, currentValue + direction))
+        : Math.max(3, thresholdValue, currentValue + direction);
+    onChangeForm(field, String(nextValue));
+  };
+
+  const handleNumberChange = (field: 'threshold' | 'count', value: string) => {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed)) {
+      onChangeForm(field, value);
+      return;
+    }
+    const nextValue =
+      field === 'threshold'
+        ? Math.min(countValue, Math.max(2, parsed))
+        : Math.max(3, thresholdValue, parsed);
     onChangeForm(field, String(nextValue));
   };
 
@@ -83,6 +106,7 @@ export function CreateFlowGenerateCard({
           <input
             aria-label="Group Name"
             value={groupName}
+            disabled={actionBusy}
             onChange={(event) => onChangeForm('groupName', event.target.value)}
             placeholder="e.g. My Signing Key, Work Key..."
           />
@@ -94,17 +118,19 @@ export function CreateFlowGenerateCard({
         <CreateCounterControl
           label="Threshold"
           value={threshold}
+          disabled={actionBusy}
           onDecrease={() => adjustNumber('threshold', -1)}
           onIncrease={() => adjustNumber('threshold', 1)}
-          onChange={(value) => onChangeForm('threshold', value)}
+          onChange={(value) => handleNumberChange('threshold', value)}
         />
         <span className="igloo-create-threshold-divider">/</span>
         <CreateCounterControl
           label="Total Shares"
           value={count}
+          disabled={actionBusy}
           onDecrease={() => adjustNumber('count', -1)}
           onIncrease={() => adjustNumber('count', 1)}
-          onChange={(value) => onChangeForm('count', value)}
+          onChange={(value) => handleNumberChange('count', value)}
         />
       </div>
 
@@ -116,21 +142,35 @@ export function CreateFlowGenerateCard({
           <HelpCircle size={14} aria-hidden="true" />
         </span>
         <div className="igloo-create-private-row">
-          <div className="igloo-create-input-shell">
+          <div className={privateKeyError ? 'igloo-create-input-shell igloo-create-input-shell-error' : 'igloo-create-input-shell'}>
             <input
               aria-label="Existing Private Key (optional)"
               value={privateKey}
+              disabled={actionBusy}
+              aria-invalid={privateKeyError ? 'true' : undefined}
+              aria-describedby={privateKeyError ? privateKeyErrorId : undefined}
               onChange={(event) => onChangeForm('privateKey', event.target.value)}
               placeholder="Paste an nsec1... key or leave blank"
             />
             <EyeOff size={16} aria-hidden="true" />
           </div>
         </div>
-        <small>Provide an existing key, otherwise a new one will be generated for you in the next step.</small>
+        {privateKeyError ? (
+          <small id={privateKeyErrorId} className="igloo-field-error">{privateKeyError}</small>
+        ) : (
+          <small>Provide an existing key, otherwise a new one will be generated for you in the next step.</small>
+        )}
       </label>
 
-      <CreateActionRow onBack={onBack}>
-        <Button type="button" className="igloo-create-primary-action" data-testid={CRITICAL_E2E_TEST_IDS.createGenerateNext} onClick={onGenerate}>
+      <CreateActionRow onBack={onBack} backDisabled={actionBusy} backLabel="Back to Welcome">
+        <Button
+          type="button"
+          className="igloo-create-primary-action"
+          data-testid={CRITICAL_E2E_TEST_IDS.createGenerateNext}
+          loading={actionBusy}
+          loadingLabel={actionLoadingLabel}
+          onClick={onGenerate}
+        >
           Next Step
         </Button>
       </CreateActionRow>
@@ -141,24 +181,26 @@ export function CreateFlowGenerateCard({
 function CreateCounterControl({
   label,
   value,
+  disabled = false,
   onDecrease,
   onIncrease,
   onChange,
 }: {
   label: string;
   value: string;
+  disabled?: boolean;
   onDecrease: () => void;
   onIncrease: () => void;
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="igloo-create-field">
+    <div className="igloo-create-field">
       <span className="igloo-create-label-with-help">
         {label}
         <HelpCircle size={14} aria-hidden="true" />
       </span>
       <div className="igloo-create-counter">
-        <button type="button" aria-label={`Decrease ${label}`} onClick={onDecrease}>
+        <button type="button" aria-label={`Decrease ${label}`} disabled={disabled} onClick={onDecrease}>
           -
         </button>
         <input
@@ -166,13 +208,14 @@ function CreateCounterControl({
           type="number"
           min={2}
           value={value}
+          disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
         />
-        <button type="button" aria-label={`Increase ${label}`} onClick={onIncrease}>
+        <button type="button" aria-label={`Increase ${label}`} disabled={disabled} onClick={onIncrease}>
           +
         </button>
       </div>
-    </label>
+    </div>
   );
 }
 

@@ -299,7 +299,77 @@ describe('shared host flow components', () => {
     expect(onGenerate).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the Paper select-share step with info-only group public key formats', () => {
+  it('keeps create-flow threshold and total-share counters in a valid shape', () => {
+    const onChangeForm = vi.fn();
+
+    render(
+      <CreateFlowGenerateCard
+        groupName=""
+        threshold="3"
+        count="3"
+        privateKey=""
+        onChangeForm={onChangeForm}
+        onGenerate={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Increase Threshold' }));
+    expect(onChangeForm).toHaveBeenLastCalledWith('threshold', '3');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease Total Shares' }));
+    expect(onChangeForm).toHaveBeenLastCalledWith('count', '3');
+
+    fireEvent.change(screen.getByLabelText('Threshold'), { target: { value: '5' } });
+    expect(onChangeForm).toHaveBeenLastCalledWith('threshold', '3');
+
+    fireEvent.change(screen.getByLabelText('Total Shares'), { target: { value: '2' } });
+    expect(onChangeForm).toHaveBeenLastCalledWith('count', '3');
+  });
+
+  it('locks create-flow keyset inputs while generation is in flight', () => {
+    render(
+      <CreateFlowGenerateCard
+        groupName="Treasury Signers"
+        threshold="2"
+        count="3"
+        privateKey="nsec1existing"
+        onChangeForm={vi.fn()}
+        onGenerate={vi.fn()}
+        onBack={vi.fn()}
+        actionBusy
+      />,
+    );
+
+    expect(screen.getByLabelText('Group Name')).toBeDisabled();
+    expect(screen.getByLabelText('Threshold')).toBeDisabled();
+    expect(screen.getByLabelText('Total Shares')).toBeDisabled();
+    expect(screen.getByLabelText('Existing Private Key (optional)')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Decrease Threshold' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Increase Threshold' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Back to Welcome' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Generating...' })).toBeDisabled();
+  });
+
+  it('renders the create-flow private key validation state inline', () => {
+    render(
+      <CreateFlowGenerateCard
+        groupName=""
+        threshold="2"
+        count="3"
+        privateKey="not-a-valid-key"
+        privateKeyError="Invalid private key format."
+        onChangeForm={vi.fn()}
+        onGenerate={vi.fn()}
+      />,
+    );
+
+    const privateKey = screen.getByLabelText('Existing Private Key (optional)');
+    expect(privateKey).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByText('Invalid private key format.')).toHaveClass('igloo-field-error');
+    expect(screen.queryByText(/Provide an existing key/)).not.toBeInTheDocument();
+  });
+
+  it('renders the select-share group public key as info in npub and raw hex formats', () => {
     const onSelectShare = vi.fn();
     const onAction = vi.fn();
 

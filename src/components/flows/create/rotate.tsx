@@ -407,7 +407,7 @@ function RotateCounterControl({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="igloo-create-field">
+    <div className="igloo-create-field">
       <span className="igloo-create-label-with-help">
         {label}
         <HelpCircle size={14} aria-hidden="true">
@@ -430,7 +430,7 @@ function RotateCounterControl({
           +
         </button>
       </div>
-    </label>
+    </div>
   );
 }
 

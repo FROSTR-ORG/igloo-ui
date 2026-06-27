@@ -3,12 +3,29 @@ import * as React from 'react';
 import { Button } from '../../ui/button';
 import { CRITICAL_E2E_TEST_IDS } from '../../../lib/e2e-test-ids';
 
-export function CreateActionRow({ onBack, children }: { onBack?: () => void; children: React.ReactNode }) {
+export function CreateActionRow({
+  onBack,
+  backDisabled = false,
+  backLabel = 'Go Back',
+  children,
+}: {
+  onBack?: () => void;
+  backDisabled?: boolean;
+  backLabel?: string;
+  children: React.ReactNode;
+}) {
   if (!onBack) return <>{children}</>;
   return (
     <div className="igloo-create-action-row">
-      <Button type="button" variant="secondary" className="igloo-create-back-action" data-testid={CRITICAL_E2E_TEST_IDS.createBack} onClick={onBack}>
-        Go Back
+      <Button
+        type="button"
+        variant="secondary"
+        className="igloo-create-back-action"
+        data-testid={CRITICAL_E2E_TEST_IDS.createBack}
+        disabled={backDisabled}
+        onClick={onBack}
+      >
+        {backLabel}
       </Button>
       {children}
     </div>
