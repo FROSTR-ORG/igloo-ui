@@ -2077,6 +2077,19 @@
     outline: none;
   }
 
+  .igloo-password-field .igloo-password-field-control,
+  .igloo-password-field .igloo-password-field-control:hover,
+  .igloo-password-field .igloo-password-field-control:focus {
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .igloo-flow-root .igloo-password-field .igloo-password-field-control {
+    border: 0;
+    background: transparent;
+    padding: 0;
+  }
+
   .igloo-password-field-toggle {
     flex: none;
     display: inline-flex;

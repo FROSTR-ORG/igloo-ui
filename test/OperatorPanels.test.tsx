@@ -295,7 +295,7 @@ describe('operator dashboard surface', () => {
     expect(screen.getByRole('heading', { name: 'Runtime Settings' })).not.toBeVisible();
     expect(screen.getByRole('button', { name: 'Change' })).toBeDisabled();
     const onboardButton = screen.getByRole('button', { name: 'Onboard a Device' });
-    expect(onboardButton).toHaveClass('w-full');
+    expect(onboardButton).toHaveClass('justify-self-end');
     expect(screen.getByRole('heading', { name: 'Logout' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Logout' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
@@ -897,9 +897,9 @@ describe('operator dashboard surface', () => {
 
     // Per-method capability badges render for both peers; online peer shows its
     // latency, the offline peer shows "Offline".
-    expect(screen.getAllByText('SIGN')).toHaveLength(2);
-    expect(screen.getAllByText('ECDH')).toHaveLength(2);
-    expect(screen.getAllByText('PING')).toHaveLength(2);
+    expect(screen.getAllByLabelText(/SIGN (capable|unavailable)/)).toHaveLength(2);
+    expect(screen.getAllByLabelText(/ECDH (capable|unavailable)/)).toHaveLength(2);
+    expect(screen.getAllByLabelText(/PING (capable|unavailable)/)).toHaveLength(2);
     expect(screen.getByText('120ms')).toBeInTheDocument();
     expect(screen.getByText('Offline')).toBeInTheDocument();
 

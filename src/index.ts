@@ -74,7 +74,7 @@ export type { ObservabilityEventInput } from './adapters/runtime-view-models';
 /* ------------------------------------------------------------------ */
 export { Alert } from './components/ui/alert';
 export type { AlertProps } from './components/ui/alert';
-export { AppHeader } from './components/ui/app-header';
+export { AppHeader, DashboardHeaderActions } from './components/ui/app-header';
 export { Badge } from './components/ui/badge';
 export type { BadgeProps } from './components/ui/badge';
 export { Button, buttonVariants } from './components/ui/button';
