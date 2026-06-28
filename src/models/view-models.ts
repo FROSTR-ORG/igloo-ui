@@ -137,7 +137,18 @@ export type PendingOperationRowModel = {
 export type EventLogRowModel = {
   id: string;
   badgeLabel: string;
-  badgeTone: 'default' | 'success' | 'warning' | 'danger' | 'info';
+  badgeTone:
+    | 'default'
+    | 'success'
+    | 'warning'
+    | 'danger'
+    | 'info'
+    | 'sync'
+    | 'sign'
+    | 'ecdh'
+    | 'ping'
+    | 'echo'
+    | 'policy';
   message: React.ReactNode;
   timestampLabel?: string;
 };
