@@ -16,6 +16,11 @@ type RuntimeNonceHistoryPointInput = {
   held: number;
 };
 
+type RuntimePeerNonceInventorySampleInput = {
+  updated_at: number;
+  held_count: number;
+};
+
 export type RuntimePeerStatusInput = {
   idx: number;
   pubkey: string;
@@ -25,9 +30,12 @@ export type RuntimePeerStatusInput = {
   incoming_available: number;
   outgoing_available: number;
   outgoing_spent: number;
+  latency_ms?: number;
+  nonce_inventory_history?: RuntimePeerNonceInventorySampleInput[];
   can_sign: boolean;
   can_ecdh: boolean;
   can_ping: boolean;
+  can_onboard?: boolean;
   should_send_nonces: boolean;
   last_response_latency_ms: number | null;
   avg_latency_ms: number | null;
