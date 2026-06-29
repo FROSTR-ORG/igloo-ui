@@ -1050,6 +1050,48 @@
     line-height: 1.15rem;
   }
 
+  .igloo-recover-source-badge {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    border: 1px solid rgba(96, 165, 250, 0.28);
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.1);
+    padding: 0.18rem 0.55rem;
+    color: #93c5fd;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.72rem;
+    line-height: 1rem;
+    letter-spacing: 0.08em;
+  }
+
+  .igloo-recover-source-badge[data-state='ready-to-validate'] {
+    border-color: rgba(96, 165, 250, 0.4);
+    background: rgba(37, 99, 235, 0.16);
+    color: #bfdbfe;
+  }
+
+  .igloo-recover-source-badge[data-state='missing-password'],
+  .igloo-recover-source-badge[data-state='missing-package'] {
+    border-color: rgba(234, 179, 8, 0.32);
+    background: rgba(234, 179, 8, 0.1);
+    color: #fde68a;
+  }
+
+  .igloo-recover-source-badge[data-state='error'] {
+    border-color: rgba(248, 113, 113, 0.38);
+    background: rgba(127, 29, 29, 0.18);
+    color: #fca5a5;
+  }
+
+  .igloo-recover-source-detail[data-state='ready-to-validate'] {
+    color: #bfdbfe;
+  }
+
+  .igloo-recover-source-detail[data-state='error'] {
+    color: #fca5a5;
+  }
+
   .igloo-recover-collect .igloo-button-row {
     gap: 0.5rem;
   }

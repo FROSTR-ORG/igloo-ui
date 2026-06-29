@@ -514,8 +514,8 @@ describe('shared host flow components', () => {
 
     expect(screen.getByRole('group', { name: 'Share #1 (this device): Ready' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Source Profile')).not.toBeInTheDocument();
-    expect(screen.getByText('Remote Source #1')).toBeInTheDocument();
-    expect(screen.getByText('Shares Collected')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Remote Source #1: Ready to validate' })).toBeInTheDocument();
+    expect(screen.getByText('Sources Ready to Validate')).toBeInTheDocument();
     expect(screen.getByText('2 of 2 required')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Source Package'), {
@@ -699,7 +699,7 @@ describe('shared host flow components', () => {
     expect(screen.getByLabelText('Package Password')).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Remove Remote Source #1' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add Source' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Rotating...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Validating...' })).toBeDisabled();
   });
 
   it('renders the Paper replace-share package entry section', () => {

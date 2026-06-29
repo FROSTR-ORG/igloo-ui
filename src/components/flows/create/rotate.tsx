@@ -38,7 +38,7 @@ export function RotateKeysetPanel({
   description,
   actionLabel = 'Next Step',
   actionBusy = false,
-  actionLoadingLabel = 'Rotating...',
+  actionLoadingLabel = 'Validating...',
   localPassphraseActionBusy = false,
   localPassphraseError = null,
   deviceShareLabel = 'Share #1 (this device)',
@@ -96,14 +96,14 @@ export function RotateKeysetPanel({
   const effectiveLocalSourceState: RecoverDeviceShareState =
     localSourceState ?? (onChangeDevicePassphrase ? (deviceShareValidated ? 'validated' : 'locked') : 'validated');
   const localReadyCount = effectiveLocalSourceState === 'validated' ? 1 : 0;
-  const readyRemoteCount = rotationSources.reduce((count, source, index) => {
+  const submittableRemoteCount = rotationSources.reduce((count, source, index) => {
     const sourceStatus = rotationSourceStatus(source, `Remote Source #${index + 1}`);
-    return sourceStatus.state === 'ready' ? count + 1 : count;
+    return sourceStatus.state === 'ready-to-validate' ? count + 1 : count;
   }, 0);
   const normalizedThreshold = Math.max(1, Math.trunc(threshold));
   const normalizedCollectedCount = Math.max(
     0,
-    Math.trunc(collectedCount ?? localReadyCount + readyRemoteCount),
+    Math.trunc(collectedCount ?? localReadyCount + submittableRemoteCount),
   );
   const resolvedNewThreshold = newThreshold ?? String(normalizedThreshold);
   const resolvedNewCount = newCount ?? String(Math.max(normalizedThreshold, 2));
@@ -300,7 +300,7 @@ export function RotateKeysetPanel({
       </div>
       <div className="igloo-recover-meter">
         <div className="igloo-recover-meter-head">
-          <span>Shares Collected</span>
+          <span>Sources Ready to Validate</span>
           <span>
             {displayedCollectedCount} of {normalizedThreshold} required
           </span>
@@ -318,7 +318,7 @@ export function RotateKeysetPanel({
         </div>
       </div>
       <p className="igloo-recover-helper">
-        Old devices do not need to be online. Provide enough source packages and passwords to meet the threshold.
+        Old devices do not need to be online. Provide source packages and passwords, then validate them to meet the threshold.
       </p>
       <div className="igloo-rotate-new-config" aria-label="New rotation configuration">
         <div className="igloo-onboard-divider" />
@@ -432,9 +432,9 @@ function rotationSourceStatus(source: SharedRotationSource, sourceLabel: string)
 
   if (hasPackage && hasPassword) {
     return {
-      state: 'ready',
-      label: 'Ready',
-      detail: `${sourceLabel} can count toward the threshold.`,
+      state: 'ready-to-validate',
+      label: 'Ready to validate',
+      detail: `${sourceLabel} will be decrypted and checked when you continue.`,
     };
   }
 
