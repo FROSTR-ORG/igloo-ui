@@ -1,33 +1,91 @@
 import * as React from 'react';
-import { Loader2 } from 'lucide-react';
 
 import type { DashboardBanner } from '../../models/dashboard-state';
 import { Alert } from '../ui/alert';
 import { Button } from '../ui/button';
-import { ContentCard } from '../ui/content-card';
+
+export type DashboardProfileSummary = {
+  profileName?: string;
+  thresholdLabel?: string;
+  groupKeyLabel?: string;
+  shareLabel?: string;
+  shareKeyLabel?: string;
+};
+
+function DashboardStateShell({
+  testId,
+  profileSummary,
+  children,
+}: {
+  testId: string;
+  profileSummary?: DashboardProfileSummary;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="igloo-dashboard-state" data-testid={testId}>
+      <DashboardProfileStrip profileSummary={profileSummary} />
+      {children}
+    </div>
+  );
+}
+
+function DashboardProfileStrip({ profileSummary }: { profileSummary?: DashboardProfileSummary }) {
+  const profileName = profileSummary?.profileName?.trim() || 'Signing profile';
+  const primaryItems = [profileName, profileSummary?.thresholdLabel, profileSummary?.groupKeyLabel].filter(
+    Boolean,
+  );
+  const shareItems = [profileSummary?.shareLabel, profileSummary?.shareKeyLabel].filter(Boolean);
+
+  return (
+    <div className="igloo-dashboard-state-profile" aria-label="Profile summary">
+      <span className="igloo-dashboard-state-profile-group">
+        {primaryItems.map((item, index) => (
+          <React.Fragment key={`${item}-${index}`}>
+            {index > 0 ? <span className="igloo-dashboard-state-separator">·</span> : null}
+            <span>{item}</span>
+          </React.Fragment>
+        ))}
+      </span>
+      {shareItems.length ? (
+        <>
+          <span className="igloo-dashboard-state-divider" aria-hidden="true" />
+          <span className="igloo-dashboard-state-profile-group">
+            {shareItems.map((item, index) => (
+              <React.Fragment key={`${item}-${index}`}>
+                {index > 0 ? <span className="igloo-dashboard-state-separator">·</span> : null}
+                <span>{item}</span>
+              </React.Fragment>
+            ))}
+          </span>
+        </>
+      ) : null}
+    </div>
+  );
+}
 
 /**
  * Full-panel loading state — shown in place of the signer dashboard while the
  * runtime restores its session and connects to relays.
  */
 export function DashboardLoadingScreen({
-  title = 'Starting signer…',
-  detail,
+  title = 'Loading profile...',
+  detail = 'Preparing your dashboard.',
+  profileSummary,
 }: {
   title?: string;
   detail?: string;
+  profileSummary?: DashboardProfileSummary;
 }) {
   return (
-    <ContentCard
-      title={title}
-      description={detail ?? 'Restoring your session and connecting to relays.'}
-      data-testid="dashboard-loading"
-    >
-      <div className="flex items-center justify-center gap-3 rounded-lg border border-blue-800/30 p-8 text-blue-300">
-        <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-        <span className="text-sm">Loading…</span>
+    <DashboardStateShell testId="dashboard-loading" profileSummary={profileSummary}>
+      <div className="igloo-dashboard-state-center" role="status" aria-live="polite">
+        <span className="igloo-dashboard-state-spinner" aria-hidden="true" />
+        <div className="igloo-dashboard-state-copy">
+          <h2>{title}</h2>
+          <p>{detail}</p>
+        </div>
       </div>
-    </ContentCard>
+    </DashboardStateShell>
   );
 }
 
@@ -42,7 +100,9 @@ export function DashboardLoadFailedScreen({
   onRetry,
   retryLabel = 'Retry',
   onClear,
-  clearLabel = 'Clear credentials',
+  clearLabel = 'Back to Profiles',
+  clearVariant = 'secondary',
+  profileSummary,
 }: {
   message: string;
   timestampLabel?: string;
@@ -50,34 +110,41 @@ export function DashboardLoadFailedScreen({
   retryLabel?: string;
   onClear?: () => void;
   clearLabel?: string;
+  clearVariant?: React.ComponentProps<typeof Button>['variant'];
+  profileSummary?: DashboardProfileSummary;
 }) {
   return (
-    <ContentCard
-      title="Couldn’t load your signer"
-      description="The saved session could not be restored."
-      data-testid="dashboard-load-failed"
-    >
-      <Alert tone="danger" title="Load failed">
-        {message}
-        {timestampLabel ? (
-          <div className="mt-1 text-xs opacity-80">{timestampLabel}</div>
-        ) : null}
-      </Alert>
-      {onRetry || onClear ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {onRetry ? (
-            <Button onClick={onRetry} data-testid="dashboard-load-failed-retry">
-              {retryLabel}
-            </Button>
-          ) : null}
-          {onClear ? (
-            <Button variant="destructive" onClick={onClear}>
-              {clearLabel}
-            </Button>
+    <DashboardStateShell testId="dashboard-load-failed" profileSummary={profileSummary}>
+      <div className="igloo-dashboard-state-center">
+        <span className="igloo-dashboard-state-error-icon" aria-hidden="true">
+          !
+        </span>
+        <div className="igloo-dashboard-state-copy">
+          <h2>Couldn’t load profile</h2>
+          <p>Try again, or return to your profiles.</p>
+        </div>
+        <div className="igloo-dashboard-state-error" role="alert">
+          {message}
+          {timestampLabel ? (
+            <span className="igloo-dashboard-state-error-time">{timestampLabel}</span>
           ) : null}
         </div>
-      ) : null}
-    </ContentCard>
+        {onRetry || onClear ? (
+          <div className="igloo-dashboard-state-actions">
+            {onRetry ? (
+              <Button onClick={onRetry} data-testid="dashboard-load-failed-retry">
+                {retryLabel}
+              </Button>
+            ) : null}
+            {onClear ? (
+              <Button variant={clearVariant} onClick={onClear}>
+                {clearLabel}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </DashboardStateShell>
   );
 }
 

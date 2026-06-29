@@ -258,5 +258,6 @@ export {
   DashboardLoadFailedScreen,
   DashboardConditionBanner,
 } from './components/flows/DashboardStateScreens';
+export type { DashboardProfileSummary } from './components/flows/DashboardStateScreens';
 export { ProfileConfirmationCard } from './components/flows/ProfileConfirmationCard';
 export { QrPayloadModal } from './components/flows/QrPayloadModal';

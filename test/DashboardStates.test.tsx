@@ -197,17 +197,39 @@ describe('deriveDashboardState', () => {
 
 describe('dashboard state screens', () => {
   it('renders the loading screen', () => {
-    render(<DashboardLoadingScreen detail="restoring" />);
+    render(
+      <DashboardLoadingScreen
+        profileSummary={{
+          profileName: 'My Signing Key',
+          thresholdLabel: '2/3',
+          groupKeyLabel: 'npub1qe3...7k4m',
+          shareLabel: 'Share #1',
+          shareKeyLabel: '02a3f8...8f2c',
+        }}
+      />,
+    );
     expect(screen.getByTestId('dashboard-loading')).toBeInTheDocument();
-    expect(screen.getByText('restoring')).toBeInTheDocument();
+    expect(screen.getByText('Loading profile...')).toBeInTheDocument();
+    expect(screen.getByText('Preparing your dashboard.')).toBeInTheDocument();
+    expect(screen.getByText('My Signing Key')).toBeInTheDocument();
+    expect(screen.getByText('Share #1')).toBeInTheDocument();
   });
 
   it('renders the load-failed screen with retry and clear actions', () => {
     const onRetry = vi.fn();
     const onClear = vi.fn();
     render(
-      <DashboardLoadFailedScreen message="bad snapshot" onRetry={onRetry} onClear={onClear} />,
+      <DashboardLoadFailedScreen
+        message="bad snapshot"
+        onRetry={onRetry}
+        onClear={onClear}
+        clearLabel="Clear credentials"
+        clearVariant="destructive"
+        profileSummary={{ profileName: 'My Signing Key' }}
+      />,
     );
+    expect(screen.getByText('Couldn’t load profile')).toBeInTheDocument();
+    expect(screen.getByText('Try again, or return to your profiles.')).toBeInTheDocument();
     expect(screen.getByText('bad snapshot')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('dashboard-load-failed-retry'));
     expect(onRetry).toHaveBeenCalled();
