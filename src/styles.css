@@ -1264,6 +1264,11 @@
     box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
   }
 
+  .igloo-dashboard-status-dot.is-degraded {
+    background: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+  }
+
   .igloo-dashboard-status-dot.is-stopped {
     background: #ef4444;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
@@ -1278,6 +1283,10 @@
 
   .igloo-dashboard-status-title.is-running {
     color: #dcfce7;
+  }
+
+  .igloo-dashboard-status-title.is-degraded {
+    color: #fde68a;
   }
 
   .igloo-dashboard-status-title.is-stopped {
@@ -2187,6 +2196,11 @@
     color: #fca5a5;
   }
 
+  .igloo-dashboard-pill.is-warning {
+    background: rgba(245, 158, 11, 0.14);
+    color: #fde68a;
+  }
+
   .igloo-dashboard-pill.is-muted {
     background: rgba(148, 163, 184, 0.12);
     color: #cbd5e1;
@@ -2213,6 +2227,45 @@
     font-family: var(--igloo-font-inter);
     font-size: 0.875rem;
     color: #94a3b8;
+  }
+
+  .igloo-dashboard-unavailable-grid {
+    display: grid;
+    gap: 1.125rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 64rem) {
+    .igloo-dashboard-unavailable-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .igloo-dashboard-retry-action {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: #2563eb;
+    padding: 0.625rem 1rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.125rem;
+    color: #ffffff;
+    cursor: pointer;
+  }
+
+  .igloo-dashboard-retry-action:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
+
+  .igloo-dashboard-retry-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   .igloo-public-task-screen {

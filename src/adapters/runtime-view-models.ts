@@ -188,7 +188,8 @@ export type DashboardStateInput = {
  *
  * Precedence: load-failed > loading > ready. Within `ready`, banners follow
  * `all-relays-offline` (mutually exclusive with) `signing-blocked`, then an
- * independent, dismissible `signing-failed`.
+ * independent, dismissible `signing-failed`. Consumers may promote the
+ * availability states into replacement dashboard content instead of top banners.
  */
 export function deriveDashboardState(input: DashboardStateInput): DashboardState {
   const { active, status } = input;

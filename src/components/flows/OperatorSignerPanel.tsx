@@ -9,6 +9,7 @@ import type {
   PendingOperationRowModel,
   SignerDashboardViewModel,
 } from '../../models/view-models';
+import type { DashboardBanner } from '../../models/dashboard-state';
 import { CRITICAL_E2E_TEST_IDS as TID } from '../../lib/e2e-test-ids';
 import { methodToneClass } from '../../lib/method-tone';
 import { Button } from '../ui/button';
@@ -33,6 +34,7 @@ type Props = {
   primaryActionDisabled?: boolean;
   onRefreshPeers?: () => void;
   refreshPeersDisabled?: boolean;
+  availabilityIssue?: Extract<DashboardBanner, { kind: 'all-relays-offline' | 'signing-blocked' }> | null;
   onPingPeer?: (pubkey: string) => void;
   pingPeerDisabled?: boolean;
   pingingPeerPubkey?: string | null;
@@ -57,6 +59,7 @@ export function OperatorSignerPanel({
   primaryActionDisabled,
   onRefreshPeers,
   refreshPeersDisabled,
+  availabilityIssue = null,
   onPingPeer,
   pingPeerDisabled,
   pingingPeerPubkey,
@@ -80,6 +83,7 @@ export function OperatorSignerPanel({
       <StatusCard
         view={view}
         running={running}
+        availabilityIssue={availabilityIssue}
         runtimeControlLabel={runtimeControlLabel}
         onPrimaryAction={onPrimaryAction}
         primaryActionDisabled={primaryActionDisabled}
@@ -91,24 +95,28 @@ export function OperatorSignerPanel({
       {statusBanner ? statusBanner : null}
 
       {running ? (
-        <>
-          <PeersSection
-            rows={view.peerRows}
-            onRefresh={onRefreshPeers}
-            refreshDisabled={refreshPeersDisabled}
-            onPingPeer={onPingPeer}
-            pingDisabled={pingPeerDisabled}
-            pingingPeerPubkey={pingingPeerPubkey}
-          />
-          <PendingApprovalsSection
-            rows={view.pendingApprovalRows ?? []}
-            onApproveOnce={onApproveOnce}
-            onAlwaysAllow={onAlwaysAllow}
-            onDenyApproval={onDenyApproval}
-          />
-          {view.pendingOperationRows.length > 0 ? <PendingOperationsSection rows={view.pendingOperationRows} /> : null}
-          <EventLogSection rows={view.eventRows} onClear={onClearLogs} />
-        </>
+        availabilityIssue ? (
+          <UnavailableState issue={availabilityIssue} view={view} onRetry={onRefreshPeers} retryDisabled={refreshPeersDisabled} />
+        ) : (
+          <>
+            <PeersSection
+              rows={view.peerRows}
+              onRefresh={onRefreshPeers}
+              refreshDisabled={refreshPeersDisabled}
+              onPingPeer={onPingPeer}
+              pingDisabled={pingPeerDisabled}
+              pingingPeerPubkey={pingingPeerPubkey}
+            />
+            <PendingApprovalsSection
+              rows={view.pendingApprovalRows ?? []}
+              onApproveOnce={onApproveOnce}
+              onAlwaysAllow={onAlwaysAllow}
+              onDenyApproval={onDenyApproval}
+            />
+            {view.pendingOperationRows.length > 0 ? <PendingOperationsSection rows={view.pendingOperationRows} /> : null}
+            <EventLogSection rows={view.eventRows} onClear={onClearLogs} />
+          </>
+        )
       ) : (
         <div className="igloo-dashboard-stopped-grid">
           <ReadinessCard />
@@ -122,6 +130,7 @@ export function OperatorSignerPanel({
 function StatusCard({
   view,
   running,
+  availabilityIssue,
   runtimeControlLabel,
   onPrimaryAction,
   primaryActionDisabled,
@@ -131,6 +140,7 @@ function StatusCard({
 }: {
   view: SignerDashboardViewModel;
   running: boolean;
+  availabilityIssue?: Extract<DashboardBanner, { kind: 'all-relays-offline' | 'signing-blocked' }> | null;
   runtimeControlLabel: string;
   onPrimaryAction: () => void;
   primaryActionDisabled?: boolean;
@@ -138,12 +148,16 @@ function StatusCard({
   onCopyGroupKey?: (format?: 'npub' | 'hex') => void;
   onCopyShareKey?: (format?: 'npub' | 'hex') => void;
 }) {
+  const degraded = running && Boolean(availabilityIssue);
+  const toneClass = degraded ? 'is-degraded' : running ? 'is-running' : 'is-stopped';
+  const connectionLabel = availabilityIssue ? availabilityStatusDetail(availabilityIssue) : view.relaySummary;
+
   return (
     <div className="igloo-dashboard-status">
       <div className="igloo-dashboard-status-main">
         <div className="igloo-dashboard-status-head">
-          <span className={`igloo-dashboard-status-dot ${running ? 'is-running' : 'is-stopped'}`} />
-          <span className={`igloo-dashboard-status-title ${running ? 'is-running' : 'is-stopped'}`}>
+          <span className={`igloo-dashboard-status-dot ${toneClass}`} />
+          <span className={`igloo-dashboard-status-title ${toneClass}`}>
             {view.readinessLabel}
           </span>
           <span className="igloo-dashboard-chip is-threshold">{view.thresholdLabel}</span>
@@ -179,7 +193,7 @@ function StatusCard({
           ) : null}
         </div>
 
-        <div className="igloo-dashboard-status-connection">{view.relaySummary}</div>
+        <div className="igloo-dashboard-status-connection">{connectionLabel}</div>
       </div>
 
       <button
@@ -192,6 +206,110 @@ function StatusCard({
       </button>
     </div>
   );
+}
+
+function availabilityStatusDetail(issue: Extract<DashboardBanner, { kind: 'all-relays-offline' | 'signing-blocked' }>) {
+  if (issue.kind === 'all-relays-offline') {
+    return 'All relays unreachable · signing degraded.';
+  }
+  return 'Policy or readiness gate active.';
+}
+
+function UnavailableState({
+  issue,
+  view,
+  onRetry,
+  retryDisabled,
+}: {
+  issue: Extract<DashboardBanner, { kind: 'all-relays-offline' | 'signing-blocked' }>;
+  view: SignerDashboardViewModel;
+  onRetry?: () => void;
+  retryDisabled?: boolean;
+}) {
+  const signingReady = view.peerRows.filter((peer) => (peer.state === 'online' || peer.state === 'idle') && peer.canSign).length;
+  const remoteRequired = Math.max(parseThresholdRequired(view.thresholdLabel) - 1, 1);
+
+  if (issue.kind === 'all-relays-offline') {
+    return (
+      <div className="igloo-dashboard-unavailable-grid" data-testid="dashboard-banner-all-relays-offline">
+        <section className="igloo-dashboard-card">
+          <span className="igloo-dashboard-card-label">Readiness</span>
+          <div className="igloo-dashboard-readiness-body">
+            <span className="igloo-dashboard-readiness-disc" aria-hidden="true">
+              <span className="igloo-dashboard-readiness-disc-inner">
+                <span className="igloo-dashboard-readiness-disc-dot" />
+              </span>
+            </span>
+            <div>
+              <div className="igloo-dashboard-readiness-title">All Relays Offline</div>
+              <div className="igloo-dashboard-readiness-detail">No relay route to peers.</div>
+            </div>
+          </div>
+          <div className="igloo-dashboard-readiness-badges">
+            <span className="igloo-dashboard-pill is-danger">
+              {issue.connectedCount} / {issue.configuredCount} relays reachable
+            </span>
+            <span className="igloo-dashboard-pill is-warning">Ready count degraded</span>
+          </div>
+        </section>
+        <section className="igloo-dashboard-card">
+          <span className="igloo-dashboard-card-label">Recovery</span>
+          <div className="igloo-dashboard-nextstep-lines">
+            <span>Check network, DNS, and firewall.</span>
+          </div>
+          <div className="igloo-dashboard-nextstep-note">Blocked until a relay connects.</div>
+          {onRetry ? (
+            <button
+              type="button"
+              className="igloo-dashboard-retry-action"
+              onClick={onRetry}
+              disabled={retryDisabled}
+            >
+              <RefreshCw size={14} aria-hidden="true" />
+              Retry Connections
+            </button>
+          ) : null}
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="igloo-dashboard-unavailable-grid" data-testid="dashboard-banner-signing-blocked">
+      <section className="igloo-dashboard-card">
+        <span className="igloo-dashboard-card-label">Common Causes</span>
+        <div className="igloo-dashboard-readiness-body">
+          <div>
+            <div className="igloo-dashboard-readiness-title">Signing Blocked</div>
+            <div className="igloo-dashboard-readiness-detail">
+              {issue.reason === 'policy' ? 'Requests held pending clearance.' : 'Not enough peers are ready.'}
+            </div>
+          </div>
+        </div>
+        <div className="igloo-dashboard-readiness-badges">
+          {issue.reason === 'policy' ? <span className="igloo-dashboard-pill is-warning">Policy decision pending</span> : null}
+          <span className="igloo-dashboard-pill is-warning">Not enough ready peers</span>
+          <span className="igloo-dashboard-pill is-warning">Pool imbalance</span>
+        </div>
+      </section>
+      <section className="igloo-dashboard-card">
+        <span className="igloo-dashboard-card-label">Operator Action</span>
+        <div className="igloo-dashboard-nextstep-lines">
+          <span>{issue.reason === 'policy' ? 'Clear via permissions or approvals.' : 'Bring another signer online.'}</span>
+        </div>
+        <div className="igloo-dashboard-nextstep-note">
+          {issue.reason === 'policy'
+            ? 'Peer policy is denying signing. Review Permissions or approve pending requests.'
+            : `${signingReady} of ${remoteRequired} signing peers are ready. Bring another signing peer online before approving signatures.`}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function parseThresholdRequired(label: string) {
+  const match = label.match(/\d+/);
+  return match ? Number.parseInt(match[0], 10) || 1 : 1;
 }
 
 function toNum(value: number | undefined): number | null {

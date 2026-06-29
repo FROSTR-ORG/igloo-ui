@@ -250,6 +250,48 @@ describe('operator dashboard surface', () => {
     expect(screen.getByText('78')).toBeInTheDocument();
   });
 
+  it('replaces running dashboard sections with the signing-unavailable state', () => {
+    render(
+      <OperatorSignerPanel
+        view={{
+          profileName: 'Primary Browser Device',
+          thresholdLabel: '2 of 3',
+          publicKeyLabel: 'group-pub-1',
+          shareLabel: 'Share #1',
+          running: true,
+          readinessLabel: 'Signer Running (Degraded)',
+          relaySummary: 'Connected to wss://relay.primal.net',
+          peerRows: [
+            {
+              id: 'peer-0',
+              alias: 'Peer #0',
+              pubkey: '02a3f8c2d18f2c4a000000000000000000000000000000000000000000000000',
+              state: 'offline',
+              statusLabel: 'offline',
+              canSign: false,
+              canEcdh: false,
+              canPing: false,
+              lastResponseLatencyMs: null,
+              avgLatencyMs: null,
+              nonceSeries: [],
+            },
+          ],
+          pendingOperationRows: [],
+          eventRows: [{ id: 'event-1', badgeLabel: 'runtime', badgeTone: 'info', message: 'still hidden' }],
+        }}
+        runtimeControlLabel="Stop Signer"
+        onPrimaryAction={vi.fn()}
+        availabilityIssue={{ kind: 'signing-blocked', reason: 'insufficient-peers' }}
+      />,
+    );
+
+    expect(screen.getByTestId('dashboard-banner-signing-blocked')).toBeInTheDocument();
+    expect(screen.getByText('Policy or readiness gate active.')).toBeInTheDocument();
+    expect(screen.getByText('Signing Blocked')).toBeInTheDocument();
+    expect(screen.getByText('0 of 1 signing peers are ready. Bring another signing peer online before approving signatures.')).toBeInTheDocument();
+    expect(screen.queryByText('Event Log')).not.toBeInTheDocument();
+  });
+
   it('renders the Paper settings sidebar sections and actions', () => {
     const onClose = vi.fn();
     const onSave = vi.fn();

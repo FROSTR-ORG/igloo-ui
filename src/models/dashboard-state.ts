@@ -5,7 +5,8 @@
  * status plus the client's own load/activation error, and rendered the same way
  * by every client (pwa / chrome / home). Two states replace the signer panel
  * (`loading`, `load-failed`); `ready` renders the panel with zero or more
- * condition banners stacked above it.
+ * conditions. Severe availability conditions may replace the running dashboard
+ * sections, while dismissible failures remain as banners above the panel.
  */
 export type DashboardState =
   | { kind: 'loading'; detail?: string }
@@ -21,9 +22,8 @@ export type DashboardState =
 export type SigningBlockedReason = 'policy' | 'insufficient-peers';
 
 /**
- * A non-fatal condition shown as a banner above an otherwise-usable dashboard.
- * `all-relays-offline` and `signing-blocked` are mutually exclusive (the relay
- * banner explains the block); `signing-failed` is an independent, dismissible
+ * A dashboard condition. `all-relays-offline` and `signing-blocked` are mutually
+ * exclusive availability states; `signing-failed` is an independent, dismissible
  * record of the most recent failed sign attempt.
  */
 export type DashboardBanner =
