@@ -191,6 +191,65 @@ describe('operator dashboard surface', () => {
     expect(screen.queryByRole('button', { name: /wipe all data/i })).not.toBeInTheDocument();
   });
 
+  it('renders Paper-aligned peer actions and pings an available peer', () => {
+    const onPingPeer = vi.fn();
+
+    render(
+      <OperatorSignerPanel
+        view={{
+          profileName: 'Primary Browser Device',
+          thresholdLabel: '2 of 3',
+          publicKeyLabel: 'group-pub-1',
+          shareLabel: 'Share #1',
+          running: true,
+          readinessLabel: 'Signer Running',
+          relaySummary: 'Connected to wss://relay.primal.net',
+          peerRows: [
+            {
+              id: 'peer-0',
+              alias: 'Peer #0',
+              pubkey: '02a3f8c2d18f2c4a000000000000000000000000000000000000000000000000',
+              state: 'online',
+              statusLabel: 'sign-ready',
+              canSign: true,
+              canEcdh: true,
+              canPing: true,
+              lastResponseLatencyMs: 24,
+              avgLatencyMs: 31,
+              nonceSeries: [],
+              incomingAvailable: 93,
+              outgoingAvailable: 78,
+            },
+            {
+              id: 'peer-2',
+              alias: 'Peer #2',
+              pubkey: '029c4a82f16a1f5e000000000000000000000000000000000000000000000000',
+              state: 'offline',
+              statusLabel: 'offline',
+              canSign: false,
+              canEcdh: false,
+              canPing: false,
+              lastResponseLatencyMs: null,
+              avgLatencyMs: null,
+              nonceSeries: [],
+            },
+          ],
+          pendingOperationRows: [],
+          eventRows: [],
+        }}
+        runtimeControlLabel="Stop Signer"
+        onPrimaryAction={vi.fn()}
+        onPingPeer={onPingPeer}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ping Peer #0' }));
+    expect(onPingPeer).toHaveBeenCalledWith('02a3f8c2d18f2c4a000000000000000000000000000000000000000000000000');
+    expect(screen.getByRole('button', { name: 'Unavailable Peer #2' })).toBeDisabled();
+    expect(screen.getByText('93')).toBeInTheDocument();
+    expect(screen.getByText('78')).toBeInTheDocument();
+  });
+
   it('renders the Paper settings sidebar sections and actions', () => {
     const onClose = vi.fn();
     const onSave = vi.fn();

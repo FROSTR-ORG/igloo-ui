@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChevronDown, Clock, Copy, Filter, RefreshCw } from 'lucide-react';
+import { ChevronDown, Clock, Copy, Filter, Radio, RefreshCw } from 'lucide-react';
 
 import type {
   DashboardKeyModel,
@@ -33,6 +33,9 @@ type Props = {
   primaryActionDisabled?: boolean;
   onRefreshPeers?: () => void;
   refreshPeersDisabled?: boolean;
+  onPingPeer?: (pubkey: string) => void;
+  pingPeerDisabled?: boolean;
+  pingingPeerPubkey?: string | null;
   onClearLogs?: () => void;
   // Pending-approval decisions. When omitted, the card stays read-only.
   onApproveOnce?: (id: string) => void;
@@ -54,6 +57,9 @@ export function OperatorSignerPanel({
   primaryActionDisabled,
   onRefreshPeers,
   refreshPeersDisabled,
+  onPingPeer,
+  pingPeerDisabled,
+  pingingPeerPubkey,
   onClearLogs,
   onApproveOnce,
   onAlwaysAllow,
@@ -86,7 +92,14 @@ export function OperatorSignerPanel({
 
       {running ? (
         <>
-          <PeersSection rows={view.peerRows} onRefresh={onRefreshPeers} refreshDisabled={refreshPeersDisabled} />
+          <PeersSection
+            rows={view.peerRows}
+            onRefresh={onRefreshPeers}
+            refreshDisabled={refreshPeersDisabled}
+            onPingPeer={onPingPeer}
+            pingDisabled={pingPeerDisabled}
+            pingingPeerPubkey={pingingPeerPubkey}
+          />
           <PendingApprovalsSection
             rows={view.pendingApprovalRows ?? []}
             onApproveOnce={onApproveOnce}
@@ -189,10 +202,16 @@ function PeersSection({
   rows,
   onRefresh,
   refreshDisabled,
+  onPingPeer,
+  pingDisabled,
+  pingingPeerPubkey,
 }: {
   rows: PeerReadinessRowModel[];
   onRefresh?: () => void;
   refreshDisabled?: boolean;
+  onPingPeer?: (pubkey: string) => void;
+  pingDisabled?: boolean;
+  pingingPeerPubkey?: string | null;
 }) {
   const total = rows.length;
   const online = rows.filter((peer) => peer.state === 'online' || peer.state === 'idle').length;
@@ -234,7 +253,15 @@ function PeersSection({
         ) : null}
       </header>
       {total > 0 ? (
-        rows.map((peer) => <PeerRow key={peer.id} peer={peer} />)
+        rows.map((peer) => (
+          <PeerRow
+            key={peer.id}
+            peer={peer}
+            onPingPeer={onPingPeer}
+            pingDisabled={pingDisabled}
+            pinging={pingingPeerPubkey === peer.pubkey}
+          />
+        ))
       ) : (
         <div className="igloo-dashboard-empty">No peers are currently tracked.</div>
       )}
@@ -242,13 +269,26 @@ function PeersSection({
   );
 }
 
-function PeerRow({ peer }: { peer: PeerReadinessRowModel }) {
+function PeerRow({
+  peer,
+  onPingPeer,
+  pingDisabled,
+  pinging,
+}: {
+  peer: PeerReadinessRowModel;
+  onPingPeer?: (pubkey: string) => void;
+  pingDisabled?: boolean;
+  pinging?: boolean;
+}) {
   const online = peer.state === 'online' || peer.state === 'idle';
   const incoming = toNum(peer.incomingAvailable);
   const outgoing = toNum(peer.outgoingAvailable);
   const denom = Math.max(incoming ?? 0, outgoing ?? 0, 1);
   const showMeter = incoming != null || outgoing != null;
   const aliasLabel = peer.alias.replace(/^Peer\s+/, '');
+  const isLocal = peer.statusLabel === 'local';
+  const pingAvailable = Boolean(onPingPeer && online && peer.canPing && !isLocal);
+  const actionLabel = isLocal ? 'Local' : pingAvailable ? (pinging ? 'Pinging' : 'Ping') : 'Unavailable';
 
   return (
     <div className="igloo-dashboard-peer-row">
@@ -269,25 +309,42 @@ function PeerRow({ peer }: { peer: PeerReadinessRowModel }) {
       </div>
       <div className="igloo-dashboard-peer-meter">
         {showMeter ? (
-          <span
-            className="igloo-dashboard-bars"
-            title={`Incoming ${incoming ?? 'n/a'} · Outgoing ${outgoing ?? 'n/a'}`}
-          >
-            <span className="igloo-dashboard-bar">
-              <span className="igloo-dashboard-bar-fill" style={{ width: `${((incoming ?? 0) / denom) * 100}%` }} />
+          <>
+            <span
+              className="igloo-dashboard-bars"
+              title={`Incoming ${incoming ?? 'n/a'} · Outgoing ${outgoing ?? 'n/a'}`}
+            >
+              <span className="igloo-dashboard-bar">
+                <span className="igloo-dashboard-bar-fill" style={{ width: `${((incoming ?? 0) / denom) * 100}%` }} />
+              </span>
+              <span className="igloo-dashboard-bar">
+                <span
+                  className="igloo-dashboard-bar-fill is-dim"
+                  style={{ width: `${((outgoing ?? 0) / denom) * 100}%` }}
+                />
+              </span>
             </span>
-            <span className="igloo-dashboard-bar">
-              <span
-                className="igloo-dashboard-bar-fill is-dim"
-                style={{ width: `${((outgoing ?? 0) / denom) * 100}%` }}
-              />
+            <span className="igloo-dashboard-meter-values" aria-hidden="true">
+              <span>{incoming ?? '—'}</span>
+              <span>{outgoing ?? '—'}</span>
             </span>
-          </span>
+          </>
         ) : null}
-        <span className={`igloo-dashboard-peer-latency ${online ? '' : 'is-idle'}`}>
-          {online ? formatLatency(peer) : 'Offline'}
-        </span>
       </div>
+      <span className={`igloo-dashboard-peer-latency ${online ? '' : 'is-idle'}`}>
+        {online ? formatLatency(peer) : 'Offline'}
+      </span>
+      <button
+        type="button"
+        className={`igloo-dashboard-peer-action ${pingAvailable ? 'is-available' : 'is-unavailable'}`}
+        onClick={() => onPingPeer?.(peer.pubkey)}
+        disabled={!pingAvailable || pingDisabled || pinging}
+        aria-label={`${actionLabel} ${peer.alias}`}
+        title={pingAvailable ? `Ping ${peer.alias}` : actionLabel}
+      >
+        <Radio size={12} aria-hidden="true" />
+        <span>{actionLabel}</span>
+      </button>
     </div>
   );
 }
@@ -326,11 +383,19 @@ function PendingApprovalsSection({
   onDenyApproval?: (id: string) => void;
 }) {
   const interactive = Boolean(onApproveOnce || onAlwaysAllow || onDenyApproval);
+  const nearest = rows[0]?.expiresLabel.replace(/^expires\s+/, '');
   return (
     <section className="igloo-dashboard-section">
       <header className="igloo-dashboard-section-head">
         <span className="igloo-dashboard-section-title">Pending Approvals</span>
         {rows.length > 0 ? <span className="igloo-dashboard-count is-pending">{rows.length} pending</span> : null}
+        <span className="igloo-dashboard-section-spacer" />
+        {nearest ? (
+          <span className="igloo-dashboard-timer">
+            <Clock size={12} aria-hidden="true" />
+            Nearest: {nearest}
+          </span>
+        ) : null}
       </header>
       <div data-testid={TID.dashboardPendingApprovals}>
         {rows.length > 0 ? (
@@ -343,40 +408,45 @@ function PendingApprovalsSection({
                 <span className="igloo-dashboard-approval-peer-key">{shortKey(approval.pubkey)}</span>
               </span>
               <span className="igloo-dashboard-approval-desc">{approval.detailLabel}</span>
-              <span className="igloo-dashboard-section-spacer" />
               <span className="igloo-dashboard-timer">
                 <Clock size={12} aria-hidden="true" />
                 {approval.expiresLabel}
               </span>
               {interactive ? (
                 <span className="igloo-dashboard-approval-actions">
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    className="h-7 px-2.5 text-xs"
-                    data-testid={`${TID.dashboardPendingApprovals}-deny`}
-                    onClick={() => onDenyApproval?.(approval.id)}
-                  >
-                    Deny
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="success"
-                    className="h-7 px-2.5 text-xs"
-                    data-testid={`${TID.dashboardPendingApprovals}-allow-once`}
-                    onClick={() => onApproveOnce?.(approval.id)}
-                  >
-                    Allow once
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="h-7 px-2.5 text-xs"
-                    data-testid={`${TID.dashboardPendingApprovals}-always-allow`}
-                    onClick={() => onAlwaysAllow?.(approval.id)}
-                  >
-                    Always allow
-                  </Button>
+                  {onApproveOnce ? (
+                    <Button
+                      type="button"
+                      variant="success"
+                      className="h-7 px-3 text-xs"
+                      data-testid={`${TID.dashboardPendingApprovals}-allow-once`}
+                      onClick={() => onApproveOnce(approval.id)}
+                    >
+                      Allow once
+                    </Button>
+                  ) : null}
+                  {onDenyApproval ? (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="h-7 px-2.5 text-xs"
+                      data-testid={`${TID.dashboardPendingApprovals}-deny`}
+                      onClick={() => onDenyApproval(approval.id)}
+                    >
+                      Deny
+                    </Button>
+                  ) : null}
+                  {onAlwaysAllow ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="h-7 px-2.5 text-xs"
+                      data-testid={`${TID.dashboardPendingApprovals}-always-allow`}
+                      onClick={() => onAlwaysAllow(approval.id)}
+                    >
+                      Always allow
+                    </Button>
+                  ) : null}
                 </span>
               ) : null}
             </div>

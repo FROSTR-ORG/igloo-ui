@@ -1464,7 +1464,8 @@
 
   /* Peer row. */
   .igloo-dashboard-peer-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr) 7.125rem 3.5rem 6.75rem;
     align-items: center;
     gap: 1rem;
     padding: 0.75rem 1.25rem;
@@ -1514,7 +1515,6 @@
   .igloo-dashboard-peer-main {
     display: flex;
     min-width: 0;
-    flex: 1 1 auto;
     align-items: center;
     gap: 0.5rem;
   }
@@ -1583,9 +1583,9 @@
 
   .igloo-dashboard-peer-meter {
     display: flex;
-    flex-shrink: 0;
     align-items: center;
-    gap: 0.625rem;
+    justify-content: flex-end;
+    gap: 0.5rem;
   }
 
   .igloo-dashboard-bars {
@@ -1616,9 +1616,26 @@
     background: rgba(96, 165, 250, 0.5);
   }
 
+  .igloo-dashboard-meter-values {
+    display: flex;
+    width: 1.5rem;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.0625rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.6875rem;
+    line-height: 0.875rem;
+    color: rgba(96, 165, 250, 0.78);
+  }
+
+  .igloo-dashboard-meter-values > span + span {
+    color: rgba(96, 165, 250, 0.5);
+  }
+
   .igloo-dashboard-peer-latency {
     width: 3.5rem;
-    flex-shrink: 0;
+    justify-self: end;
     text-align: right;
     font-family: var(--igloo-font-share-tech-mono);
     font-size: 0.8125rem;
@@ -1629,9 +1646,42 @@
     color: #6b7280;
   }
 
+  .igloo-dashboard-peer-action {
+    display: inline-flex;
+    width: 6.75rem;
+    height: 1.875rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3125rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(96, 165, 250, 0.24);
+    background: rgba(15, 23, 42, 0.5);
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    color: #93c5fd;
+    cursor: pointer;
+  }
+
+  .igloo-dashboard-peer-action.is-available:hover:not(:disabled) {
+    border-color: rgba(96, 165, 250, 0.45);
+    background: rgba(30, 58, 138, 0.2);
+    color: #bfdbfe;
+  }
+
+  .igloo-dashboard-peer-action.is-unavailable,
+  .igloo-dashboard-peer-action:disabled {
+    border-color: rgba(100, 116, 139, 0.18);
+    background: rgba(15, 23, 42, 0.28);
+    color: rgba(148, 163, 184, 0.62);
+    cursor: not-allowed;
+  }
+
   /* Pending approval row. */
   .igloo-dashboard-approval-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 0.625rem minmax(3rem, max-content) minmax(8.5rem, max-content) minmax(8rem, 1fr) 5.75rem minmax(15rem, max-content);
     align-items: center;
     gap: 1rem;
     padding: 0.75rem 1.25rem;
@@ -1720,6 +1770,7 @@
     display: flex;
     flex-shrink: 0;
     align-items: center;
+    justify-content: flex-end;
     gap: 0.375rem;
   }
 
@@ -1790,7 +1841,7 @@
   }
 
   .igloo-dashboard-event-list {
-    max-height: 19.5rem;
+    max-height: 20.25rem;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-color: rgba(96, 165, 250, 0.45) transparent;
@@ -1883,7 +1934,8 @@
   }
 
   .igloo-dashboard-event-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 4.375rem minmax(3rem, max-content) minmax(0, 1fr);
     align-items: center;
     gap: 1rem;
     padding: 0.5rem 1.25rem;
@@ -1896,7 +1948,6 @@
 
   .igloo-dashboard-event-time {
     width: 4.375rem;
-    flex-shrink: 0;
     font-family: var(--igloo-font-share-tech-mono);
     font-size: 0.8125rem;
     line-height: 1.125rem;
@@ -1971,6 +2022,53 @@
   }
 
   @media (max-width: 640px) {
+    .igloo-dashboard-peer-row {
+      grid-template-columns: 2rem minmax(0, 1fr) 6.75rem;
+      grid-template-areas:
+        "avatar main action"
+        "avatar meter latency";
+      align-items: center;
+    }
+
+    .igloo-dashboard-peer-avatar {
+      grid-area: avatar;
+    }
+
+    .igloo-dashboard-peer-main {
+      grid-area: main;
+      flex-wrap: wrap;
+    }
+
+    .igloo-dashboard-peer-meter {
+      grid-area: meter;
+      justify-content: flex-start;
+    }
+
+    .igloo-dashboard-peer-latency {
+      grid-area: latency;
+    }
+
+    .igloo-dashboard-peer-action {
+      grid-area: action;
+      justify-self: end;
+    }
+
+    .igloo-dashboard-approval-row {
+      grid-template-columns: 0.625rem minmax(3rem, max-content) minmax(0, 1fr);
+    }
+
+    .igloo-dashboard-approval-peer,
+    .igloo-dashboard-approval-desc,
+    .igloo-dashboard-timer,
+    .igloo-dashboard-approval-actions {
+      grid-column: 2 / -1;
+    }
+
+    .igloo-dashboard-approval-actions {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+
     .igloo-dashboard-event-head {
       flex-wrap: wrap;
     }
@@ -1982,6 +2080,10 @@
 
     .igloo-dashboard-filter-trigger {
       min-width: 0;
+    }
+
+    .igloo-dashboard-event-row {
+      grid-template-columns: 4.375rem minmax(3rem, max-content) minmax(0, 1fr);
     }
   }
 
