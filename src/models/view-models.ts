@@ -142,12 +142,16 @@ export type EventLogRowModel = {
     | 'success'
     | 'warning'
     | 'danger'
+    | 'error'
+    | 'ready'
     | 'info'
     | 'sync'
     | 'sign'
     | 'ecdh'
     | 'ping'
     | 'echo'
+    | 'signer-policy'
+    | 'peer-policy'
     | 'policy';
   message: React.ReactNode;
   timestampLabel?: string;

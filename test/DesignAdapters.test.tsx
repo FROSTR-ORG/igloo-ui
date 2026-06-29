@@ -70,13 +70,27 @@ describe('design runtime adapters', () => {
         event: 'failure',
         message: 'sign failed',
       },
+      {
+        ts: 1700000002000,
+        level: 'info',
+        component: 'runtime',
+        domain: 'runtime',
+        event: 'wasm_runtime_init_ok',
+      },
+      {
+        ts: 1700000003000,
+        level: 'info',
+        component: 'runtime',
+        domain: 'peer_policy',
+        event: 'peer_policy_override',
+      },
     ]);
 
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(4);
     expect(rows[0]).toMatchObject({
       id: '0-1700000000000-runtime-runtime-restore_skipped',
-      badgeLabel: 'runtime',
-      badgeTone: 'warning',
+      badgeLabel: 'error',
+      badgeTone: 'error',
       message: 'restore_skipped',
     });
     expect(rows[0].timestampLabel).toMatch(/^\d{1,2}:\d{2}:\d{2}[ap]$/);
@@ -84,9 +98,19 @@ describe('design runtime adapters', () => {
     expect(rows[0].timestampLabel).not.toContain(',');
     expect(rows[1]).toMatchObject({
       id: '1-1700000001000-runtime-runtime-failure',
-      badgeLabel: 'runtime',
-      badgeTone: 'danger',
+      badgeLabel: 'error',
+      badgeTone: 'error',
       message: 'sign failed',
+    });
+    expect(rows[2]).toMatchObject({
+      badgeLabel: 'ready',
+      badgeTone: 'ready',
+      message: 'wasm_runtime_init_ok',
+    });
+    expect(rows[3]).toMatchObject({
+      badgeLabel: 'peer policy',
+      badgeTone: 'peer-policy',
+      message: 'peer_policy_override',
     });
   });
 });

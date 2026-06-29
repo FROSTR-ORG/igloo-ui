@@ -1471,6 +1471,19 @@
     color: #94a3b8;
   }
 
+  .igloo-dashboard-event-controls .igloo-dashboard-clear {
+    height: 1.875rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 0 0.625rem;
+    color: #94a3b8;
+  }
+
+  .igloo-dashboard-event-controls .igloo-dashboard-clear:hover {
+    border-color: rgba(148, 163, 184, 0.34);
+    color: #cbd5e1;
+  }
+
   /* Peer row. */
   .igloo-dashboard-peer-row {
     display: grid;
@@ -1829,9 +1842,17 @@
   }
 
   /* Event log. */
+  .igloo-dashboard-event-section {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(30, 58, 138, 0.3);
+    border-radius: 0.75rem;
+  }
+
   .igloo-dashboard-event-head {
     flex-wrap: nowrap;
     gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom-color: rgba(30, 58, 138, 0.2);
   }
 
   .igloo-dashboard-event-title-group {
@@ -1841,11 +1862,23 @@
     gap: 0.75rem;
   }
 
+  .igloo-dashboard-event-chevron {
+    color: #94a3b8;
+  }
+
+  .igloo-dashboard-event-live-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: #4ade80;
+  }
+
   .igloo-dashboard-event-controls {
     display: inline-flex;
     flex-shrink: 0;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     margin-left: auto;
   }
 
@@ -1870,84 +1903,83 @@
     background: rgba(96, 165, 250, 0.28);
   }
 
-  .igloo-dashboard-filter-wrap {
-    position: relative;
-    flex-shrink: 0;
-  }
-
   .igloo-dashboard-filter-trigger {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    height: 2.125rem;
-    min-width: 9.75rem;
-    justify-content: space-between;
-    border-radius: 0.5rem;
-    border: 1px solid rgba(96, 165, 250, 0.35);
-    background: rgba(15, 23, 42, 0.45);
-    padding: 0 0.75rem;
+    justify-content: center;
+    gap: 0.375rem;
+    height: 1.875rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: transparent;
+    padding: 0 0.625rem;
     font-family: var(--igloo-font-inter);
     font-size: 0.75rem;
-    color: #93c5fd;
+    color: #94a3b8;
     cursor: pointer;
   }
 
   .igloo-dashboard-filter-trigger:hover {
-    border-color: rgba(96, 165, 250, 0.55);
-    background: rgba(30, 58, 138, 0.22);
-    color: #bfdbfe;
+    border-color: rgba(148, 163, 184, 0.34);
+    color: #cbd5e1;
   }
 
-  .igloo-dashboard-filter-count {
-    flex-shrink: 0;
-    border-radius: 999px;
-    background: rgba(96, 165, 250, 0.18);
-    padding: 0.0625rem 0.4375rem;
-    font-size: 0.6875rem;
-    color: #93c5fd;
-  }
-
-  .igloo-dashboard-filter-menu {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 0.375rem);
-    z-index: 20;
+  .igloo-dashboard-filter-bar {
     display: flex;
-    min-width: 9rem;
-    flex-direction: column;
-    gap: 0.25rem;
-    border-radius: 0.625rem;
-    border: 1px solid rgba(30, 58, 138, 0.4);
-    background: rgba(2, 6, 23, 0.98);
-    padding: 0.375rem;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid rgba(30, 58, 138, 0.15);
   }
 
   .igloo-dashboard-filter-chip {
-    width: 100%;
-    border-radius: 0.4375rem;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.25rem;
     border: 1px solid transparent;
-    background: transparent;
-    padding: 0.375rem 0.5rem;
-    font-family: var(--igloo-font-inter);
-    font-size: 0.75rem;
-    text-align: left;
-    color: #93c5fd;
+    padding: 0.1875rem 0.5rem;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.6875rem;
+    line-height: 0.875rem;
+    color: #64748b;
+    letter-spacing: 0.04em;
+    opacity: 0.48;
     cursor: pointer;
+    text-transform: uppercase;
   }
 
   .igloo-dashboard-filter-chip.is-active {
-    border-color: rgba(96, 165, 250, 0.5);
-    background: rgba(96, 165, 250, 0.2);
-    color: #bfdbfe;
+    opacity: 1;
+  }
+
+  .igloo-dashboard-filter-bulk {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0 0.25rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.6875rem;
+    color: rgba(148, 163, 184, 0.6);
+  }
+
+  .igloo-dashboard-filter-bulk button {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .igloo-dashboard-filter-bulk button:hover {
+    color: #cbd5e1;
   }
 
   .igloo-dashboard-event-row {
     display: grid;
-    grid-template-columns: 4.375rem minmax(3rem, max-content) minmax(0, 1fr);
+    grid-template-columns: 4rem 7rem minmax(0, 1fr) 0.875rem;
     align-items: center;
-    gap: 1rem;
-    padding: 0.5rem 1.25rem;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
     border-bottom: 1px solid rgba(30, 58, 138, 0.06);
   }
 
@@ -1956,12 +1988,20 @@
   }
 
   .igloo-dashboard-event-time {
-    width: 4.375rem;
+    width: 4rem;
     font-family: var(--igloo-font-share-tech-mono);
-    font-size: 0.8125rem;
-    line-height: 1.125rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
     white-space: nowrap;
-    color: #4b5563;
+    color: rgba(148, 163, 184, 0.6);
+  }
+
+  .igloo-dashboard-event-badge-slot {
+    display: flex;
+    width: 7rem;
+    min-width: 0;
+    flex-shrink: 0;
+    align-items: center;
   }
 
   .igloo-dashboard-event-badge {
@@ -1969,13 +2009,36 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    border-radius: 999px;
+    min-width: 3rem;
+    border-radius: 0.1875rem;
     border: 1px solid transparent;
-    padding: 0.125rem 0.625rem;
+    padding: 0.125rem 0.375rem;
     font-family: var(--igloo-font-share-tech-mono);
     font-size: 0.6875rem;
+    line-height: 0.875rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+  }
+
+  .igloo-dashboard-event-badge.is-ready,
+  .igloo-dashboard-filter-chip.is-ready.is-active {
+    border-color: rgba(22, 163, 74, 0.3);
+    background: rgba(22, 163, 74, 0.2);
+    color: #4ade80;
+  }
+
+  .igloo-dashboard-event-badge.is-info,
+  .igloo-dashboard-filter-chip.is-info.is-active {
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+  }
+
+  .igloo-dashboard-event-badge.is-error,
+  .igloo-dashboard-filter-chip.is-error.is-active {
+    border-color: rgba(220, 38, 38, 0.3);
+    background: rgba(220, 38, 38, 0.2);
+    color: #f87171;
   }
 
   .igloo-dashboard-event-badge.is-sync {
@@ -1996,22 +2059,37 @@
     color: #22d3ee;
   }
 
-  .igloo-dashboard-event-badge.is-policy {
+  .igloo-dashboard-event-badge.is-signer-policy {
+    min-width: 6.625rem;
+    border-color: rgba(251, 191, 36, 0.3);
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+  }
+
+  .igloo-dashboard-event-badge.is-peer-policy {
+    min-width: 5.75rem;
+    border-color: rgba(96, 165, 250, 0.3);
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+  }
+
+  .igloo-dashboard-event-badge.is-policy,
+  .igloo-dashboard-filter-chip.is-signer-policy.is-active {
     border-color: rgba(129, 140, 248, 0.3);
     background: rgba(129, 140, 248, 0.15);
     color: #818cf8;
   }
 
   .igloo-dashboard-event-badge.is-ping {
-    border-color: rgba(168, 85, 247, 0.3);
-    background: rgba(168, 85, 247, 0.15);
-    color: #a855f7;
+    border-color: rgba(250, 204, 21, 0.3);
+    background: rgba(250, 204, 21, 0.15);
+    color: #facc15;
   }
 
   .igloo-dashboard-event-badge.is-echo {
-    border-color: rgba(244, 114, 182, 0.3);
-    background: rgba(244, 114, 182, 0.15);
-    color: #f472b6;
+    border-color: rgba(52, 211, 153, 0.3);
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
   }
 
   .igloo-dashboard-event-badge.is-default {
@@ -2020,14 +2098,59 @@
     color: #93c5fd;
   }
 
+  .igloo-dashboard-filter-chip.is-sync.is-active {
+    border-color: rgba(45, 212, 191, 0.3);
+    background: rgba(45, 212, 191, 0.15);
+    color: #2dd4bf;
+  }
+
+  .igloo-dashboard-filter-chip.is-sign.is-active {
+    border-color: rgba(34, 197, 94, 0.3);
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+  }
+
+  .igloo-dashboard-filter-chip.is-ecdh.is-active {
+    border-color: rgba(34, 211, 238, 0.3);
+    background: rgba(34, 211, 238, 0.15);
+    color: #22d3ee;
+  }
+
+  .igloo-dashboard-filter-chip.is-ping.is-active {
+    border-color: rgba(250, 204, 21, 0.3);
+    background: rgba(250, 204, 21, 0.15);
+    color: #facc15;
+  }
+
+  .igloo-dashboard-filter-chip.is-echo.is-active {
+    border-color: rgba(52, 211, 153, 0.3);
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+  }
+
+  .igloo-dashboard-filter-chip.is-peer-policy.is-active {
+    border-color: rgba(96, 165, 250, 0.3);
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+  }
+
   .igloo-dashboard-event-msg {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-family: var(--igloo-font-inter);
-    font-size: 0.875rem;
-    color: #94a3b8;
+    font-size: 0.8125rem;
+    line-height: 1rem;
+    color: #cbd5e1;
+  }
+
+  .igloo-dashboard-event-row.is-error .igloo-dashboard-event-msg {
+    color: #fca5a5;
+  }
+
+  .igloo-dashboard-event-row-chevron {
+    color: #475569;
   }
 
   @media (max-width: 640px) {
@@ -2087,12 +2210,16 @@
       justify-content: flex-end;
     }
 
-    .igloo-dashboard-filter-trigger {
-      min-width: 0;
+    .igloo-dashboard-event-row {
+      grid-template-columns: 4rem 6.5rem minmax(0, 1fr);
     }
 
-    .igloo-dashboard-event-row {
-      grid-template-columns: 4.375rem minmax(3rem, max-content) minmax(0, 1fr);
+    .igloo-dashboard-event-row-chevron {
+      display: none;
+    }
+
+    .igloo-dashboard-event-badge-slot {
+      width: 6.5rem;
     }
   }
 

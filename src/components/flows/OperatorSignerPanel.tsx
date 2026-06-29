@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChevronDown, Clock, Copy, Filter, Radio, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock, Copy, Filter, Radio, RefreshCw } from 'lucide-react';
 
 import type {
   DashboardKeyModel,
@@ -15,7 +15,6 @@ import { methodToneClass } from '../../lib/method-tone';
 import { Button } from '../ui/button';
 import { ContentCard } from '../ui/content-card';
 import { Input } from '../ui/input';
-import { PermissionToken, normalizePermissionMethod } from '../ui/permission-token';
 
 type Props = {
   view: SignerDashboardViewModel | null;
@@ -603,126 +602,170 @@ function PendingOperationsSection({ rows }: { rows: PendingOperationRowModel[] }
   );
 }
 
-// Map an event domain label to its Paper badge tone. Checks the more specific
-// "Signer Policy" before the substring "Sign".
-function eventTone(label: string): string {
-  const value = label.toLowerCase();
-  if (value.includes('policy')) return 'is-policy';
-  if (value.includes('sync')) return 'is-sync';
-  if (value.includes('ecdh')) return 'is-ecdh';
-  if (value.includes('ping')) return 'is-ping';
-  if (value.includes('echo')) return 'is-echo';
-  if (value.includes('sign')) return 'is-sign';
-  return 'is-default';
+type EventLogKind =
+  | 'ready'
+  | 'info'
+  | 'error'
+  | 'sign'
+  | 'ecdh'
+  | 'echo'
+  | 'ping'
+  | 'sync'
+  | 'signer-policy'
+  | 'peer-policy';
+
+const EVENT_KIND_ORDER: EventLogKind[] = [
+  'ready',
+  'info',
+  'error',
+  'sign',
+  'ecdh',
+  'echo',
+  'ping',
+  'sync',
+  'signer-policy',
+  'peer-policy',
+];
+
+const EVENT_KIND_LABELS: Record<EventLogKind, string> = {
+  ready: 'READY',
+  info: 'INFO',
+  error: 'ERROR',
+  sign: 'SIGN',
+  ecdh: 'ECDH',
+  echo: 'ECHO',
+  ping: 'PING',
+  sync: 'SYNC',
+  'signer-policy': 'SIGNER POLICY',
+  'peer-policy': 'PEER POLICY',
+};
+
+const EVENT_FILTER_LEADING: EventLogKind[] = ['ready', 'info', 'error', 'sign', 'ecdh', 'echo', 'ping'];
+
+function normalizeEventKind(value: string): EventLogKind | null {
+  const label = value.toLowerCase().replace(/[_\s]+/g, '-');
+  if (label.includes('peer-policy') || label.includes('permission')) return 'peer-policy';
+  if (label.includes('signer-policy') || label === 'policy') return 'signer-policy';
+  if (label.includes('ready') || label === 'success') return 'ready';
+  if (label.includes('error') || label === 'danger' || label === 'warning' || label === 'warn') return 'error';
+  if (label.includes('sync')) return 'sync';
+  if (label.includes('ecdh')) return 'ecdh';
+  if (label.includes('ping')) return 'ping';
+  if (label.includes('echo')) return 'echo';
+  if (label.includes('sign')) return 'sign';
+  if (label.includes('info') || label === 'default' || label.includes('runtime') || label.includes('relay')) return 'info';
+  return null;
+}
+
+function eventKind(row: EventLogRowModel): EventLogKind {
+  const toneKind = normalizeEventKind(row.badgeTone);
+  const labelKind = normalizeEventKind(row.badgeLabel);
+  if (toneKind && toneKind !== 'info') return toneKind;
+  return labelKind ?? toneKind ?? 'info';
+}
+
+function sortEventKinds(kinds: EventLogKind[]) {
+  return [...kinds].sort((a, b) => EVENT_KIND_ORDER.indexOf(a) - EVENT_KIND_ORDER.indexOf(b));
 }
 
 function EventLogSection({ rows, onClear }: { rows: EventLogRowModel[]; onClear?: () => void }) {
-  const [activeFilter, setActiveFilter] = React.useState<string | null>(null);
-  const [filterMenuOpen, setFilterMenuOpen] = React.useState(false);
-  const filterMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const [activeFilters, setActiveFilters] = React.useState<EventLogKind[] | null>(null);
+  const [filtersOpen, setFiltersOpen] = React.useState(true);
 
-  // Distinct domain tags present in the current rows drive the filter chips.
-  const domains = React.useMemo(() => {
-    const seen = new Set<string>();
-    const ordered: string[] = [];
+  const availableKinds = React.useMemo(() => {
+    const seen = new Set<EventLogKind>();
     for (const row of rows) {
-      if (!seen.has(row.badgeLabel)) {
-        seen.add(row.badgeLabel);
-        ordered.push(row.badgeLabel);
-      }
+      seen.add(eventKind(row));
     }
-    return ordered;
+    return sortEventKinds([...seen]);
   }, [rows]);
 
-  // A filter that no longer matches any row (e.g. after Clear) falls back to All.
-  const effectiveFilter = activeFilter && domains.includes(activeFilter) ? activeFilter : null;
-  const visibleRows = effectiveFilter ? rows.filter((row) => row.badgeLabel === effectiveFilter) : rows;
-  const activeFilterCount = effectiveFilter ? 1 : domains.length;
+  const selectedKinds = React.useMemo(() => {
+    if (activeFilters === null) return availableKinds;
+    return activeFilters.filter((kind) => availableKinds.includes(kind));
+  }, [activeFilters, availableKinds]);
+  const selectedKindSet = React.useMemo(() => new Set(selectedKinds), [selectedKinds]);
+  const visibleRows = rows.filter((row) => selectedKindSet.has(eventKind(row)));
+  const leadingKinds = availableKinds.filter((kind) => EVENT_FILTER_LEADING.includes(kind));
+  const trailingKinds = availableKinds.filter((kind) => !EVENT_FILTER_LEADING.includes(kind));
 
-  React.useEffect(() => {
-    if (!filterMenuOpen) return undefined;
-    const onPointerDown = (event: MouseEvent) => {
-      if (!filterMenuRef.current?.contains(event.target as Node)) {
-        setFilterMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onPointerDown);
-    return () => document.removeEventListener('mousedown', onPointerDown);
-  }, [filterMenuOpen]);
+  const toggleKind = (kind: EventLogKind) => {
+    setActiveFilters((current) => {
+      const base = current === null ? availableKinds : current;
+      return base.includes(kind) ? base.filter((item) => item !== kind) : sortEventKinds([...base, kind]);
+    });
+  };
 
   return (
-    <section className="igloo-dashboard-section">
+    <section className="igloo-dashboard-section igloo-dashboard-event-section">
       <header className="igloo-dashboard-section-head igloo-dashboard-event-head">
         <div className="igloo-dashboard-event-title-group">
+          <ChevronDown size={14} aria-hidden="true" className="igloo-dashboard-event-chevron" />
           <span className="igloo-dashboard-section-title">Event Log</span>
           {rows.length > 0 ? <span className="igloo-dashboard-count is-total">{rows.length} events</span> : null}
+          {rows.length > 0 ? <span className="igloo-dashboard-event-live-dot" aria-label="Event stream active" /> : null}
         </div>
         <div className="igloo-dashboard-event-controls">
+          {availableKinds.length > 0 ? (
+            <button
+              type="button"
+              className="igloo-dashboard-filter-trigger"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((open) => !open)}
+            >
+              <Filter size={13} aria-hidden="true" />
+              <span>Filter</span>
+            </button>
+          ) : null}
           {onClear ? (
             <button type="button" className="igloo-dashboard-clear" onClick={onClear}>
               Clear
             </button>
           ) : null}
-          {domains.length > 1 ? (
-            <div ref={filterMenuRef} className="igloo-dashboard-filter-wrap">
-              <button
-                type="button"
-                className="igloo-dashboard-filter-trigger"
-                aria-haspopup="menu"
-                aria-expanded={filterMenuOpen}
-                onClick={() => setFilterMenuOpen((open) => !open)}
-              >
-                <Filter size={14} aria-hidden="true" />
-                <span>Filter</span>
-                <span className="igloo-dashboard-filter-count">{activeFilterCount} active</span>
-                <ChevronDown size={12} aria-hidden="true" />
-              </button>
-              {filterMenuOpen ? (
-                <div className="igloo-dashboard-filter-menu" role="menu">
-                  <FilterChip
-                    label="All"
-                    active={effectiveFilter === null}
-                    onClick={() => {
-                      setActiveFilter(null);
-                      setFilterMenuOpen(false);
-                    }}
-                  />
-                  {domains.map((domain) => (
-                    <FilterChip
-                      key={domain}
-                      label={domain}
-                      active={effectiveFilter === domain}
-                      onClick={() => {
-                        setActiveFilter(domain);
-                        setFilterMenuOpen(false);
-                      }}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
         </div>
       </header>
+      {filtersOpen && availableKinds.length > 0 ? (
+        <div className="igloo-dashboard-filter-bar" aria-label="Event log filters">
+          {leadingKinds.map((kind) => (
+            <EventFilterChip
+              key={kind}
+              kind={kind}
+              active={selectedKindSet.has(kind)}
+              onClick={() => toggleKind(kind)}
+            />
+          ))}
+          <span className="igloo-dashboard-filter-bulk">
+            <button type="button" onClick={() => setActiveFilters(null)}>
+              Select all
+            </button>
+            <span>/</span>
+            <button type="button" onClick={() => setActiveFilters([])}>
+              Clear all
+            </button>
+          </span>
+          {trailingKinds.map((kind) => (
+            <EventFilterChip
+              key={kind}
+              kind={kind}
+              active={selectedKindSet.has(kind)}
+              onClick={() => toggleKind(kind)}
+            />
+          ))}
+        </div>
+      ) : null}
 
       <div className="igloo-dashboard-event-list" role="log" aria-label="Event Log">
         {visibleRows.length > 0 ? (
           visibleRows.map((row) => {
-            const permissionMethod = normalizePermissionMethod(row.badgeLabel);
+            const kind = eventKind(row);
             return (
-              <div key={row.id} className="igloo-dashboard-event-row">
-                {row.timestampLabel ? <span className="igloo-dashboard-event-time">{row.timestampLabel}</span> : null}
-                {permissionMethod ? (
-                  <PermissionToken
-                    method={permissionMethod}
-                    variant="policy"
-                    as="span"
-                    className="igloo-dashboard-event-token"
-                  />
-                ) : (
-                  <span className={`igloo-dashboard-event-badge ${eventTone(row.badgeLabel)}`}>{row.badgeLabel}</span>
-                )}
+              <div key={row.id} className={`igloo-dashboard-event-row ${kind === 'error' ? 'is-error' : ''}`}>
+                <span className="igloo-dashboard-event-time">{row.timestampLabel ?? ''}</span>
+                <span className="igloo-dashboard-event-badge-slot">
+                  <span className={`igloo-dashboard-event-badge is-${kind}`}>{EVENT_KIND_LABELS[kind]}</span>
+                </span>
                 <span className="igloo-dashboard-event-msg">{row.message}</span>
+                <ChevronRight size={14} aria-hidden="true" className="igloo-dashboard-event-row-chevron" />
               </div>
             );
           })
@@ -734,17 +777,23 @@ function EventLogSection({ rows, onClear }: { rows: EventLogRowModel[]; onClear?
   );
 }
 
-function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function EventFilterChip({
+  kind,
+  active,
+  onClick,
+}: {
+  kind: EventLogKind;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
-      role="menuitemradio"
       onClick={onClick}
       aria-pressed={active}
-      aria-checked={active}
-      className={`igloo-dashboard-filter-chip ${active ? 'is-active' : ''}`}
+      className={`igloo-dashboard-filter-chip is-${kind} ${active ? 'is-active' : ''}`}
     >
-      {label}
+      {EVENT_KIND_LABELS[kind]}
     </button>
   );
 }

@@ -1017,8 +1017,8 @@ describe('operator dashboard surface', () => {
           ],
           pendingOperationRows: [],
           eventRows: [
-            { id: 'e1', badgeLabel: 'sign', badgeTone: 'info', message: 'sign request received' },
-            { id: 'e2', badgeLabel: 'sync', badgeTone: 'info', message: 'peer roster synced' },
+            { id: 'e1', badgeLabel: 'sign', badgeTone: 'sign', message: 'sign request received' },
+            { id: 'e2', badgeLabel: 'sync', badgeTone: 'sync', message: 'peer roster synced' },
           ],
         }}
         introMessage="Runtime is attached."
@@ -1046,10 +1046,11 @@ describe('operator dashboard surface', () => {
     // Both domains render until the compact Paper filter narrows the list.
     expect(screen.getByText('sign request received')).toBeInTheDocument();
     expect(screen.getByText('peer roster synced')).toBeInTheDocument();
-    expect(screen.queryByRole('menuitemradio', { name: 'sync' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'SIGN' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'SYNC' })).toHaveAttribute('aria-pressed', 'true');
 
-    fireEvent.click(screen.getByRole('button', { name: /Filter/ }));
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'sync', checked: false }));
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
+    fireEvent.click(screen.getByRole('button', { name: 'SYNC' }));
     expect(screen.queryByText('sign request received')).not.toBeInTheDocument();
     expect(screen.getByText('peer roster synced')).toBeInTheDocument();
 

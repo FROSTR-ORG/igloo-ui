@@ -287,14 +287,68 @@ export function runtimePeerPermissionStatesToPolicyDashboardView(
 export function observabilityEventsToEventRows(
   events: ObservabilityEventInput[]
 ): EventLogRowModel[] {
-  return events.map((event, index) => ({
-    // Index keeps the key unique when several events share a tick/domain/event.
-    id: `${index}-${event.ts}-${event.component}-${event.domain}-${event.event}`,
-    badgeLabel: event.domain,
-    badgeTone: event.level === 'error' ? 'danger' : event.level === 'warn' ? 'warning' : 'info',
-    message: event.message ?? event.event,
-    timestampLabel: formatEventTimestamp(event.ts),
-  }));
+  return events.map((event, index) => {
+    const tone = classifyEventLogTone(event);
+    return {
+      // Index keeps the key unique when several events share a tick/domain/event.
+      id: `${index}-${event.ts}-${event.component}-${event.domain}-${event.event}`,
+      badgeLabel: eventLogToneLabel(tone),
+      badgeTone: tone,
+      message: event.message ?? event.event,
+      timestampLabel: formatEventTimestamp(event.ts),
+    };
+  });
+}
+
+function classifyEventLogTone(event: ObservabilityEventInput): EventLogRowModel['badgeTone'] {
+  const domain = event.domain.toLowerCase();
+  const name = event.event.toLowerCase();
+  const joined = `${domain}:${name}`;
+
+  if (event.level === 'error' || event.level === 'warn' || joined.includes('fail') || joined.includes('lost')) {
+    return 'error';
+  }
+  if (joined.includes('peer_policy') || joined.includes('peer-policy') || joined.includes('permission')) {
+    return 'peer-policy';
+  }
+  if (joined.includes('signer_policy') || joined.includes('signer-policy') || joined.includes('policy')) {
+    return 'signer-policy';
+  }
+  if (domain.includes('sign') || name.includes('sign')) return 'sign';
+  if (domain.includes('ecdh') || name.includes('ecdh')) return 'ecdh';
+  if (domain.includes('ping') || name.includes('ping')) return 'ping';
+  if (domain.includes('echo') || name.includes('echo')) return 'echo';
+  if (domain.includes('sync') || name.includes('sync')) return 'sync';
+  if (
+    name.endsWith('_ok') ||
+    name.includes('ready') ||
+    name.includes('restore_complete') ||
+    name === 'connected'
+  ) {
+    return 'ready';
+  }
+  return 'info';
+}
+
+function eventLogToneLabel(tone: EventLogRowModel['badgeTone']): string {
+  switch (tone) {
+    case 'danger':
+    case 'warning':
+    case 'error':
+      return 'error';
+    case 'success':
+    case 'ready':
+      return 'ready';
+    case 'signer-policy':
+    case 'policy':
+      return 'signer policy';
+    case 'peer-policy':
+      return 'peer policy';
+    case 'default':
+      return 'info';
+    default:
+      return tone;
+  }
 }
 
 function runtimePeerToReadinessRow(peer: RuntimePeerStatusInput): PeerReadinessRowModel {
