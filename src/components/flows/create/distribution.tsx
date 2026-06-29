@@ -2,9 +2,9 @@ import * as React from 'react';
 import { Check, Copy, KeyRound, Play, QrCode, RotateCcw, Square, X } from 'lucide-react';
 
 import { Button } from '../../ui/button';
+import { PermissionTokenGroup } from '../../ui/permission-token';
 import { StatusDot } from '../../ui/status-indicator';
 import { CRITICAL_E2E_TEST_IDS } from '../../../lib/e2e-test-ids';
-import { methodToneClass } from '../../../lib/method-tone';
 import { passwordManagerOptOutProps } from '../../../lib/password-manager';
 import type {
   SharedGeneratedShare,
@@ -50,25 +50,15 @@ function CreatePermissionToggles({
       <div>
         <strong>Permissions</strong>
       </div>
-      <div aria-label={`${share.name} permissions`}>
-        {(['sign', 'ecdh', 'ping', 'onboard'] as const).map((permission) => {
-          const isEnabled = enabled.includes(permission);
-          return (
-            <button
-              type="button"
-              key={permission}
-              className={`${methodToneClass(permission)} ${isEnabled ? 'is-enabled' : 'is-disabled'}`}
-              aria-label={`${share.name} ${permission} permission: ${isEnabled ? 'enabled' : 'disabled'}`}
-              aria-pressed={isEnabled}
-              data-method={permission}
-              data-state={isEnabled ? 'active' : 'inactive'}
-              onClick={() => onTogglePermission?.(share.member_idx, permission, !isEnabled)}
-            >
-              {permission.toUpperCase()}
-            </button>
-          );
-        })}
-      </div>
+      <PermissionTokenGroup
+        activeMethods={enabled}
+        ariaLabel={`${share.name} permissions`}
+        variant="distribution"
+        onToggle={(permission, isEnabled) => onTogglePermission?.(share.member_idx, permission, isEnabled)}
+        getAriaLabel={(permission, isEnabled) =>
+          `${share.name} ${permission} permission: ${isEnabled ? 'enabled' : 'disabled'}`
+        }
+      />
     </div>
   );
 }

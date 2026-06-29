@@ -598,6 +598,12 @@
     color: #64748b;
   }
 
+  .igloo-public-task-screen + .igloo-welcome-entry-footer {
+    position: static;
+    flex-shrink: 0;
+    background: transparent;
+  }
+
   .igloo-welcome-returning-stack {
     display: flex;
     width: 30rem;
@@ -845,14 +851,37 @@
 
   .igloo-recover-device-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    border: 1px solid rgba(34, 197, 94, 0.35);
+    border: 1px solid rgba(234, 179, 8, 0.35);
     border-radius: 0.625rem;
     background: rgba(15, 23, 42, 0.6);
     padding: 0.875rem 1rem;
     color: #cbd5e1;
+  }
+
+  .igloo-recover-device-row[data-state='validated'] {
+    border-color: rgba(34, 197, 94, 0.35);
+  }
+
+  .igloo-recover-device-main {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .igloo-recover-device-main strong {
+    color: #93c5fd;
+    font-size: 0.95rem;
+    line-height: 1.25rem;
+  }
+
+  .igloo-recover-device-main p {
+    margin: 0.25rem 0 0;
+    color: #94a3b8;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
   }
 
   .igloo-recover-validated {
@@ -865,8 +894,22 @@
     line-height: 1rem;
   }
 
+  .igloo-recover-device-badge {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--igloo-font-share-tech-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
   .igloo-recover-device-badge[data-state='locked'] {
     color: #fbbf24;
+  }
+
+  .igloo-recover-device-badge[data-state='validated'] {
+    color: #4ade80;
   }
 
   .igloo-rotate-local-passphrase {
@@ -995,7 +1038,7 @@
   }
 
   .igloo-recover-source-card header strong {
-    color: #dbeafe;
+    color: #93c5fd;
     font-size: 0.95rem;
     line-height: 1.25rem;
   }
@@ -1726,22 +1769,109 @@
   }
 
   /* Event log. */
-  .igloo-dashboard-filters {
-    display: flex;
-    flex-wrap: wrap;
+  .igloo-dashboard-event-head {
+    flex-wrap: nowrap;
+    gap: 1rem;
+  }
+
+  .igloo-dashboard-event-title-group {
+    display: inline-flex;
+    min-width: 0;
     align-items: center;
-    gap: 0.375rem;
-    padding: 0.625rem 1.25rem;
-    border-bottom: 1px solid rgba(30, 58, 138, 0.08);
+    gap: 0.75rem;
+  }
+
+  .igloo-dashboard-event-controls {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+  }
+
+  .igloo-dashboard-event-list {
+    max-height: 19.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: rgba(96, 165, 250, 0.45) transparent;
+    scrollbar-width: thin;
+  }
+
+  .igloo-dashboard-event-list::-webkit-scrollbar {
+    width: 0.5rem;
+  }
+
+  .igloo-dashboard-event-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .igloo-dashboard-event-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(96, 165, 250, 0.28);
+  }
+
+  .igloo-dashboard-filter-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .igloo-dashboard-filter-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.125rem;
+    min-width: 9.75rem;
+    justify-content: space-between;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(96, 165, 250, 0.35);
+    background: rgba(15, 23, 42, 0.45);
+    padding: 0 0.75rem;
+    font-family: var(--igloo-font-inter);
+    font-size: 0.75rem;
+    color: #93c5fd;
+    cursor: pointer;
+  }
+
+  .igloo-dashboard-filter-trigger:hover {
+    border-color: rgba(96, 165, 250, 0.55);
+    background: rgba(30, 58, 138, 0.22);
+    color: #bfdbfe;
+  }
+
+  .igloo-dashboard-filter-count {
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: rgba(96, 165, 250, 0.18);
+    padding: 0.0625rem 0.4375rem;
+    font-size: 0.6875rem;
+    color: #93c5fd;
+  }
+
+  .igloo-dashboard-filter-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.375rem);
+    z-index: 20;
+    display: flex;
+    min-width: 9rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    border-radius: 0.625rem;
+    border: 1px solid rgba(30, 58, 138, 0.4);
+    background: rgba(2, 6, 23, 0.98);
+    padding: 0.375rem;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
   }
 
   .igloo-dashboard-filter-chip {
-    border-radius: 999px;
-    border: 1px solid rgba(30, 58, 138, 0.3);
-    background: rgba(30, 58, 138, 0.2);
-    padding: 0.125rem 0.625rem;
+    width: 100%;
+    border-radius: 0.4375rem;
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 0.375rem 0.5rem;
     font-family: var(--igloo-font-inter);
     font-size: 0.75rem;
+    text-align: left;
     color: #93c5fd;
     cursor: pointer;
   }
@@ -1769,6 +1899,8 @@
     flex-shrink: 0;
     font-family: var(--igloo-font-share-tech-mono);
     font-size: 0.8125rem;
+    line-height: 1.125rem;
+    white-space: nowrap;
     color: #4b5563;
   }
 
@@ -1836,6 +1968,21 @@
     font-family: var(--igloo-font-inter);
     font-size: 0.875rem;
     color: #94a3b8;
+  }
+
+  @media (max-width: 640px) {
+    .igloo-dashboard-event-head {
+      flex-wrap: wrap;
+    }
+
+    .igloo-dashboard-event-controls {
+      width: 100%;
+      justify-content: flex-end;
+    }
+
+    .igloo-dashboard-filter-trigger {
+      min-width: 0;
+    }
   }
 
   /* Stopped state: Readiness + Next Step cards. */
@@ -1973,7 +2120,7 @@
     flex-direction: column;
     gap: 1.25rem;
     margin: 0 auto;
-    padding: 1rem 0 3.5rem;
+    padding: 1rem 0 calc(5.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   .igloo-public-task-title {

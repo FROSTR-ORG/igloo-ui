@@ -51,33 +51,53 @@ export function RecoverCollectSharesPanel({
   const sourceNumberOffset = lostDeviceMode ? 1 : 2;
   // Show the validation badge only when the host opted into unlock verification.
   const showDeviceShareStatus = Boolean(onVerifyDevicePassphrase);
+  const deviceShareState = deviceShareValidated ? 'validated' : 'locked';
+  const deviceShareStatusLabel = deviceShareValidated ? 'Ready' : 'Passphrase required';
+  const passphraseReady = devicePassphrase.trim().length > 0;
+  const requiredRemoteSources = Math.max(1, threshold - (lostDeviceMode ? 0 : 1));
+  const canAddSource = sources.length < requiredRemoteSources;
+  const canRemoveSource = sources.length > requiredRemoteSources;
+
   return (
     <div className="igloo-recover-collect">
       {lostDeviceMode ? null : (
-        <div className="igloo-generated-card">
-          <header className="igloo-recover-device-header">
+        <div
+          className="igloo-recover-device-row"
+          data-state={deviceShareState}
+          role="group"
+          aria-label={`${deviceShareLabel}: ${deviceShareStatusLabel}`}
+        >
+          <div className="igloo-recover-device-main">
             <strong>{deviceShareLabel}</strong>
-            {showDeviceShareStatus ? (
-              <span
-                className={
-                  deviceShareValidated
-                    ? 'igloo-recover-share-status igloo-recover-share-status-valid'
-                    : 'igloo-recover-share-status'
-                }
-              >
-                {deviceShareValidated ? 'Validated' : 'Locked'}
-              </span>
-            ) : null}
-          </header>
-          <label>
-            Device Passphrase
-            <PasswordField
-              data-testid={CRITICAL_E2E_TEST_IDS.recoverDevicePassphrase}
-              value={devicePassphrase}
-              onChange={(event) => onChangeDevicePassphrase(event.target.value)}
-              onBlur={onVerifyDevicePassphrase ? () => onVerifyDevicePassphrase() : undefined}
-              placeholder="Unlock this device's share to count it toward the threshold"
-            />
+          </div>
+          {showDeviceShareStatus ? (
+            <span className="igloo-recover-device-badge" data-state={deviceShareState}>
+              {deviceShareStatusLabel}
+            </span>
+          ) : null}
+          <label className="igloo-rotate-local-passphrase">
+            <span>Profile Passphrase</span>
+            <div className="igloo-rotate-local-passphrase-row">
+              <PasswordField
+                data-testid={CRITICAL_E2E_TEST_IDS.recoverDevicePassphrase}
+                value={devicePassphrase}
+                onChange={(event) => onChangeDevicePassphrase(event.target.value)}
+                onBlur={onVerifyDevicePassphrase ? () => onVerifyDevicePassphrase() : undefined}
+                placeholder="Enter this device profile passphrase"
+              />
+              {onVerifyDevicePassphrase ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="igloo-rotate-local-passphrase-submit"
+                  disabled={!passphraseReady}
+                  onClick={onVerifyDevicePassphrase}
+                >
+                  Unlock Share
+                </Button>
+              ) : null}
+            </div>
           </label>
         </div>
       )}
@@ -93,7 +113,7 @@ export function RecoverCollectSharesPanel({
       ) : null}
       <div className="igloo-stack">
         {sources.map((source, index) => (
-          <div key={`recover-source-${index}`} className="igloo-generated-card">
+          <div key={`recover-source-${index}`} className="igloo-generated-card igloo-recover-source-card">
             <header>
               <strong>Share #{index + sourceNumberOffset}</strong>
             </header>
@@ -103,7 +123,7 @@ export function RecoverCollectSharesPanel({
                 className="min-h-[96px]"
                 value={source.packageText}
                 onChange={(event) => onChangeSource(index, 'packageText', event.target.value)}
-                placeholder="Paste a bfshare from another device..."
+                placeholder="Paste bfprofile or bfshare from another device or backup..."
               />
             </label>
             <label>
@@ -111,20 +131,25 @@ export function RecoverCollectSharesPanel({
               <PasswordField
                 value={source.packagePassword}
                 onChange={(event) => onChangeSource(index, 'packagePassword', event.target.value)}
+                placeholder="Enter password to decrypt"
               />
             </label>
-            <div className="igloo-button-row">
-              <Button type="button" size="sm" variant="secondary" onClick={() => onRemoveSource(index)}>
-                Remove
-              </Button>
-            </div>
+            {canRemoveSource ? (
+              <div className="igloo-button-row">
+                <Button type="button" size="sm" variant="secondary" onClick={() => onRemoveSource(index)}>
+                  Remove
+                </Button>
+              </div>
+            ) : null}
           </div>
         ))}
-        <div className="igloo-button-row">
-          <Button type="button" size="sm" variant="secondary" onClick={onAddSource}>
-            Add Source
-          </Button>
-        </div>
+        {canAddSource ? (
+          <div className="igloo-button-row">
+            <Button type="button" size="sm" variant="secondary" onClick={onAddSource}>
+              Add Source
+            </Button>
+          </div>
+        ) : null}
       </div>
       <div className="igloo-recover-meter">
         <div className="igloo-recover-meter-head">

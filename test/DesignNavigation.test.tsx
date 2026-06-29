@@ -64,6 +64,8 @@ describe('design navigation primitives', () => {
     expect(screen.getByTestId('dashboard-permissions')).toHaveTextContent('Permissions');
     expect(screen.getByTestId('dashboard-permissions')).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('dashboard-settings')).toHaveAttribute('aria-label', 'Settings');
+    expect(screen.getByTestId('dashboard-settings')).toHaveTextContent('');
+    expect(screen.getByTestId('dashboard-settings').querySelector('svg')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('dashboard-home'));
     fireEvent.click(screen.getByTestId('dashboard-action'));

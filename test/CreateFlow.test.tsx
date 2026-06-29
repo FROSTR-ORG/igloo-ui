@@ -280,7 +280,7 @@ describe('shared host flow components', () => {
     expect(screen.queryByRole('button', { name: 'Generate' })).not.toBeInTheDocument();
     expect(screen.getByText('Threshold')).toBeInTheDocument();
     expect(screen.getByText('Existing Private Key (optional)')).toBeInTheDocument();
-    expect(screen.getByText('Any 2 of 3 shares can sign - min threshold is 2, min shares is 3')).toBeInTheDocument();
+    expect(screen.getByText('Any 2 of 3 shares can sign - min threshold is 2, min shares is 2')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Group Name'), {
       target: { value: 'Treasury Signers' },
@@ -324,6 +324,27 @@ describe('shared host flow components', () => {
 
     fireEvent.change(screen.getByLabelText('Total Shares'), { target: { value: '2' } });
     expect(onChangeForm).toHaveBeenLastCalledWith('count', '3');
+  });
+
+  it('allows a create-flow 2-of-2 keyset shape', () => {
+    const onChangeForm = vi.fn();
+
+    render(
+      <CreateFlowGenerateCard
+        groupName=""
+        threshold="2"
+        count="3"
+        privateKey=""
+        onChangeForm={onChangeForm}
+        onGenerate={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease Total Shares' }));
+    expect(onChangeForm).toHaveBeenLastCalledWith('count', '2');
+
+    fireEvent.change(screen.getByLabelText('Total Shares'), { target: { value: '2' } });
+    expect(onChangeForm).toHaveBeenLastCalledWith('count', '2');
   });
 
   it('locks create-flow keyset inputs while generation is in flight', () => {
@@ -587,7 +608,7 @@ describe('shared host flow components', () => {
     );
 
     expect(screen.getByRole('group', { name: 'Share #2 (this device): Passphrase required' })).toBeInTheDocument();
-    expect(screen.getByText(/This device share is available but not counted yet/)).toBeInTheDocument();
+    expect(screen.queryByText(/This device share is available but not counted yet/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Unlock Share' })).toBeDisabled();
     fireEvent.change(screen.getByLabelText('Profile Passphrase'), {
       target: { value: 'device-passphrase' },
@@ -676,7 +697,7 @@ describe('shared host flow components', () => {
 
     expect(screen.getByLabelText('Source Package')).toBeDisabled();
     expect(screen.getByLabelText('Package Password')).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Remove Remote Source #1' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Remove Remote Source #1' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add Source' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Rotating...' })).toBeDisabled();
   });
@@ -1105,7 +1126,11 @@ describe('shared host flow components', () => {
     expect(section.getByText('runtime panel')).toBeInTheDocument();
     expect(section.getByText('Remaining Shares')).toBeInTheDocument();
     expect(section.getByLabelText('Package password')).toBeInTheDocument();
+    expect(section.getByLabelText('Remote Tablet sign permission: enabled')).toHaveClass('igloo-permission-token');
+    expect(section.getByLabelText('Remote Tablet sign permission: enabled')).toHaveAttribute('data-variant', 'distribution');
     expect(section.getByLabelText('Remote Tablet sign permission: enabled')).toHaveAttribute('data-state', 'active');
+    expect(section.getByLabelText('Remote Tablet ecdh permission: disabled')).toHaveClass('igloo-permission-token');
+    expect(section.getByLabelText('Remote Tablet ecdh permission: disabled')).toHaveAttribute('data-variant', 'distribution');
     expect(section.getByLabelText('Remote Tablet ecdh permission: disabled')).toHaveAttribute('data-state', 'inactive');
     fireEvent.click(section.getByLabelText('Remote Tablet ecdh permission: disabled'));
     expect(onTogglePermission).toHaveBeenCalledWith(2, 'ecdh', true);

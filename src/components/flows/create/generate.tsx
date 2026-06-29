@@ -73,14 +73,14 @@ export function CreateFlowGenerateCard({
   const privateKeyErrorId = React.useId();
   const thresholdValue = Number.parseInt(threshold, 10) || 2;
   const countValue = Number.parseInt(count, 10) || 3;
-  const thresholdSummary = `Any ${thresholdValue} of ${countValue} shares can sign - min threshold is 2, min shares is 3`;
+  const thresholdSummary = `Any ${thresholdValue} of ${countValue} shares can sign - min threshold is 2, min shares is 2`;
 
   const adjustNumber = (field: 'threshold' | 'count', direction: -1 | 1) => {
     const currentValue = field === 'threshold' ? thresholdValue : countValue;
     const nextValue =
       field === 'threshold'
         ? Math.min(countValue, Math.max(2, currentValue + direction))
-        : Math.max(3, thresholdValue, currentValue + direction);
+        : Math.max(2, thresholdValue, currentValue + direction);
     onChangeForm(field, String(nextValue));
   };
 
@@ -93,7 +93,7 @@ export function CreateFlowGenerateCard({
     const nextValue =
       field === 'threshold'
         ? Math.min(countValue, Math.max(2, parsed))
-        : Math.max(3, thresholdValue, parsed);
+        : Math.max(2, thresholdValue, parsed);
     onChangeForm(field, String(nextValue));
   };
 

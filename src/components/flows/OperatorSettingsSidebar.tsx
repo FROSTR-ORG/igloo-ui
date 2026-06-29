@@ -315,6 +315,7 @@ export function OperatorSettingsSidebar({
                         value={signerName}
                         onChange={(event) => onSignerNameChange(event.target.value)}
                         placeholder="Unnamed signer"
+                        data-testid={TID.settingsSignerName}
                         aria-label="Profile Name"
                         spellCheck={false}
                         autoCorrect="off"
@@ -345,7 +346,12 @@ export function OperatorSettingsSidebar({
 
                   <div className="space-y-2 px-3 py-3">
                     {relays.map((relay) => (
-                      <div key={relay} className="grid grid-cols-[minmax(0,1fr)_2.5rem] items-center gap-2">
+                      <div
+                        key={relay}
+                        data-testid={TID.settingsRelayRow}
+                        data-relay-url={relay}
+                        className="grid grid-cols-[minmax(0,1fr)_2.5rem] items-center gap-2"
+                      >
                         <div className="min-w-0 rounded-md border border-blue-900/30 bg-slate-950/60 px-3 py-2.5 font-sharetech text-[13px] leading-4 text-slate-300">
                           <span className="block truncate">{relay}</span>
                         </div>
@@ -372,13 +378,20 @@ export function OperatorSettingsSidebar({
                         }}
                         placeholder="wss://..."
                         aria-label="New relay URL"
+                        data-testid={TID.settingsRelayAddInput}
                         inputMode="url"
                         spellCheck={false}
                         autoCorrect="off"
                         autoCapitalize="none"
                         className="h-11 border-blue-900/30 bg-slate-950/60 font-sharetech text-[13px] text-slate-300 placeholder:text-slate-600 hover:border-blue-500/40 focus-visible:border-blue-400/80 focus-visible:bg-slate-950/75 focus-visible:ring-2 focus-visible:ring-blue-500/25"
                       />
-                      <Button type="button" size="sm" onClick={onAddRelay} className="min-h-11 px-4 active:scale-[0.96]">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={onAddRelay}
+                        data-testid={TID.settingsRelayAddSubmit}
+                        className="min-h-11 px-4 active:scale-[0.96]"
+                      >
                         Add
                       </Button>
                     </div>
@@ -394,6 +407,7 @@ export function OperatorSettingsSidebar({
                       type="button"
                       size="sm"
                       onClick={onSave}
+                      data-testid={TID.settingsSave}
                       loading={saving}
                       loadingLabel="Saving..."
                       disabled={saving || saveDisabled}
@@ -472,21 +486,25 @@ export function OperatorSettingsSidebar({
                         <div className="grid gap-3">
                           <NumberField
                             label="Sign Timeout"
+                            field="sign_timeout_secs"
                             value={signerSettings.sign_timeout_secs}
                             onChange={(value) => onSignerSettingNumberChange?.('sign_timeout_secs', value)}
                           />
                           <NumberField
                             label="Ping Timeout"
+                            field="ping_timeout_secs"
                             value={signerSettings.ping_timeout_secs}
                             onChange={(value) => onSignerSettingNumberChange?.('ping_timeout_secs', value)}
                           />
                           <NumberField
                             label="Request TTL"
+                            field="request_ttl_secs"
                             value={signerSettings.request_ttl_secs}
                             onChange={(value) => onSignerSettingNumberChange?.('request_ttl_secs', value)}
                           />
                           <NumberField
                             label="State Save Interval"
+                            field="state_save_interval_secs"
                             value={signerSettings.state_save_interval_secs}
                             onChange={(value) => onSignerSettingNumberChange?.('state_save_interval_secs', value)}
                           />
@@ -1409,10 +1427,12 @@ function ActionRow({ action, emphasis = false }: { action: OperatorSettingsSideb
 
 function NumberField({
   label,
+  field,
   value,
   onChange,
 }: {
   label: string;
+  field?: keyof Omit<OperatorSignerSettings, 'peer_selection_strategy'>;
   value: number;
   onChange: (value: string) => void;
 }) {
@@ -1423,6 +1443,8 @@ function NumberField({
         type="number"
         min={1}
         value={String(value)}
+        data-testid={field ? TID.settingsNumberField : undefined}
+        data-field={field}
         onChange={(event) => onChange(event.target.value)}
         className="h-8 border-blue-900/30 bg-slate-950/60 text-right text-xs"
       />

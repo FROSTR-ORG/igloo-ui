@@ -79,6 +79,9 @@ describe('design runtime adapters', () => {
       badgeTone: 'warning',
       message: 'restore_skipped',
     });
+    expect(rows[0].timestampLabel).toMatch(/^\d{1,2}:\d{2}:\d{2}[ap]$/);
+    expect(rows[0].timestampLabel).not.toContain('/');
+    expect(rows[0].timestampLabel).not.toContain(',');
     expect(rows[1]).toMatchObject({
       id: '1-1700000001000-runtime-runtime-failure',
       badgeLabel: 'runtime',

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Settings as SettingsIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 type DashboardHeaderAction = {
@@ -43,7 +44,7 @@ export function AppHeader({
         >
           Igloo
         </h1>
-        {mode !== 'dashboard' ? (
+        {mode === 'welcome' ? (
           <p className="text-xs leading-4 tracking-[0.01em] text-igloo-subtle">
             Threshold Signing for Nostr
           </p>
@@ -53,7 +54,13 @@ export function AppHeader({
   );
 
   return (
-    <header className={cn('flex w-full justify-center px-5 py-5 sm:px-10 lg:px-20', className)}>
+    <header
+      className={cn(
+        'flex w-full justify-center py-5',
+        mode === 'dashboard' ? 'px-0' : 'px-5 sm:px-10 lg:px-20',
+        className,
+      )}
+    >
       <div
         className="flex w-full max-w-[1000px] min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl border border-igloo-border bg-igloo-panel px-5 py-3.5 sm:flex-nowrap"
       >
@@ -83,12 +90,13 @@ export function DashboardHeaderActions({
 }: {
   dashboard: DashboardHeaderAction;
   permissions: DashboardHeaderAction;
-  settings: Omit<DashboardHeaderAction, 'active'>;
+  settings: DashboardHeaderAction;
 }) {
   return (
     <nav className="flex min-w-0 flex-wrap items-center justify-end gap-2" aria-label="Dashboard navigation">
       <button
         type="button"
+        id="operator-tab-signer"
         data-testid={dashboard.testId}
         aria-pressed={dashboard.active ?? false}
         className={cn(
@@ -101,6 +109,7 @@ export function DashboardHeaderActions({
       </button>
       <button
         type="button"
+        id="operator-tab-permissions"
         data-testid={permissions.testId}
         aria-pressed={permissions.active ?? false}
         className={cn(
@@ -114,12 +123,18 @@ export function DashboardHeaderActions({
       <span className="mx-2 h-6 w-px bg-igloo-border" aria-hidden="true" />
       <button
         type="button"
+        id="operator-tab-settings"
         aria-label={settings.label}
+        title={settings.label}
         data-testid={settings.testId}
-        className="rounded-md px-3 py-1.5 text-sm text-igloo-muted transition-colors hover:bg-igloo-primary/15 hover:text-igloo-primary"
+        aria-pressed={settings.active ?? false}
+        className={cn(
+          'inline-flex h-8 w-8 items-center justify-center rounded-md text-igloo-muted transition-colors hover:bg-igloo-primary/15 hover:text-igloo-primary',
+          settings.active && 'bg-igloo-primary/15 text-igloo-primary',
+        )}
         onClick={settings.onClick}
       >
-        {settings.label}
+        <SettingsIcon className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
     </nav>
   );

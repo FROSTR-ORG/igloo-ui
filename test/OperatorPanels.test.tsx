@@ -730,7 +730,7 @@ describe('operator dashboard surface', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('merges identity into the signer card with npub/hex split-copy and a pending-approvals empty state', () => {
+  it('merges running identity into the signer card with Paper copy and calm empty states', () => {
     const onCopyGroupKey = vi.fn();
     const onCopyShareKey = vi.fn();
 
@@ -763,15 +763,19 @@ describe('operator dashboard surface', () => {
 
     // Member label appears on the merged card.
     expect(screen.getByText('Share #1')).toBeInTheDocument();
+    expect(screen.getByText('Browser runtime connected')).toBeInTheDocument();
+    expect(screen.queryByText('Share Public Key')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pending Operations')).not.toBeInTheDocument();
 
     // Default copy buttons copy npub.
     fireEvent.click(screen.getByTestId('dashboard-group-key-copy'));
     expect(onCopyGroupKey).toHaveBeenCalledWith('npub');
 
     // The format caret reveals a hex option.
-    fireEvent.click(screen.getByTestId('dashboard-share-key-format'));
+    fireEvent.click(screen.getByTestId('dashboard-group-key-format'));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Copy hex' }));
-    expect(onCopyShareKey).toHaveBeenCalledWith('hex');
+    expect(onCopyGroupKey).toHaveBeenCalledWith('hex');
+    expect(onCopyShareKey).not.toHaveBeenCalled();
 
     // The format menu dismisses on an outside click.
     fireEvent.click(screen.getByTestId('dashboard-group-key-format'));
@@ -781,6 +785,39 @@ describe('operator dashboard surface', () => {
 
     // Pending Approvals renders as a calm empty state (deferred behavior).
     expect(screen.getByText('No pending approvals.')).toBeInTheDocument();
+  });
+
+  it('keeps the share public key split-copy on the stopped signer card', () => {
+    const onCopyShareKey = vi.fn();
+
+    render(
+      <OperatorSignerPanel
+        view={{
+          profileName: 'Primary Browser Device',
+          thresholdLabel: '2/3',
+          memberLabel: 'Share #1',
+          publicKeyLabel: 'group-pub-1',
+          shareLabel: 'share-pub-1',
+          groupKey: { display: 'npub1qe3...7k4m', npub: 'npub1qe3group', hex: 'aa'.repeat(32) },
+          shareKey: { display: 'npub1zfd...3k9p', npub: 'npub1zfdshare', hex: 'bb'.repeat(32) },
+          running: false,
+          readinessLabel: 'Signer Stopped',
+          relaySummary: 'Runtime stopped',
+          peerRows: [],
+          pendingApprovalRows: [],
+          pendingOperationRows: [],
+          eventRows: [],
+        }}
+        runtimeControlLabel="Start Signer"
+        copiedField={null}
+        onCopyShareKey={onCopyShareKey}
+        onPrimaryAction={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('dashboard-share-key-format'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Copy hex' }));
+    expect(onCopyShareKey).toHaveBeenCalledWith('hex');
   });
 
   it('fires the right callback for each pending-approval decision button', () => {
@@ -897,17 +934,21 @@ describe('operator dashboard surface', () => {
 
     // Per-method capability badges render for both peers; online peer shows its
     // latency, the offline peer shows "Offline".
+    expect(screen.getByText('#1')).toBeInTheDocument();
+    expect(screen.queryByText('Peer #1')).not.toBeInTheDocument();
     expect(screen.getAllByLabelText(/SIGN (capable|unavailable)/)).toHaveLength(2);
     expect(screen.getAllByLabelText(/ECDH (capable|unavailable)/)).toHaveLength(2);
     expect(screen.getAllByLabelText(/PING (capable|unavailable)/)).toHaveLength(2);
     expect(screen.getByText('120ms')).toBeInTheDocument();
     expect(screen.getByText('Offline')).toBeInTheDocument();
 
-    // Both domains render until a filter narrows the list.
+    // Both domains render until the compact Paper filter narrows the list.
     expect(screen.getByText('sign request received')).toBeInTheDocument();
     expect(screen.getByText('peer roster synced')).toBeInTheDocument();
+    expect(screen.queryByRole('menuitemradio', { name: 'sync' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'sync', pressed: false }));
+    fireEvent.click(screen.getByRole('button', { name: /Filter/ }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'sync', checked: false }));
     expect(screen.queryByText('sign request received')).not.toBeInTheDocument();
     expect(screen.getByText('peer roster synced')).toBeInTheDocument();
 

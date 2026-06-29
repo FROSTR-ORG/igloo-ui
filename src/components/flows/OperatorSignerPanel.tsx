@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChevronDown, Clock, Copy, RefreshCw } from 'lucide-react';
+import { ChevronDown, Clock, Copy, Filter, RefreshCw } from 'lucide-react';
 
 import type {
   DashboardKeyModel,
@@ -93,7 +93,7 @@ export function OperatorSignerPanel({
             onAlwaysAllow={onAlwaysAllow}
             onDenyApproval={onDenyApproval}
           />
-          <PendingOperationsSection rows={view.pendingOperationRows} />
+          {view.pendingOperationRows.length > 0 ? <PendingOperationsSection rows={view.pendingOperationRows} /> : null}
           <EventLogSection rows={view.eventRows} onClear={onClearLogs} />
         </>
       ) : (
@@ -150,18 +150,20 @@ function StatusCard({
           ) : (
             <KeyField label="Group Public Key" value={view.publicKeyLabel} copied={copiedField === 'group'} onCopy={onCopyGroupKey} />
           )}
-          {view.shareKey ? (
-            <KeyRow
-              label="Share Public Key"
-              keyModel={view.shareKey}
-              copied={copiedField === 'share'}
-              onCopy={onCopyShareKey}
-              copyTestId={TID.dashboardShareKeyCopy}
-              formatTestId={TID.dashboardShareKeyFormat}
-            />
-          ) : (
-            <KeyField label="Share Public Key" value={view.shareLabel} copied={copiedField === 'share'} onCopy={onCopyShareKey} />
-          )}
+          {!running ? (
+            view.shareKey ? (
+              <KeyRow
+                label="Share Public Key"
+                keyModel={view.shareKey}
+                copied={copiedField === 'share'}
+                onCopy={onCopyShareKey}
+                copyTestId={TID.dashboardShareKeyCopy}
+                formatTestId={TID.dashboardShareKeyFormat}
+              />
+            ) : (
+              <KeyField label="Share Public Key" value={view.shareLabel} copied={copiedField === 'share'} onCopy={onCopyShareKey} />
+            )
+          ) : null}
         </div>
 
         <div className="igloo-dashboard-status-connection">{view.relaySummary}</div>
@@ -246,6 +248,7 @@ function PeerRow({ peer }: { peer: PeerReadinessRowModel }) {
   const outgoing = toNum(peer.outgoingAvailable);
   const denom = Math.max(incoming ?? 0, outgoing ?? 0, 1);
   const showMeter = incoming != null || outgoing != null;
+  const aliasLabel = peer.alias.replace(/^Peer\s+/, '');
 
   return (
     <div className="igloo-dashboard-peer-row">
@@ -255,9 +258,9 @@ function PeerRow({ peer }: { peer: PeerReadinessRowModel }) {
         </span>
       </span>
       <div className="igloo-dashboard-peer-main">
-        <span className="igloo-dashboard-peer-id">{peer.alias}</span>
+        <span className="igloo-dashboard-peer-id">{aliasLabel}</span>
         <span className="igloo-dashboard-peer-sep">·</span>
-        <span className="igloo-dashboard-peer-key">{peer.pubkey}</span>
+        <span className="igloo-dashboard-peer-key">{shortKey(peer.pubkey)}</span>
         <span className="igloo-dashboard-caps">
           <Cap label="SIGN" tone="sign" capable={peer.canSign} />
           <Cap label="ECDH" tone="ecdh" capable={peer.canEcdh} />
@@ -427,6 +430,8 @@ function eventTone(label: string): string {
 
 function EventLogSection({ rows, onClear }: { rows: EventLogRowModel[]; onClear?: () => void }) {
   const [activeFilter, setActiveFilter] = React.useState<string | null>(null);
+  const [filterMenuOpen, setFilterMenuOpen] = React.useState(false);
+  const filterMenuRef = React.useRef<HTMLDivElement | null>(null);
 
   // Distinct domain tags present in the current rows drive the filter chips.
   const domains = React.useMemo(() => {
@@ -444,57 +449,99 @@ function EventLogSection({ rows, onClear }: { rows: EventLogRowModel[]; onClear?
   // A filter that no longer matches any row (e.g. after Clear) falls back to All.
   const effectiveFilter = activeFilter && domains.includes(activeFilter) ? activeFilter : null;
   const visibleRows = effectiveFilter ? rows.filter((row) => row.badgeLabel === effectiveFilter) : rows;
+  const activeFilterCount = effectiveFilter ? 1 : domains.length;
+
+  React.useEffect(() => {
+    if (!filterMenuOpen) return undefined;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!filterMenuRef.current?.contains(event.target as Node)) {
+        setFilterMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [filterMenuOpen]);
 
   return (
     <section className="igloo-dashboard-section">
-      <header className="igloo-dashboard-section-head">
-        <span className="igloo-dashboard-section-title">Event Log</span>
-        {rows.length > 0 ? <span className="igloo-dashboard-count is-total">{rows.length} events</span> : null}
-        <span className="igloo-dashboard-section-spacer" />
-        {onClear ? (
-          <button type="button" className="igloo-dashboard-clear" onClick={onClear}>
-            Clear
-          </button>
-        ) : null}
+      <header className="igloo-dashboard-section-head igloo-dashboard-event-head">
+        <div className="igloo-dashboard-event-title-group">
+          <span className="igloo-dashboard-section-title">Event Log</span>
+          {rows.length > 0 ? <span className="igloo-dashboard-count is-total">{rows.length} events</span> : null}
+        </div>
+        <div className="igloo-dashboard-event-controls">
+          {onClear ? (
+            <button type="button" className="igloo-dashboard-clear" onClick={onClear}>
+              Clear
+            </button>
+          ) : null}
+          {domains.length > 1 ? (
+            <div ref={filterMenuRef} className="igloo-dashboard-filter-wrap">
+              <button
+                type="button"
+                className="igloo-dashboard-filter-trigger"
+                aria-haspopup="menu"
+                aria-expanded={filterMenuOpen}
+                onClick={() => setFilterMenuOpen((open) => !open)}
+              >
+                <Filter size={14} aria-hidden="true" />
+                <span>Filter</span>
+                <span className="igloo-dashboard-filter-count">{activeFilterCount} active</span>
+                <ChevronDown size={12} aria-hidden="true" />
+              </button>
+              {filterMenuOpen ? (
+                <div className="igloo-dashboard-filter-menu" role="menu">
+                  <FilterChip
+                    label="All"
+                    active={effectiveFilter === null}
+                    onClick={() => {
+                      setActiveFilter(null);
+                      setFilterMenuOpen(false);
+                    }}
+                  />
+                  {domains.map((domain) => (
+                    <FilterChip
+                      key={domain}
+                      label={domain}
+                      active={effectiveFilter === domain}
+                      onClick={() => {
+                        setActiveFilter(domain);
+                        setFilterMenuOpen(false);
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </header>
 
-      {domains.length > 1 ? (
-        <div className="igloo-dashboard-filters">
-          <FilterChip label="All" active={effectiveFilter === null} onClick={() => setActiveFilter(null)} />
-          {domains.map((domain) => (
-            <FilterChip
-              key={domain}
-              label={domain}
-              active={effectiveFilter === domain}
-              onClick={() => setActiveFilter(domain)}
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {visibleRows.length > 0 ? (
-        visibleRows.map((row) => {
-          const permissionMethod = normalizePermissionMethod(row.badgeLabel);
-          return (
-            <div key={row.id} className="igloo-dashboard-event-row">
-              {row.timestampLabel ? <span className="igloo-dashboard-event-time">{row.timestampLabel}</span> : null}
-              {permissionMethod ? (
-                <PermissionToken
-                  method={permissionMethod}
-                  variant="policy"
-                  as="span"
-                  className="igloo-dashboard-event-token"
-                />
-              ) : (
-                <span className={`igloo-dashboard-event-badge ${eventTone(row.badgeLabel)}`}>{row.badgeLabel}</span>
-              )}
-              <span className="igloo-dashboard-event-msg">{row.message}</span>
-            </div>
-          );
-        })
-      ) : (
-        <div className="igloo-dashboard-empty">No events captured yet.</div>
-      )}
+      <div className="igloo-dashboard-event-list" role="log" aria-label="Event Log">
+        {visibleRows.length > 0 ? (
+          visibleRows.map((row) => {
+            const permissionMethod = normalizePermissionMethod(row.badgeLabel);
+            return (
+              <div key={row.id} className="igloo-dashboard-event-row">
+                {row.timestampLabel ? <span className="igloo-dashboard-event-time">{row.timestampLabel}</span> : null}
+                {permissionMethod ? (
+                  <PermissionToken
+                    method={permissionMethod}
+                    variant="policy"
+                    as="span"
+                    className="igloo-dashboard-event-token"
+                  />
+                ) : (
+                  <span className={`igloo-dashboard-event-badge ${eventTone(row.badgeLabel)}`}>{row.badgeLabel}</span>
+                )}
+                <span className="igloo-dashboard-event-msg">{row.message}</span>
+              </div>
+            );
+          })
+        ) : (
+          <div className="igloo-dashboard-empty">No events captured yet.</div>
+        )}
+      </div>
     </section>
   );
 }
@@ -503,8 +550,10 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
   return (
     <button
       type="button"
+      role="menuitemradio"
       onClick={onClick}
       aria-pressed={active}
+      aria-checked={active}
       className={`igloo-dashboard-filter-chip ${active ? 'is-active' : ''}`}
     >
       {label}

@@ -1,5 +1,5 @@
 import type * as React from 'react';
-import { AlertTriangle, Check, HelpCircle, RotateCcw } from 'lucide-react';
+import { AlertTriangle, Check, HelpCircle, Info } from 'lucide-react';
 
 import { Button } from '../../ui/button';
 import { PasswordField } from '../../ui/password-field';
@@ -33,6 +33,7 @@ export function RotateKeysetPanel({
   onRemoveRotationSource,
   onRotate,
   onBack,
+  backLabel = 'Back',
   title,
   description,
   actionLabel = 'Next Step',
@@ -65,6 +66,7 @@ export function RotateKeysetPanel({
   onRemoveRotationSource: (index: number) => void;
   onRotate: () => void;
   onBack?: () => void;
+  backLabel?: string;
   title?: string;
   description?: string;
   actionLabel?: string;
@@ -124,15 +126,14 @@ export function RotateKeysetPanel({
     effectiveLocalSourceState === 'validated'
       ? {
           label: 'Ready',
-          detail: 'This device share is unlocked and counts toward the rotation threshold.',
         }
       : {
           label: 'Passphrase required',
-          detail:
-            'This device share is available but not counted yet. Enter its profile passphrase, or provide enough remote source packages without it.',
         };
-  const requiredRemoteSources = Math.max(1, normalizedThreshold - localReadyCount);
+  const expectedLocalSourceCount = showLocalPassphrase || localReadyCount > 0 ? 1 : 0;
+  const requiredRemoteSources = Math.max(1, normalizedThreshold - expectedLocalSourceCount);
   const canAddSource = rotationSources.length < requiredRemoteSources;
+  const canRemoveSource = rotationSources.length > requiredRemoteSources;
   const localPassphraseReady = resolvedLocalPassphrase.trim().length > 0;
   const adjustNewConfiguration = (field: 'threshold' | 'count', direction: -1 | 1) => {
     const currentValue = field === 'threshold' ? normalizedNewThreshold : normalizedNewCount;
@@ -140,16 +141,6 @@ export function RotateKeysetPanel({
     const nextValue = Math.max(2, (currentValue || fallbackValue) + direction);
     onChangeNewConfiguration?.(field, String(nextValue));
   };
-  const collectionStatus = actionBusy
-    ? 'Rotating keyset from collected shares...'
-    : readyToRotate
-      ? newShapeValid
-        ? 'Threshold met. Continue to select the local share for this device.'
-        : 'Choose a valid rotated keyset configuration to continue.'
-      : showLocalPassphrase
-        ? 'Enter this device passphrase or add enough remote source packages to continue.'
-        : 'Add another source package and password to continue.';
-
   return (
     <div className="igloo-recover-collect igloo-rotate-collect">
       {onBack ? (
@@ -160,7 +151,7 @@ export function RotateKeysetPanel({
           disabled={actionBusy}
           onClick={onBack}
         >
-          ‹ Back
+          ‹ {backLabel}
         </button>
       ) : null}
       {title || description ? (
@@ -195,14 +186,8 @@ export function RotateKeysetPanel({
       >
         <div className="igloo-recover-device-main">
           <strong>{resolvedLocalSourceLabel}</strong>
-          <p>{localSourceStatus.detail}</p>
         </div>
         <span className="igloo-recover-device-badge" data-state={effectiveLocalSourceState}>
-          {effectiveLocalSourceState === 'validated' ? (
-            <Check size={14} aria-hidden="true" />
-          ) : (
-            <AlertTriangle size={14} aria-hidden="true" />
-          )}
           {localSourceStatus.label}
         </span>
         {showLocalPassphrase ? (
@@ -281,18 +266,20 @@ export function RotateKeysetPanel({
                   placeholder="Enter password to decrypt"
                 />
               </label>
-              <div className="igloo-button-row">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  aria-label={`Remove ${sourceLabel}`}
-                  disabled={actionBusy}
-                  onClick={() => onRemoveRotationSource(index)}
-                >
-                  Remove
-                </Button>
-              </div>
+              {canRemoveSource ? (
+                <div className="igloo-button-row">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    aria-label={`Remove ${sourceLabel}`}
+                    disabled={actionBusy}
+                    onClick={() => onRemoveRotationSource(index)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : null}
             </div>
           );
         })}
@@ -361,9 +348,6 @@ export function RotateKeysetPanel({
           {newConfigurationSummary}
         </p>
       </div>
-      <p role="status" aria-live="polite" aria-label="Rotation collection status" className="igloo-recover-status">
-        {collectionStatus}
-      </p>
       <Button
         type="button"
         className="igloo-create-primary-action"
@@ -376,7 +360,7 @@ export function RotateKeysetPanel({
         {actionLabel}
       </Button>
       <div className="igloo-rotate-same-key-note">
-        <RotateCcw size={16} aria-hidden="true" />
+        <Info size={16} aria-hidden="true" />
         <div>
           <strong>All shares change, group key stays the same</strong>
           <p>

@@ -292,7 +292,7 @@ export function observabilityEventsToEventRows(
     badgeLabel: event.domain,
     badgeTone: event.level === 'error' ? 'danger' : event.level === 'warn' ? 'warning' : 'info',
     message: event.message ?? event.event,
-    timestampLabel: formatTimestamp(event.ts),
+    timestampLabel: formatEventTimestamp(event.ts),
   }));
 }
 
@@ -424,4 +424,14 @@ export function buildPendingApprovalRows(input: {
 function formatTimestamp(value: number) {
   const normalized = value > 10_000_000_000 ? value : value * 1000;
   return new Date(normalized).toLocaleString();
+}
+
+function formatEventTimestamp(value: number) {
+  const normalized = value > 10_000_000_000 ? value : value * 1000;
+  const date = new Date(normalized);
+  const suffix = date.getHours() >= 12 ? 'p' : 'a';
+  const hour = date.getHours() % 12 || 12;
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  const second = String(date.getSeconds()).padStart(2, '0');
+  return `${hour}:${minute}:${second}${suffix}`;
 }
