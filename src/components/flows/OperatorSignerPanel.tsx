@@ -1,12 +1,11 @@
 import * as React from 'react';
-import { ChevronDown, ChevronRight, Clock, Copy, Filter, Radio, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock, Copy, Filter, Radio, RefreshCw, ShieldAlert, X } from 'lucide-react';
 
 import type {
   DashboardKeyModel,
   EventLogRowModel,
   PeerReadinessRowModel,
   PendingApprovalRowModel,
-  PendingOperationRowModel,
   SignerDashboardViewModel,
 } from '../../models/view-models';
 import type { DashboardBanner } from '../../models/dashboard-state';
@@ -112,7 +111,6 @@ export function OperatorSignerPanel({
               onAlwaysAllow={onAlwaysAllow}
               onDenyApproval={onDenyApproval}
             />
-            {view.pendingOperationRows.length > 0 ? <PendingOperationsSection rows={view.pendingOperationRows} /> : null}
             <EventLogSection rows={view.eventRows} onClear={onClearLogs} />
           </>
         )
@@ -500,10 +498,26 @@ function PendingApprovalsSection({
   onDenyApproval?: (id: string) => void;
 }) {
   const interactive = Boolean(onApproveOnce || onAlwaysAllow || onDenyApproval);
-  const nearest = rows[0]?.expiresLabel.replace(/^expires\s+/, '');
+  const [activeApprovalId, setActiveApprovalId] = React.useState<string | null>(null);
+  const activeApproval = activeApprovalId ? rows.find((approval) => approval.id === activeApprovalId) : null;
+  const nearest = rows[0]?.expiresLabel;
+
+  React.useEffect(() => {
+    if (activeApprovalId && !rows.some((approval) => approval.id === activeApprovalId)) {
+      setActiveApprovalId(null);
+    }
+  }, [activeApprovalId, rows]);
+
+  const closePrompt = () => setActiveApprovalId(null);
+  const resolve = (callback: ((id: string) => void) | undefined, approval: PendingApprovalRowModel) => {
+    callback?.(approval.id);
+    closePrompt();
+  };
+
   return (
     <section className="igloo-dashboard-section">
       <header className="igloo-dashboard-section-head">
+        {rows.length > 0 ? <span className="igloo-dashboard-approval-spark" aria-hidden="true">*</span> : null}
         <span className="igloo-dashboard-section-title">Pending Approvals</span>
         {rows.length > 0 ? <span className="igloo-dashboard-count is-pending">{rows.length} pending</span> : null}
         <span className="igloo-dashboard-section-spacer" />
@@ -531,39 +545,14 @@ function PendingApprovalsSection({
               </span>
               {interactive ? (
                 <span className="igloo-dashboard-approval-actions">
-                  {onApproveOnce ? (
-                    <Button
-                      type="button"
-                      variant="success"
-                      className="h-7 px-3 text-xs"
-                      data-testid={`${TID.dashboardPendingApprovals}-allow-once`}
-                      onClick={() => onApproveOnce(approval.id)}
-                    >
-                      Allow once
-                    </Button>
-                  ) : null}
-                  {onDenyApproval ? (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      className="h-7 px-2.5 text-xs"
-                      data-testid={`${TID.dashboardPendingApprovals}-deny`}
-                      onClick={() => onDenyApproval(approval.id)}
-                    >
-                      Deny
-                    </Button>
-                  ) : null}
-                  {onAlwaysAllow ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="h-7 px-2.5 text-xs"
-                      data-testid={`${TID.dashboardPendingApprovals}-always-allow`}
-                      onClick={() => onAlwaysAllow(approval.id)}
-                    >
-                      Always allow
-                    </Button>
-                  ) : null}
+                  <Button
+                    type="button"
+                    className="h-7 min-w-[7.5rem] px-3 text-xs"
+                    data-testid={`${TID.dashboardPendingApprovals}-open`}
+                    onClick={() => setActiveApprovalId(approval.id)}
+                  >
+                    Open
+                  </Button>
                 </span>
               ) : null}
             </div>
@@ -572,34 +561,108 @@ function PendingApprovalsSection({
           <div className="igloo-dashboard-empty">No pending approvals.</div>
         )}
       </div>
+      {activeApproval ? (
+        <div className="igloo-dashboard-policy-backdrop" role="presentation">
+          <div
+            className="igloo-dashboard-policy-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="igloo-dashboard-policy-title"
+          >
+            <header className="igloo-dashboard-policy-head">
+              <span className="igloo-dashboard-policy-icon" aria-hidden="true">
+                <ShieldAlert size={20} />
+              </span>
+              <span className="igloo-dashboard-policy-title-wrap">
+                <span id="igloo-dashboard-policy-title" className="igloo-dashboard-policy-title">
+                  Signer Policy
+                </span>
+                <span className="igloo-dashboard-policy-subtitle">
+                  A peer is requesting permission to {methodActionLabel(activeApproval.method)} on your behalf
+                </span>
+              </span>
+              <button
+                type="button"
+                className="igloo-dashboard-policy-close"
+                onClick={closePrompt}
+                aria-label="Close signer policy prompt"
+              >
+                <X size={16} aria-hidden="true" />
+              </button>
+            </header>
+            <div className="igloo-dashboard-policy-request">
+              <span className={`igloo-dashboard-method ${methodToneClass(activeApproval.method)}`}>
+                {activeApproval.methodLabel}
+              </span>
+              <span className="igloo-dashboard-policy-peer">from {activeApproval.peerLabel}</span>
+              <span className="igloo-dashboard-policy-key">{shortKey(activeApproval.pubkey)}</span>
+            </div>
+            <dl className="igloo-dashboard-policy-details">
+              <div>
+                <dt>Method</dt>
+                <dd>{activeApproval.methodLabel}</dd>
+              </div>
+              <div>
+                <dt>Peer</dt>
+                <dd>{activeApproval.peerLabel}</dd>
+              </div>
+              <div>
+                <dt>Request ID</dt>
+                <dd>{shortKey(activeApproval.id)}</dd>
+              </div>
+              <div>
+                <dt>Expires</dt>
+                <dd>{activeApproval.expiresLabel}</dd>
+              </div>
+            </dl>
+            <div className="igloo-dashboard-policy-expiry">
+              <Clock size={14} aria-hidden="true" />
+              {activeApproval.expiresLabel === 'expired' ? 'Expired' : `Expires in ${activeApproval.expiresLabel}`}
+            </div>
+            <div className="igloo-dashboard-policy-actions">
+              {onDenyApproval ? (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  data-testid={`${TID.dashboardPendingApprovals}-deny`}
+                  onClick={() => resolve(onDenyApproval, activeApproval)}
+                >
+                  Deny
+                </Button>
+              ) : null}
+              {onApproveOnce ? (
+                <Button
+                  type="button"
+                  variant="success"
+                  data-testid={`${TID.dashboardPendingApprovals}-allow-once`}
+                  onClick={() => resolve(onApproveOnce, activeApproval)}
+                >
+                  Allow once
+                </Button>
+              ) : null}
+              {onAlwaysAllow ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  data-testid={`${TID.dashboardPendingApprovals}-always-allow`}
+                  onClick={() => resolve(onAlwaysAllow, activeApproval)}
+                >
+                  Always allow
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
 
-function PendingOperationsSection({ rows }: { rows: PendingOperationRowModel[] }) {
-  return (
-    <section className="igloo-dashboard-section">
-      <header className="igloo-dashboard-section-head">
-        <span className="igloo-dashboard-section-title">Pending Operations</span>
-        {rows.length > 0 ? <span className="igloo-dashboard-count is-total">{rows.length} active</span> : null}
-      </header>
-      {rows.length > 0 ? (
-        rows.map((operation) => (
-          <div key={operation.id} className="igloo-dashboard-op-row">
-            <span className="igloo-dashboard-op-label">{operation.operationLabel}</span>
-            <span className="igloo-dashboard-op-id">{operation.id}</span>
-            <span className="igloo-dashboard-op-meta">
-              <span>{operation.startedLabel}</span>
-              <span>{operation.timeoutLabel}</span>
-              <span>{operation.responseLabel}</span>
-            </span>
-          </div>
-        ))
-      ) : (
-        <div className="igloo-dashboard-empty">No operations are currently pending.</div>
-      )}
-    </section>
-  );
+function methodActionLabel(method: PendingApprovalRowModel['method']) {
+  if (method === 'ecdh') return 'complete an ECDH exchange';
+  if (method === 'ping') return 'answer a ping';
+  if (method === 'onboard') return 'onboard a device';
+  return 'sign';
 }
 
 type EventLogKind =

@@ -257,6 +257,13 @@ export function deriveDashboardState(input: DashboardStateInput): DashboardState
 function deriveSigningBlockedReason(
   status: DashboardStatusInput
 ): SigningBlockedReason | null {
+  // The `ask` path is actionable in the approval queue. Do not replace the
+  // running dashboard with a generic blocked state while an operator decision is
+  // pending.
+  if ((status.pending_approvals ?? []).length > 0) {
+    return null;
+  }
+
   // Can't determine a block without readiness; sign-ready → not blocked.
   if (!status.readiness || status.readiness.sign_ready) {
     return null;
@@ -460,20 +467,35 @@ function shortPubkey(pubkey: string): string {
 export function buildPendingApprovalRows(input: {
   approvals: RuntimePendingApprovalInput[];
   peerAliases?: Record<string, string>;
+  nowMs?: number;
 }): PendingApprovalRowModel[] {
   return input.approvals.map((approval): PendingApprovalRowModel => {
     const normalized = approval.peer.toLowerCase();
     const alias = input.peerAliases?.[normalized];
+    const method = approvalMethod(approval.method);
     return {
       id: approval.request_id,
       methodLabel: approval.method.toUpperCase(),
       peerLabel: alias ?? shortPubkey(normalized),
-      detailLabel: `requested ${formatTimestamp(approval.queued_at)}`,
-      expiresLabel: `expires ${formatTimestamp(approval.expires_at)}`,
+      detailLabel: `${approval.method.toUpperCase()} request awaiting operator approval`,
+      expiresLabel: formatExpiryCountdown(approval.expires_at, input.nowMs),
       pubkey: normalized,
-      method: approvalMethod(approval.method),
+      method,
     };
   });
+}
+
+function formatExpiryCountdown(value: number, nowMs = Date.now()) {
+  const normalized = value > 10_000_000_000 ? value : value * 1000;
+  const remainingSeconds = Math.max(0, Math.ceil((normalized - nowMs) / 1000));
+  if (remainingSeconds <= 0) return 'expired';
+  if (remainingSeconds < 60) return `${remainingSeconds}s`;
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
+  if (minutes < 60) return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
 }
 
 function formatTimestamp(value: number) {

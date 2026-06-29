@@ -49,6 +49,7 @@ function status(overrides: Partial<NonNullable<StatusInput>> = {}): NonNullable<
     ],
     peer_permission_states: [],
     pending_operations: [],
+    pending_approvals: [],
     connected_relays: ['wss://relay.one'],
     configured_relays: ['wss://relay.one'],
     ...overrides,
@@ -132,6 +133,27 @@ describe('deriveDashboardState', () => {
       }),
     });
     expect(state).toMatchObject({ kind: 'ready', banners: [{ kind: 'signing-blocked', reason: 'policy' }] });
+  });
+
+  it('keeps the running dashboard visible when policy approvals are pending', () => {
+    const base = status();
+    const state = deriveDashboardState({
+      active: true,
+      status: status({
+        readiness: { ...base.readiness, sign_ready: false },
+        peers: [{ ...base.peers[0], online: true, can_sign: false }],
+        pending_approvals: [
+          {
+            request_id: 'approval-1',
+            peer: 'p',
+            method: 'sign',
+            queued_at: 1,
+            expires_at: 2,
+          },
+        ],
+      }),
+    });
+    expect(bannerKinds(state)).toEqual([]);
   });
 
   it('reports signing-blocked=insufficient-peers when no peer is online', () => {

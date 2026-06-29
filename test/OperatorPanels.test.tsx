@@ -942,8 +942,8 @@ describe('operator dashboard surface', () => {
               id: 'req-1',
               methodLabel: 'SIGN',
               peerLabel: 'Peer #2',
-              detailLabel: 'requested now',
-              expiresLabel: 'expires soon',
+              detailLabel: 'SIGN request awaiting operator approval',
+              expiresLabel: '42s',
               pubkey: 'peer-2',
               method: 'sign',
             },
@@ -960,12 +960,19 @@ describe('operator dashboard surface', () => {
       />,
     );
 
+    expect(screen.getByText('SIGN request awaiting operator approval')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('dialog', { name: 'Signer Policy' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Deny' }));
     expect(onDenyApproval).toHaveBeenCalledWith('req-1');
 
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
     fireEvent.click(screen.getByRole('button', { name: 'Allow once' }));
     expect(onApproveOnce).toHaveBeenCalledWith('req-1');
 
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
     fireEvent.click(screen.getByRole('button', { name: 'Always allow' }));
     expect(onAlwaysAllow).toHaveBeenCalledWith('req-1');
   });
