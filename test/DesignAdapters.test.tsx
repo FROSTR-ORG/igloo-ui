@@ -155,6 +155,22 @@ describe('buildPeerReadinessRows', () => {
     expect(rows[0].state).toBe('online'); // live status wins over roster/policy
   });
 
+  it('maps a live runtime peer with online=false to offline, not known', () => {
+    const rows = buildPeerReadinessRows({
+      peers: [
+        livePeer({
+          online: false,
+          can_sign: false,
+          can_ecdh: false,
+          can_ping: false,
+          last_response_latency_ms: null,
+        }),
+      ],
+    });
+
+    expect(rows[0]).toMatchObject({ state: 'offline', statusLabel: 'offline' });
+  });
+
   it('returns an empty array when there are no peers from any source', () => {
     expect(buildPeerReadinessRows({ peers: [] })).toEqual([]);
   });
