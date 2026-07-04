@@ -292,6 +292,33 @@ describe('operator dashboard surface', () => {
     expect(screen.queryByText('Event Log')).not.toBeInTheDocument();
   });
 
+  it('does not claim a remote signing peer is required for threshold-one keysets', () => {
+    render(
+      <OperatorSignerPanel
+        view={{
+          profileName: 'Primary Browser Device',
+          thresholdLabel: '1 of 3',
+          publicKeyLabel: 'group-pub-1',
+          shareLabel: 'Share #1',
+          running: true,
+          readinessLabel: 'Signer Running (Degraded)',
+          relaySummary: 'Connected to wss://relay.primal.net',
+          peerRows: [],
+          pendingOperationRows: [],
+          eventRows: [],
+        }}
+        runtimeControlLabel="Stop Signer"
+        onPrimaryAction={vi.fn()}
+        availabilityIssue={{ kind: 'signing-blocked', reason: 'insufficient-peers' }}
+      />,
+    );
+
+    expect(
+      screen.getByText('No remote signing peers are required for this threshold. Refresh peers or review local readiness.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Bring another signing peer online/)).not.toBeInTheDocument();
+  });
+
   it('renders the Paper settings sidebar sections and actions', () => {
     const onClose = vi.fn();
     const onSave = vi.fn();

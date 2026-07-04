@@ -224,7 +224,7 @@ function UnavailableState({
   retryDisabled?: boolean;
 }) {
   const signingReady = view.peerRows.filter((peer) => (peer.state === 'online' || peer.state === 'idle') && peer.canSign).length;
-  const remoteRequired = Math.max(parseThresholdRequired(view.thresholdLabel) - 1, 1);
+  const remoteRequired = Math.max(parseThresholdRequired(view.thresholdLabel) - 1, 0);
 
   if (issue.kind === 'all-relays-offline') {
     return (
@@ -297,7 +297,9 @@ function UnavailableState({
         <div className="igloo-dashboard-nextstep-note">
           {issue.reason === 'policy'
             ? 'Peer policy is denying signing. Review Permissions or approve pending requests.'
-            : `${signingReady} of ${remoteRequired} signing peers are ready. Bring another signing peer online before approving signatures.`}
+            : remoteRequired === 0
+              ? 'No remote signing peers are required for this threshold. Refresh peers or review local readiness.'
+              : `${signingReady} of ${remoteRequired} signing peers are ready. Bring another signing peer online before approving signatures.`}
         </div>
       </section>
     </div>
